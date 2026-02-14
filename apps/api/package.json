@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "echo 'Note: Azure Functions requires Azure Functions Core Tools to be installed separately. Install with: npm i -g azure-functions-core-tools@4' && echo 'Starting web dev server...' && npm run dev:web",
+    "dev": "echo 'Note: Azure Functions requires Azure Functions Core Tools to be installed globally.' && echo 'Install with: npm i -g azure-functions-core-tools@4' && echo '' && func start",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "watch": "tsc --watch"
