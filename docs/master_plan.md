@@ -221,7 +221,7 @@ These are the 15 implementation issues seeded in GitHub. Each will be assigned t
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 1 - Map interface and scenario inputs (Issues 4 and 5)
+- **Current focus:** Phase 1 - Scenario input controls (Issue 5)
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.
@@ -256,10 +256,24 @@ Update this section after each issue or change.
     - Reusable UI components (Spinner, ErrorMessage, Toast)
     - Demo controls for testing state changes and notifications
     - Application runs on localhost:5173 with full responsiveness
+  - **Issue 4 complete:** 3D Map Integration & Fire Perimeter Drawing
+    - Mapbox GL JS v3 integration with 3D terrain enabled
+    - NSW-centered map (150.5°E, 33.8°S) with satellite streets style
+    - 3D terrain with 1.5x exaggeration and sky atmosphere layer
+    - MapboxDraw polygon tool with fire-themed styling (red going edge, black inactive edge)
+    - Viewpoint presets: North, South, East, West, Aerial with smooth fly-to animations
+    - Map screenshot capture function using canvas.toDataURL()
+    - Perimeter metadata calculation: area (hectares), centroid coordinates, bounding box
+    - FirePerimeter GeoJSON Feature type with proper geometry structure
+    - Updated appStore with perimeter state management and setState alias
+    - Mapbox token configuration via VITE_MAPBOX_TOKEN environment variable
+    - Updated README with setup instructions for Mapbox token
+    - All components integrated into ScenarioPage replacing placeholder
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
-- **Next milestone:** Phase 1 continues - Map component integration (Issue 4) and scenario input controls (Issue 5)
+  - Mapbox free tier limits: 50,000 map loads/month (sufficient for development and early use)
+- **Next milestone:** Phase 1 continues - Scenario input panel and parameter controls (Issue 5)
 
 ## 14. Change Control Process
 
