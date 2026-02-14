@@ -14,6 +14,16 @@ Purpose: Keep all work aligned to the master plan and the project vision.
 - Background research: [docs/background.md](docs/background.md)
 - Technical considerations: [docs/tech_considerations.md](docs/tech_considerations.md)
 - Seed issues: [docs/suggested_issues.md](docs/suggested_issues.md)
+- Infrastructure documentation: [infra/README.md](infra/README.md)
+
+## Architecture
+
+- **Static Web App** hosts the React front-end and embedded Azure Functions API at `/api`
+- **Azure Blob Storage** stores generated images, videos, and scenario data
+- **Azure Key Vault** manages API keys and secrets
+- **Azure OpenAI** provides image generation via DALL-E 3
+- **Managed identities** handle service-to-service authentication
+- All resources deployed via Bicep templates in `infra/`
 
 ## Guardrails
 
@@ -21,6 +31,7 @@ Purpose: Keep all work aligned to the master plan and the project vision.
 - Prioritize geographic accuracy over artistic style.
 - Keep outputs safe, credible, and aligned with RFS terminology.
 - Maintain modularity so models and services can be swapped later.
+- All data stays within the NSW RFS Azure environment.
 
 ## Technical Guidance (Best Practices)
 
@@ -31,3 +42,5 @@ Purpose: Keep all work aligned to the master plan and the project vision.
 - Enforce security: Key Vault for secrets, least-privilege identities, and in-tenant data flows.
 - Monitor latency, cost per scenario, and error rates from the start.
 - Provide sensible defaults and guardrails so trainers can generate credible outputs quickly.
+- Use managed identities over connection strings for Azure service authentication.
+

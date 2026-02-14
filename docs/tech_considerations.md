@@ -82,17 +82,19 @@ We envision a web-based Bushfire Simulation Inject tool that lets NSW RFS traine
 
 **Front-end mapping app**
 
-- Azure Static Web Apps hosting a React client.
+- Azure Static Web App hosting a React client with embedded API.
 - Mapbox GL JS or Azure Maps with 3D terrain and drawing tools.
 - Camera controls for north/south/east/west and aerial views.
 - Snapshot capture to seed image-to-image pipelines.
 
 **Back-end generation pipeline**
 
-- Azure Functions for orchestration.
+- Azure Functions embedded at `/api` endpoint within Static Web App (Node.js 20, TypeScript).
+- Durable Functions for orchestrating long-running generation tasks.
 - Geospatial data retrieval for vegetation, terrain, and context.
 - Prompt construction with scenario parameters and viewpoint variants.
-- Image generation via GPT-Image or SDXL with optional ControlNet.
+- Image generation via Azure OpenAI (DALL-E 3) or SDXL with optional ControlNet.
 - Video generation via SVD or a third-party service, output to Blob Storage.
+- Managed identities for secure authentication to Key Vault and other Azure services.
 
 For the 10-step implementation roadmap, see [docs/master_plan.md](docs/master_plan.md).
