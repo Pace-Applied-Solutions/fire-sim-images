@@ -94,17 +94,23 @@ export async function initializeQuotaService(serviceConfig: QuotaServiceConfig):
 }
 
 /**
- * Get the current date in AEST (UTC+11) as YYYY-MM-DD.
+ * Get the current date in AEST/AEDT (Australian Eastern Time) as YYYY-MM-DD.
+ * Note: This is a simplified implementation that uses UTC+11.
+ * For production, consider using a timezone library like date-fns-tz or luxon
+ * to properly handle daylight saving time transitions (AEDT is UTC+10).
  */
 function getCurrentDateAEST(): string {
   const now = new Date();
-  // Convert to AEST (UTC+11)
+  // Simplified: Always use UTC+11 (AEST)
+  // TODO: Handle AEDT (UTC+10 during daylight saving) properly
   const aestTime = new Date(now.getTime() + 11 * 60 * 60 * 1000);
   return aestTime.toISOString().split('T')[0];
 }
 
 /**
- * Get midnight AEST as ISO timestamp (when quota resets).
+ * Get midnight AEST/AEDT as ISO timestamp (when quota resets).
+ * Note: This is a simplified implementation.
+ * TODO: Handle daylight saving time properly with a timezone library.
  */
 function getMidnightAESTTimestamp(): string {
   const now = new Date();

@@ -37,6 +37,11 @@ export class ImagePostProcessor {
    * Apply post-processing to an image buffer.
    * For dev mode with mock images, this is a placeholder.
    * In production, would use sharp or similar library for actual image processing.
+   * 
+   * @param imageData - Image buffer to process
+   * @param _viewpoint - Viewpoint identifier (unused in current impl, reserved for future watermarking)
+   * @param _scenarioId - Scenario identifier (unused in current impl, reserved for future watermarking)
+   * @param options - Processing options
    */
   async processImage(
     imageData: Buffer,
