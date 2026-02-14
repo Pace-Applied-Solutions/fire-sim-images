@@ -14,7 +14,7 @@ NSW RFS trainers need realistic, location-specific visuals to help crews and inc
 
 The problem we are solving is twofold: speed and fidelity. Speed means a trainer can sketch a perimeter and quickly produce multiple views that feel like real observations from the fireground. Fidelity means those outputs respect the actual vegetation type, terrain slope, and weather conditions so the visuals do not mislead trainees. The tool is not intended to replace physics-based fire simulators; instead it creates visual injects that complement existing operational planning tools and improve training immersion. By anchoring each scenario to authoritative datasets (vegetation, elevation, imagery) and structuring prompts with fire behavior parameters, the outputs remain credible and consistent with how NSW RFS describes and assesses fire behavior.
 
-The architecture is a lightweight, modular pipeline hosted in Azure. A web front-end provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end then enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses a configurable model choice: GPT-Image for rapid integration and SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments.
+The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as embedded Azure Functions within the Static Web App at the `/api` endpoint. This API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure OpenAI (DALL-E 3) for rapid integration, with the option to use SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management and managed identities for service-to-service authentication.
 
 Key architectural principles include keeping data within the NSW RFS Azure environment, favoring NSW and national datasets for geographic accuracy, and maintaining model modularity so newer AI services can be swapped in as they mature. This allows the system to start small and reliable, then evolve toward higher fidelity and longer-duration outputs without reworking the entire stack. The end result is a practical training tool that can quickly generate credible fireground visuals, improve scenario realism, and support consistent, repeatable training outcomes.
 
@@ -100,19 +100,25 @@ Key architectural principles include keeping data within the NSW RFS Azure envir
 
 **Front-end**
 
-- Azure Static Web App (React preferred).
+- Azure Static Web App hosting React application.
 - Mapbox GL JS or Azure Maps with 3D terrain.
 - Polygon draw tool and scenario parameter UI.
 - Viewpoint selection and map screenshot capture.
 
-**Back-end**
+**Back-end API**
 
-- Azure Functions (Durable Functions for long tasks).
+- Azure Functions embedded in Static Web App at `/api` endpoint (Node.js 20, TypeScript).
+- Durable Functions for long-running generation tasks.
 - Geodata lookup for vegetation, slope, elevation.
 - Prompt builder for multi-view outputs.
-- Image generation via GPT-Image or SDXL (ControlNet optional).
+- Image generation via Azure OpenAI (DALL-E 3) or SDXL (ControlNet optional).
 - Video generation via SVD or external service.
-- Storage via Azure Blob Storage.
+
+**Storage and Security**
+
+- Azure Blob Storage for generated images, videos, and scenario data.
+- Azure Key Vault for API keys and secrets.
+- Managed identities for secure service-to-service authentication.
 
 ## 7. Data Sources and Inputs
 
@@ -175,18 +181,25 @@ Key architectural principles include keeping data within the NSW RFS Azure envir
 
 ## 10. Issue Map (Authoritative Work Breakdown)
 
-These align with [docs/suggested_issues.md](docs/suggested_issues.md) and serve as the master work list.
+These are the 15 implementation issues seeded in GitHub. Each will be assigned to the coding agent in sequence. Original seed ideas are in [docs/suggested_issues.md](docs/suggested_issues.md).
 
-1. Project setup and requirements.
-2. Front-end mapping interface.
-3. Geospatial data integration.
-4. Prompt generation logic.
-5. AI image generation.
-6. Multi-perspective rendering.
-7. Video generation pipeline.
-8. Testing and iteration.
-9. Infrastructure and security.
-10. Future enhancements and roadmap.
+| # | Issue Title | Phase | GitHub |
+|---|---|---|---|
+| 1 | Project Scaffolding & Repository Structure | Phase 0 | [#1](https://github.com/richardthorek/fire-sim-images/issues/1) |
+| 2 | Azure Infrastructure as Code (Bicep) | Phase 0 | [#2](https://github.com/richardthorek/fire-sim-images/issues/2) |
+| 3 | Front-End Shell, Design System & Navigation | Phase 1 | [#3](https://github.com/richardthorek/fire-sim-images/issues/3) |
+| 4 | 3D Map Integration & Fire Perimeter Drawing | Phase 1 | [#4](https://github.com/richardthorek/fire-sim-images/issues/4) |
+| 5 | Scenario Input Panel & Parameter Controls | Phase 1 | [#6](https://github.com/richardthorek/fire-sim-images/issues/6) |
+| 6 | Geospatial Data Integration (Azure Functions) | Phase 2 | [#7](https://github.com/richardthorek/fire-sim-images/issues/7) |
+| 7 | Prompt Generation Engine | Phase 3 | [#8](https://github.com/richardthorek/fire-sim-images/issues/8) |
+| 8 | AI Image Generation Pipeline | Phase 3 | [#9](https://github.com/richardthorek/fire-sim-images/issues/9) |
+| 9 | Multi-Perspective Rendering & Consistency | Phase 3 | [#10](https://github.com/richardthorek/fire-sim-images/issues/10) |
+| 10 | Results Gallery & Scenario History | Phase 3 | [#11](https://github.com/richardthorek/fire-sim-images/issues/11) |
+| 11 | Video Generation Pipeline | Phase 4 | [#12](https://github.com/richardthorek/fire-sim-images/issues/12) |
+| 12 | Authentication, Authorization & Content Safety | Phase 5 | [#13](https://github.com/richardthorek/fire-sim-images/issues/13) |
+| 13 | Observability, Monitoring & Structured Logging | Phase 5 | [#14](https://github.com/richardthorek/fire-sim-images/issues/14) |
+| 14 | End-to-End Testing & Trainer Validation | Phase 5 | [#15](https://github.com/richardthorek/fire-sim-images/issues/15) |
+| 15 | CI/CD Pipeline, Documentation & Future Roadmap | Phase 5 | [#16](https://github.com/richardthorek/fire-sim-images/issues/16) |
 
 ## 11. Deliverables
 
@@ -210,7 +223,10 @@ Update this section after each issue or change.
 
 - **Current focus:** Phase 1 - Map interface and scenario inputs (Issue 3)
 - **Completed milestones:**
-  - Added one-page project description and technical guidance to the master plan
+  - Master plan created as single source of truth.
+  - Background research, tech considerations, and suggested issues documented.
+  - Copilot instructions file created.
+  - 15 comprehensive GitHub issues designed and seeded.
   - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
     - Monorepo structure with npm workspaces
     - Shared types package (@fire-sim/shared) with core domain types
