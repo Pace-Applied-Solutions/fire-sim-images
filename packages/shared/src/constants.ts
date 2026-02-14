@@ -94,4 +94,5 @@ export const VEGETATION_DESCRIPTORS: Record<string, string> = {
   'Coastal Sand Heath': 'wind-shaped coastal heath on sandy ridges with banksia and tea-tree',
   'Alpine Complex': 'alpine heath and grass mosaic with stunted shrubs and herbfields',
   'Plantation Forest': 'structured plantation rows with dense fuel between tree lines',
+  'Cleared/Urban': 'cleared land or urban area with minimal vegetation and structures',
 };
