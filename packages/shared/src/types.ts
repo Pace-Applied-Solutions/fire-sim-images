@@ -82,13 +82,22 @@ export interface GeoContext {
 
 /**
  * Perspective for image generation.
+ * 
+ * Helicopter views: Elevated wide-area perspective with ~60° pitch, suitable for situational awareness
+ * Ground views: Flat ground-level perspective looking horizontally, simulating truck/vehicle perspective (<2km zoom)
  */
 export type ViewPoint =
   | 'aerial'
+  | 'helicopter_north'
+  | 'helicopter_south'
+  | 'helicopter_east'
+  | 'helicopter_west'
+  | 'helicopter_above'
   | 'ground_north'
   | 'ground_south'
   | 'ground_east'
   | 'ground_west'
+  | 'ground_above'
   | 'ridge';
 
 /**

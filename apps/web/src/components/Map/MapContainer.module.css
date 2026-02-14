@@ -51,32 +51,79 @@
 .viewpointControls {
 	position: absolute;
 	top: 16px;
-	right: 120px;
+	left: 50%;
+	transform: translateX(-50%);
 	background: var(--color-bg-elevated);
 	border-radius: var(--radius-lg);
-	padding: var(--spacing-sm);
+	padding: 6px 8px;
 	box-shadow: var(--shadow-lg);
 	z-index: 1;
-}
-
-.viewpointTitle {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-secondary);
-	margin-bottom: var(--spacing-xs);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	display: flex;
+	align-items: center;
+	max-width: calc(100% - 160px);
 }
 
 .viewpointButtons {
 	display: flex;
-	gap: var(--spacing-xs);
-	margin-bottom: var(--spacing-sm);
+	align-items: center;
+	gap: 4px;
+	flex-wrap: nowrap;
+}
+
+.viewpointToggle {
+	width: 32px;
+	height: 32px;
+	border: none;
+	border-radius: var(--radius-md);
+	background: var(--color-accent);
+	color: var(--color-bg-primary);
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: all var(--transition-fast);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.viewpointToggle::after {
+	content: 'Swap view';
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 50%;
+	transform: translateX(-50%) translateY(-2px);
+	background: var(--color-bg-elevated);
+	border: 1px solid var(--color-border-default);
+	color: var(--color-text-secondary);
+	font-size: 0.6rem;
+	padding: 2px 6px;
+	border-radius: var(--radius-sm);
+	white-space: nowrap;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.viewpointToggle:hover::after,
+.viewpointToggle:focus-visible::after {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
+}
+
+.viewpointToggle:hover {
+	background: var(--color-accent-hover, #ff8a1f);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-md);
+}
+
+.viewpointToggle:active {
+	transform: translateY(0);
 }
 
 .viewpointBtn {
-	width: 36px;
-	height: 36px;
+	width: 32px;
+	height: 32px;
 	border: none;
 	border-radius: var(--radius-md);
 	background: var(--color-bg-primary);
@@ -101,31 +148,51 @@
 	transform: translateY(0);
 }
 
-.captureBtn {
-	width: 100%;
-	padding: var(--spacing-xs) var(--spacing-sm);
+.viewpointBtnActive {
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.65);
+	outline: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.viewpointCapture {
+	width: 32px;
+	height: 32px;
 	border: none;
 	border-radius: var(--radius-md);
-	background: var(--color-accent);
-	color: var(--color-bg-primary);
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
+	background: var(--color-bg-primary);
+	color: var(--color-text-primary);
+	font-size: 1rem;
+	line-height: 1;
 	cursor: pointer;
 	transition: all var(--transition-fast);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: var(--spacing-xs);
 }
 
-.captureBtn:hover {
-	background: var(--color-accent-hover, #ff8a1f);
+.viewpointCapture:hover {
+	background: var(--color-accent);
+	color: var(--color-bg-primary);
 	transform: translateY(-1px);
 	box-shadow: var(--shadow-md);
 }
 
-.captureBtn:active {
+.viewpointCapture:active {
 	transform: translateY(0);
+}
+
+@media (max-width: 900px) {
+	.viewpointControls {
+		left: 72px;
+		right: 72px;
+		transform: none;
+		justify-content: center;
+		max-width: calc(100% - 144px);
+	}
+
+	.viewpointButtons {
+		flex-wrap: wrap;
+		justify-content: center;
+	}
 }
 
 /* Metadata Panel */
@@ -254,7 +321,40 @@
 	line-height: var(--line-height-relaxed);
 }
 
-/* Mapbox control overrides for dark theme */
+.viewpointMode {
+	display: flex;
+	gap: var(--spacing-xs);
+	background: var(--color-bg-primary);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-md);
+	padding: 2px;
+}
+
+.viewpointModeButton {
+	width: 34px;
+	height: 30px;
+	border: none;
+	border-radius: var(--radius-sm);
+	background: transparent;
+	color: var(--color-text-primary);
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: all var(--transition-fast);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.viewpointModeButton:hover {
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.viewpointModeActive {
+	background: var(--color-accent);
+	color: var(--color-bg-primary);
+}
+
 :global(.mapboxgl-ctrl-group) {
 	background: var(--color-bg-elevated) !important;
 	box-shadow: var(--shadow-lg) !important;
@@ -262,8 +362,8 @@
 }
 
 :global(.mapboxgl-ctrl-group button) {
-	background: var(--color-bg-elevated) !important;
-	color: var(--color-text-primary) !important;
+	width: 32px;
+	height: 32px;
 }
 
 :global(.mapboxgl-ctrl-group button:hover) {

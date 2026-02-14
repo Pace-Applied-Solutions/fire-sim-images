@@ -20,7 +20,38 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import styles from './MapContainer.module.css';
 
-type ViewpointPreset = 'north' | 'south' | 'east' | 'west' | 'aerial';
+type ViewpointPreset =
+	| 'helicopter_north'
+	| 'helicopter_south'
+	| 'helicopter_east'
+	| 'helicopter_west'
+	| 'helicopter_above'
+	| 'ground_north'
+	| 'ground_south'
+	| 'ground_east'
+	| 'ground_west'
+	| 'ground_above'
+	| 'aerial';
+
+const VIEW_PRESET_MAP = {
+	helicopter: {
+		north: 'helicopter_north',
+		south: 'helicopter_south',
+		east: 'helicopter_east',
+		west: 'helicopter_west',
+		above: 'helicopter_above',
+	},
+	ground: {
+		north: 'ground_north',
+		south: 'ground_south',
+		east: 'ground_east',
+		west: 'ground_west',
+		above: 'ground_above',
+	},
+} as const;
+
+type ViewMode = keyof typeof VIEW_PRESET_MAP;
+type ViewDirection = keyof (typeof VIEW_PRESET_MAP)['helicopter'];
 
 interface PerimeterMetadata {
 	areaHectares: number;
@@ -37,6 +68,8 @@ export const MapContainer = () => {
 	const [perimeter, setPerimeter] = useState<FirePerimeter | null>(null);
 	const [metadata, setMetadata] = useState<PerimeterMetadata | null>(null);
 	const [mapError, setMapError] = useState<string | null>(null);
+	const [viewMode, setViewMode] = useState<ViewMode>('helicopter');
+	const [currentDirection, setCurrentDirection] = useState<ViewDirection>('north');
 
 	const { setPerimeter: setAppPerimeter, setState } = useAppStore();
 	const { addToast } = useToastStore();
@@ -405,39 +438,86 @@ export const MapContainer = () => {
 
 			let bearing = 0;
 			let pitch = 0;
+			let zoom = baseZoom - 1;
 			let center: [number, number] = [centerLng, centerLat];
 
 			switch (preset) {
-				case 'north':
+				// Helicopter views: Elevated wide-area perspective (existing behavior)
+				case 'helicopter_north':
 					bearing = 180; // Look from north (camera south, looking north)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng, centerLat - maxDiff * 0.8];
 					break;
-				case 'south':
+				case 'helicopter_south':
 					bearing = 0; // Look from south (camera north, looking south)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng, centerLat + maxDiff * 0.8];
 					break;
-				case 'east':
+				case 'helicopter_east':
 					bearing = 270; // Look from east (camera west, looking east)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng + maxDiff * 0.8, centerLat];
 					break;
-				case 'west':
+				case 'helicopter_west':
 					bearing = 90; // Look from west (camera east, looking west)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng - maxDiff * 0.8, centerLat];
 					break;
+				case 'helicopter_above':
+					bearing = 0;
+					pitch = 30; // Slightly angled down
+					zoom = baseZoom - 1;
+					center = [centerLng, centerLat];
+					break;
+
+				// Ground-level views: Flat horizontal perspective (truck/vehicle view)
+				case 'ground_north':
+					bearing = 180; // Look from north (camera south, looking north)
+					pitch = 85; // Nearly horizontal, ground-level perspective
+					zoom = baseZoom + 1.5; // Much closer zoom (simulates <2km distance)
+					center = [centerLng, centerLat - maxDiff * 0.35]; // Closer to fire
+					break;
+				case 'ground_south':
+					bearing = 0; // Look from south (camera north, looking south)
+					pitch = 85;
+					zoom = baseZoom + 1.5;
+					center = [centerLng, centerLat + maxDiff * 0.35];
+					break;
+				case 'ground_east':
+					bearing = 270; // Look from east (camera west, looking east)
+					pitch = 85;
+					zoom = baseZoom + 1.5;
+					center = [centerLng + maxDiff * 0.35, centerLat];
+					break;
+				case 'ground_west':
+					bearing = 90; // Look from west (camera east, looking west)
+					pitch = 85;
+					zoom = baseZoom + 1.5;
+					center = [centerLng - maxDiff * 0.35, centerLat];
+					break;
+				case 'ground_above':
+					bearing = 0;
+					pitch = 0; // Top-down, but closer
+					zoom = baseZoom + 1; // Zoomed in compared to helicopter_above
+					center = [centerLng, centerLat];
+					break;
+
+				// Legacy aerial view
 				case 'aerial':
 					bearing = 0;
 					pitch = 0; // Top-down view
+					zoom = baseZoom - 1;
 					center = [centerLng, centerLat];
 					break;
 			}
 
 			map.flyTo({
 				center,
-				zoom: baseZoom - 1,
+				zoom,
 				bearing,
 				pitch,
 				duration: 2000,
@@ -450,6 +530,22 @@ export const MapContainer = () => {
 			});
 		},
 		[metadata, addToast]
+	);
+
+	const toggleViewMode = useCallback(() => {
+		setViewMode((prevMode) => {
+			const nextMode = prevMode === 'ground' ? 'helicopter' : 'ground';
+			flyToViewpoint(VIEW_PRESET_MAP[nextMode][currentDirection]);
+			return nextMode;
+		});
+	}, [currentDirection, flyToViewpoint]);
+
+	const handleDirectionSelect = useCallback(
+		(direction: ViewDirection) => {
+			setCurrentDirection(direction);
+			flyToViewpoint(VIEW_PRESET_MAP[viewMode][direction]);
+		},
+		[flyToViewpoint, viewMode]
 	);
 
 	return (
@@ -487,47 +583,61 @@ export const MapContainer = () => {
 			{/* Viewpoint Controls */}
 			{metadata && (
 				<div className={styles.viewpointControls}>
-					<div className={styles.viewpointTitle}>Viewpoints</div>
 					<div className={styles.viewpointButtons}>
 						<button
-							onClick={() => flyToViewpoint('north')}
-							className={styles.viewpointBtn}
-							title="View from North"
+							onClick={toggleViewMode}
+							className={styles.viewpointToggle}
+							aria-pressed={viewMode === 'ground'}
+							aria-label={
+								viewMode === 'helicopter'
+									? 'Switch to fire truck perspective'
+									: 'Switch to helicopter perspective'
+							}
+							title={
+								viewMode === 'helicopter'
+									? 'Switch to fire truck perspective'
+									: 'Switch to helicopter perspective'
+							}
+							type="button"
 						>
-							N
+							{viewMode === 'helicopter' ? '🚁' : '🚒'}
 						</button>
+						{(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
+							(direction) => (
+								<button
+									key={direction}
+									onClick={() => handleDirectionSelect(direction)}
+									className={`${styles.viewpointBtn} ${
+										currentDirection === direction ? styles.viewpointBtnActive : ''
+									}`}
+									title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
+										direction === 'above' ? 'above' : `from ${direction}`
+									}`}
+									aria-pressed={currentDirection === direction}
+									type="button"
+								>
+									{direction === 'north'
+										? 'N'
+										: direction === 'south'
+											? 'S'
+											: direction === 'east'
+												? 'E'
+												: direction === 'west'
+													? 'W'
+													: '⬆'}
+								</button>
+							)
+						)}
 						<button
-							onClick={() => flyToViewpoint('south')}
-							className={styles.viewpointBtn}
-							title="View from South"
+							onClick={captureMapView}
+							className={styles.viewpointCapture}
+							title="Capture current view"
+							aria-label="Capture current view"
+							type="button"
 						>
-							S
-						</button>
-						<button
-							onClick={() => flyToViewpoint('east')}
-							className={styles.viewpointBtn}
-							title="View from East"
-						>
-							E
-						</button>
-						<button
-							onClick={() => flyToViewpoint('west')}
-							className={styles.viewpointBtn}
-							title="View from West"
-						>
-							W
-						</button>
-						<button
-							onClick={() => flyToViewpoint('aerial')}
-							className={styles.viewpointBtn}
-							title="Aerial View (Top-Down)"
-						>
-							⬆
+							📷
 						</button>
 					</div>
-					<button onClick={captureMapView} className={styles.captureBtn}>
-						📷 Capture View
-					</button>
 				</div>
 			)}
 

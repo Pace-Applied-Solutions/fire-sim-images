@@ -305,6 +305,16 @@ Update this section after each issue or change.
   - Removed fire intensity UI from the sidebar
   - Aligned catastrophic rating with internal intensity mapping
   - **Issue 6 progress:** Added `/api/geodata` Azure Function returning cached GeoContext lookups (vegetation, elevation, slope, aspect, features) using NSW profile heuristics with low-confidence fallback and vegetation descriptor mapping in shared constants
+  - **View Perspectives Enhancement:** Added ground-level NSEW and Above views for realistic truck perspective
+    - Added 10 new view types: `helicopter_north/south/east/west/above` and `ground_north/south/east/west/above`
+    - Helicopter views: Elevated perspective (60° pitch, 0.8x distance) for wide-area situational awareness
+    - Ground views: Ground-level perspective (85° pitch, 0.35x distance) simulating realistic truck/vehicle view <2km from terrain
+    - Updated MapContainer UI with an active-direction highlight and responsive row sizing to avoid control overlap
+  - **Results Panel Behavior:** Results panel now starts collapsed and expands when scenario results are ready
+    - Created comprehensive documentation: `docs/current_state/view_perspectives.md` with use cases, technical details, and training guidance
+    - Created UI layout documentation: `docs/current_state/images/viewpoint_controls_layout.md` with visual diagrams
+    - Retained existing `aerial` and `ridge` view types for backward compatibility
+    - All builds and linting pass successfully
   - **Fire Danger Controls (AFDRS-based):** Enhanced sidebar with Australian Fire Danger Rating System controls
     - Replaced outdated McArthur FFDI/GFDI calculations with modern AFDRS approach
     - Rewrote fire danger documentation (`docs/current_state/fire_danger_calculations.md`) to focus on AFDRS rating levels and vegetation-specific fire behaviour

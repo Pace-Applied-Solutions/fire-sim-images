@@ -4,12 +4,15 @@
   width: 360px;
   background-color: var(--color-bg-secondary);
   border-left: 1px solid var(--color-border-default);
-  transition: transform var(--transition-base);
+  transition: width var(--transition-base), transform var(--transition-base);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .panel.closed {
-  transform: translateX(100%);
+  width: 0;
+  transform: translateX(0);
+  border-left: 0;
 }
 
 .header {
