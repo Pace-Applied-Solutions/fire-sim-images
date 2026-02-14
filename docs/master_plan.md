@@ -256,6 +256,7 @@ Update this section after each issue or change.
     - Reusable UI components (Spinner, ErrorMessage, Toast)
     - Demo controls for testing state changes and notifications
     - Application runs on localhost:5173 with full responsiveness
+  - Dependency alignment: downgraded ESLint to a version compatible with @typescript-eslint and reinstalled npm dependencies across root, api, and web
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
