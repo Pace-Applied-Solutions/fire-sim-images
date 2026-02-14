@@ -32,10 +32,10 @@ export function initializeAuditLogging(config: AuditLogConfig): void {
     appInsights
       .setup(config.connectionString)
       .setAutoCollectRequests(true)
-      .setAutoCollectPerformance(true)
+      .setAutoCollectPerformance(true, true)
       .setAutoCollectExceptions(true)
       .setAutoCollectDependencies(true)
-      .setAutoCollectConsole(true)
+      .setAutoCollectConsole(true, true)
       .setUseDiskRetryCaching(true)
       .setSendLiveMetrics(false)
       .start();
@@ -141,12 +141,12 @@ export async function queryAuditLogs(
 export function shutdownAuditLogging(): Promise<void> {
   if (telemetryClient) {
     return new Promise((resolve) => {
-      telemetryClient!.flush({
-        callback: () => {
-          console.log('[AuditLog] Audit logs flushed successfully');
-          resolve();
-        },
-      });
+      telemetryClient!.flush();
+      // Give it a moment to flush before resolving
+      setTimeout(() => {
+        console.log('[AuditLog] Audit logs flushed successfully');
+        resolve();
+      }, 1000);
     });
   }
   return Promise.resolve();

@@ -40,8 +40,8 @@ export class ImagePostProcessor {
    */
   async processImage(
     imageData: Buffer,
-    viewpoint: ViewPoint,
-    scenarioId: string,
+    _viewpoint: ViewPoint,
+    _scenarioId: string,
     options: PostProcessingOptions = {}
   ): Promise<PostProcessingResult> {
     const adjustmentsApplied: string[] = [];
@@ -83,7 +83,7 @@ export class ImagePostProcessor {
    */
   async normalizeColorPalette(
     images: Array<{ viewpoint: ViewPoint; imageData: Buffer }>,
-    anchorImage?: { viewpoint: ViewPoint; imageData: Buffer }
+    _anchorImage?: { viewpoint: ViewPoint; imageData: Buffer }
   ): Promise<Array<{ viewpoint: ViewPoint; imageData: Buffer }>> {
     // Placeholder for production implementation
     // Would analyze anchor image's color histogram and apply matching adjustments to others
