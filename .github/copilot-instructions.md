@@ -13,7 +13,6 @@ Purpose: Keep all work aligned to the master plan and the project vision.
 
 - Background research: [docs/background.md](docs/background.md)
 - Technical considerations: [docs/tech_considerations.md](docs/tech_considerations.md)
-- Seed issues: [docs/suggested_issues.md](docs/suggested_issues.md)
 - Infrastructure documentation: [infra/README.md](infra/README.md)
 
 ## Architecture

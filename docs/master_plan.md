@@ -6,7 +6,6 @@ This is the single source of truth for project context, scope, and execution. Ev
 
 - Background research: [docs/background.md](docs/background.md)
 - Technical considerations: [docs/tech_considerations.md](docs/tech_considerations.md)
-- Seed issues: [docs/suggested_issues.md](docs/suggested_issues.md)
 
 ## Project Description (Intent, Problem, Architecture)
 
@@ -102,6 +101,7 @@ Key architectural principles include keeping data within the NSW RFS Azure envir
 
 - Azure Static Web App hosting React application.
 - Mapbox GL JS or Azure Maps with 3D terrain.
+- Map token via environment variable `VITE_MAPBOX_TOKEN`.
 - Polygon draw tool and scenario parameter UI.
 - Viewpoint selection and map screenshot capture.
 
@@ -181,7 +181,7 @@ Key architectural principles include keeping data within the NSW RFS Azure envir
 
 ## 10. Issue Map (Authoritative Work Breakdown)
 
-These are the 15 implementation issues seeded in GitHub. Each will be assigned to the coding agent in sequence. Original seed ideas are in [docs/suggested_issues.md](docs/suggested_issues.md).
+These are the 15 implementation issues seeded in GitHub. Each will be assigned to the coding agent in sequence.
 
 | # | Issue Title | Phase | GitHub |
 |---|---|---|---|
@@ -221,12 +221,14 @@ These are the 15 implementation issues seeded in GitHub. Each will be assigned t
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 1 - Map interface and scenario inputs (Issue 3)
+- **Current focus:** Phase 1 - Map interface and scenario inputs (Issues 4 and 5)
 - **Completed milestones:**
   - Master plan created as single source of truth.
-  - Background research, tech considerations, and suggested issues documented.
+  - Background research and technical considerations documented.
   - Copilot instructions file created.
   - 15 comprehensive GitHub issues designed and seeded.
+  - Mapbox token environment variable recorded as `VITE_MAPBOX_TOKEN` (local + GitHub secrets).
+  - Local web environment file created with `VITE_MAPBOX_TOKEN` for Mapbox access.
   - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
     - Monorepo structure with npm workspaces
     - Shared types package (@fire-sim/shared) with core domain types
@@ -234,6 +236,17 @@ Update this section after each issue or change.
     - Azure Functions API (apps/api) with v4 programming model
     - Development tooling (ESLint, Prettier, TypeScript strict mode)
     - Updated README with comprehensive setup instructions
+  - **Infrastructure as Code:** Bicep templates for Azure deployment (Issue 2)
+    - Complete Bicep template structure under `infra/`
+    - Main orchestrator (`main.bicep`) and modular resource templates
+    - Static Web App with embedded Azure Functions API at `/api`
+    - Azure Blob Storage with three containers and lifecycle management
+    - Azure Key Vault with managed identity access
+    - Azure OpenAI with DALL-E 3 model deployment
+    - Dev and prod parameter files
+    - Deployment script (`deploy.sh`) and GitHub Actions workflow
+    - Comprehensive infrastructure documentation
+    - Updated master plan to reflect Static Web App architecture with embedded API
   - **Issue 3 complete:** Front-End Shell, Design System & Navigation
     - Comprehensive design token system with dark theme optimized for training rooms
     - Responsive layout with Header, Sidebar, MainArea, and ResultsPanel components
@@ -245,6 +258,7 @@ Update this section after each issue or change.
     - Application runs on localhost:5173 with full responsiveness
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
+  - Azure OpenAI availability varies by region; may need fallback to East US 2
 - **Next milestone:** Phase 1 continues - Map component integration (Issue 4) and scenario input controls (Issue 5)
 
 ## 14. Change Control Process
