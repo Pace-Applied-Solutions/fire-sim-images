@@ -221,7 +221,7 @@ These are the 15 implementation issues seeded in GitHub. Each will be assigned t
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 1 - Scenario input controls (Issue 5)
+- **Current focus:** Phase 2 - Geospatial data integration (Issue 6)
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.
@@ -269,6 +269,21 @@ Update this section after each issue or change.
     - Mapbox token configuration via VITE_MAPBOX_TOKEN environment variable
     - Updated README with setup instructions for Mapbox token
     - All components integrated into ScenarioPage replacing placeholder
+  - **Phase 1 complete:** Issue 5 - Scenario Input Panel & Parameter Controls
+    - Updated ScenarioInputs type with fireStage field and veryHigh intensity option
+    - Wind direction changed from degrees to cardinal directions (N, NE, E, SE, S, SW, W, NW)
+    - Comprehensive ScenarioInputPanel component with collapsible sections
+    - Weather controls: wind speed slider (0-120 km/h), wind direction dropdown, temperature slider with heat gradient (5-50°C), humidity slider (5-100%)
+    - Fire controls: segmented control for intensity (Low, Moderate, High, Very High, Extreme), dropdown for fire stage (Spot fire, Developing, Established, Major)
+    - Timing control: dropdown for time of day (Dawn, Morning, Midday, Afternoon, Dusk, Night)
+    - Input validation with inline error messages for out-of-range values
+    - Four preset scenarios: Grass fire — moderate, Forest fire — severe, Night operation, Extreme day
+    - Summary card displaying human-readable scenario description
+    - Generate button with disabled state when perimeter missing or validation errors present
+    - Scenario inputs persisted to Zustand app store alongside fire perimeter
+    - ScenarioInputPanel integrated into ScenarioPage, replacing DemoControls
+    - All controls keyboard-accessible with proper focus states
+    - CSS styled with design tokens from Issue 3
   - Dependency alignment: downgraded ESLint to a version compatible with @typescript-eslint and reinstalled npm dependencies across root, api, and web
   - Genericized agency-specific references across docs and UI copy for broader fire service use
   - Fixed Azure Functions entrypoint imports to resolve local start module resolution
@@ -276,7 +291,7 @@ Update this section after each issue or change.
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month (sufficient for development and early use)
-- **Next milestone:** Phase 1 continues - Scenario input panel and parameter controls (Issue 5)
+- **Next milestone:** Phase 2 - Geospatial data integration (Issue 6)
 
 ## 14. Change Control Process
 

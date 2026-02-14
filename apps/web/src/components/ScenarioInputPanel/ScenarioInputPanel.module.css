@@ -1,0 +1,320 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Presets */
+.presets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Section */
+.section {
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+}
+
+.sectionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--color-bg-elevated);
+  border: none;
+  cursor: pointer;
+  transition: background 150ms;
+}
+
+.sectionHeader:hover {
+  background: rgba(255, 149, 0, 0.1);
+}
+
+.sectionHeader:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: -2px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.chevron {
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.sectionContent {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Form Fields */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.select {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.375rem;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.select:hover {
+  border-color: var(--color-border-hover);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
+}
+
+/* Slider Controls */
+.sliderGroup {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.slider {
+  flex: 1;
+  height: 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--color-bg-primary);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: var(--color-accent-secondary);
+  transform: scale(1.1);
+}
+
+.slider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  border: none;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: var(--color-accent-secondary);
+  transform: scale(1.1);
+}
+
+.slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
+}
+
+.slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
+}
+
+/* Heat gradient slider */
+.sliderHeat {
+  background: linear-gradient(
+    to right,
+    #3b82f6 0%,
+    #10b981 25%,
+    #f59e0b 50%,
+    #ef4444 75%,
+    #dc2626 100%
+  );
+}
+
+.numberInput {
+  width: 4rem;
+  padding: 0.375rem 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.375rem;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  text-align: center;
+  transition: all 150ms;
+}
+
+.numberInput:hover {
+  border-color: var(--color-border-hover);
+}
+
+.numberInput:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
+}
+
+/* Remove spinner arrows from number inputs */
+.numberInput::-webkit-inner-spin-button,
+.numberInput::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Segmented Control */
+.segmentedControl {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-bg-primary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-default);
+}
+
+.segment {
+  padding: 0.5rem 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms;
+  white-space: nowrap;
+}
+
+.segment:hover {
+  background: rgba(255, 149, 0, 0.1);
+  color: var(--color-text-primary);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: -2px;
+}
+
+.segmentActive {
+  background: var(--color-accent-primary);
+  color: #0f1419;
+  font-weight: 600;
+}
+
+.segmentActive:hover {
+  background: var(--color-accent-secondary);
+}
+
+/* Validation Error */
+.error {
+  font-size: 0.75rem;
+  color: var(--color-status-error);
+  margin-top: -0.25rem;
+}
+
+/* Summary Card */
+.summary {
+  padding: 1rem;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.summaryTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summaryText {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+/* Generate Button */
+.generateButton {
+  padding: 0.875rem 1.5rem;
+  background: var(--color-accent-primary);
+  border: none;
+  border-radius: 0.5rem;
+  color: #0f1419;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms;
+  margin-top: 0.5rem;
+}
+
+.generateButton:hover:not(:disabled) {
+  background: var(--color-accent-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+}
+
+.generateButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.generateButton:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+.generateButton:disabled {
+  background: var(--color-border-default);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .segmentedControl {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .segment {
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+}

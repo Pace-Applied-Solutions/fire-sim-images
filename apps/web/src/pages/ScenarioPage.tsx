@@ -1,17 +1,13 @@
 import React from 'react';
 import { Layout } from '../components/Layout';
-import { DemoControls } from '../components/DemoControls';
 import { MapContainer } from '../components/Map';
+import { ScenarioInputPanel } from '../components/ScenarioInputPanel';
 import styles from './ScenarioPage.module.css';
 
 export const ScenarioPage: React.FC = () => {
   return (
     <Layout
-      sidebar={
-        <div className={styles.sidebarContent}>
-          <DemoControls />
-        </div>
-      }
+      sidebar={<ScenarioInputPanel />}
       main={<MapContainer />}
       results={
         <div className={styles.resultsContent}>
