@@ -23,7 +23,7 @@ param modelVersion string = '3.0'
 param modelCapacity int = 1
 
 // Azure OpenAI resource
-resource openAI 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
+resource openAI 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: name
   location: location
   tags: tags
@@ -42,7 +42,7 @@ resource openAI 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
 }
 
 // Model deployment
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-10-01-preview' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
   parent: openAI
   name: modelName
   sku: {
