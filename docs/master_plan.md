@@ -295,6 +295,9 @@ Update this section after each issue or change.
   - Updated Azure Functions imports for CommonJS compatibility
   - Switched shared type imports to type-only to avoid runtime export errors
   - Updated geodata function imports for CommonJS + type-only usage
+  - Replaced draw toolbar with emoji-based map controls
+  - Moved map guidance banner to top with arrow callout and crosshair cursor in draw mode
+  - Tightened map guidance layout and simplified copy
   - **Issue 6 progress:** Added `/api/geodata` Azure Function returning cached GeoContext lookups (vegetation, elevation, slope, aspect, features) using NSW profile heuristics with low-confidence fallback and vegetation descriptor mapping in shared constants
   - **Fire Danger Controls (AFDRS-based):** Enhanced sidebar with Australian Fire Danger Rating System controls
     - Replaced outdated McArthur FFDI/GFDI calculations with modern AFDRS approach
