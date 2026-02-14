@@ -2,21 +2,81 @@
  * Component to display generated images from the generation results.
  */
 
-import React, { useState } from 'react';
-import type { GenerationResult } from '@fire-sim/shared';
+import React, { useState, useCallback } from 'react';
+import JSZip from 'jszip';
+import type { GenerationResult, ScenarioInputs, GeoContext, FirePerimeter } from '@fire-sim/shared';
+import { ImageLightbox } from './ImageLightbox';
+import { ScenarioSummaryCard } from './ScenarioSummaryCard';
 import { ImageComparison } from '../ImageComparison';
 import styles from './GeneratedImages.module.css';
 
 interface GeneratedImagesProps {
   result: GenerationResult;
+  perimeter?: FirePerimeter;
+  inputs?: ScenarioInputs;
+  geoContext?: GeoContext;
+  promptVersion?: string;
   onRegenerateImage?: (viewpoint: string) => void;
 }
 
 export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ 
-  result,
+  result, 
+  perimeter,
+  inputs,
+  geoContext,
+  promptVersion,
   onRegenerateImage,
 }) => {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+
+  // Download all images as ZIP
+  const handleDownloadAll = useCallback(async () => {
+    setIsDownloadingZip(true);
+
+    try {
+      const zip = new JSZip();
+
+      // Download all images and add to zip
+      const downloadPromises = result.images.map(async (image) => {
+        const response = await fetch(image.url);
+        const blob = await response.blob();
+        const filename = `${image.viewPoint}.png`;
+        zip.file(filename, blob);
+      });
+
+      await Promise.all(downloadPromises);
+
+      // Generate ZIP file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // Download ZIP
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(zipBlob);
+      link.href = url;
+      link.download = `scenario_${result.id}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to create ZIP', error);
+      alert('Failed to download all images. Please try again.');
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  }, [result]);
+
+  // Open lightbox
+  const openLightbox = useCallback((index: number) => {
+    setLightboxIndex(index);
+  }, []);
+
+  // Close lightbox
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+  }, []);
 
   if (result.status === 'pending' || result.status === 'in_progress') {
     return (
@@ -73,6 +133,18 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
 
   return (
     <div className={styles.container}>
+      {/* Scenario Summary Card */}
+      {perimeter && inputs && geoContext && (
+        <ScenarioSummaryCard
+          perimeter={perimeter}
+          inputs={inputs}
+          geoContext={geoContext}
+          imageCount={result.images.length}
+          timestamp={result.createdAt}
+          promptVersion={promptVersion}
+        />
+      )}
+
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <h3 className={styles.title}>Generated Images</h3>
@@ -85,12 +157,21 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             </span>
           )}
         </div>
-        <button
-          className={styles.compareButton}
-          onClick={() => setShowComparison(true)}
-        >
-          Compare Views
-        </button>
+        <div className={styles.headerActions}>
+          <button
+            className={styles.compareButton}
+            onClick={() => setShowComparison(true)}
+          >
+            Compare Views
+          </button>
+          <button
+            className={styles.downloadAllButton}
+            onClick={handleDownloadAll}
+            disabled={isDownloadingZip}
+          >
+            {isDownloadingZip ? 'Creating ZIP...' : 'Download All'}
+          </button>
+        </div>
       </div>
 
       <div className={styles.grid}>
@@ -99,11 +180,11 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             <div className={styles.imageWrapper}>
               <img
                 src={result.anchorImage.url}
-                alt={`${result.anchorImage.viewPoint} view`}
+                alt={`${result.anchorImage.viewPoint} view (anchor)`}
                 className={styles.image}
                 loading="lazy"
               />
-              <div className={styles.anchorBadge}>Anchor</div>
+              <div className={styles.anchorBadge}>⚓ Anchor</div>
             </div>
             <div className={styles.imageInfo}>
               <h4 className={styles.viewpoint}>{formatViewpoint(result.anchorImage.viewPoint)}</h4>
@@ -123,20 +204,29 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             </div>
           </div>
         )}
-        {result.images.map((image) => (
+        {result.images.map((image, index) => (
           <div key={image.viewPoint} className={styles.imageCard}>
-            <div className={styles.imageWrapper}>
+            <div 
+              className={styles.imageWrapper}
+              onClick={() => openLightbox(index)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openLightbox(index);
+                }
+              }}
+            >
               <img
                 src={image.url}
                 alt={`${image.viewPoint} view`}
                 className={styles.image}
                 loading="lazy"
               />
-              {image.metadata.usedReferenceImage && (
-                <div className={styles.referenceBadge} title="Generated using anchor reference">
-                  🔗
-                </div>
-              )}
+              <div className={styles.imageOverlay}>
+                <span className={styles.viewIcon}>🔍</span>
+              </div>
             </div>
             <div className={styles.imageInfo}>
               <h4 className={styles.viewpoint}>{formatViewpoint(image.viewPoint)}</h4>
@@ -159,7 +249,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
                   onClick={() => onRegenerateImage(image.viewPoint)}
                   title="Regenerate this view"
                 >
-                  🔄
+                  Regenerate
                 </button>
               )}
             </div>
@@ -173,6 +263,15 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             Completed at {new Date(result.completedAt).toLocaleString()}
           </p>
         </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={result.images}
+          initialIndex={lightboxIndex}
+          onClose={closeLightbox}
+        />
       )}
     </div>
   );

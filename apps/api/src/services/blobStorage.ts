@@ -175,6 +175,59 @@ export class BlobStorageService {
   }
 
   /**
+   * List all scenarios from blob storage.
+   * Returns metadata for all scenarios in the scenario-data container.
+   */
+  async listScenarios(): Promise<Array<{ scenarioId: string; metadata: unknown }>> {
+    const client = await this.getClient();
+    const containerClient = client.getContainerClient('scenario-data');
+
+    const scenarios: Array<{ scenarioId: string; metadata: unknown }> = [];
+
+    // List all blobs in the container
+    for await (const blob of containerClient.listBlobsFlat()) {
+      // Only process metadata.json files
+      if (blob.name.endsWith('metadata.json')) {
+        const scenarioId = blob.name.split('/')[0];
+        try {
+          const metadata = await this.getMetadata(scenarioId);
+          scenarios.push({ scenarioId, metadata });
+        } catch (error) {
+          this.context.warn(`Failed to load metadata for scenario ${scenarioId}`, error);
+        }
+      }
+    }
+
+    return scenarios;
+  }
+
+  /**
+   * Delete a scenario and all its associated blobs.
+   * Removes images from generated-images container and metadata from scenario-data container.
+   */
+  async deleteScenario(scenarioId: string): Promise<void> {
+    const client = await this.getClient();
+
+    // Delete images from generated-images container
+    const imagesContainer = client.getContainerClient(this.containerName);
+    for await (const blob of imagesContainer.listBlobsFlat({ prefix: `${scenarioId}/` })) {
+      const blobClient = imagesContainer.getBlockBlobClient(blob.name);
+      await blobClient.delete();
+      this.context.log(`Deleted image blob: ${blob.name}`);
+    }
+
+    // Delete metadata from scenario-data container
+    const metadataContainer = client.getContainerClient('scenario-data');
+    for await (const blob of metadataContainer.listBlobsFlat({ prefix: `${scenarioId}/` })) {
+      const blobClient = metadataContainer.getBlockBlobClient(blob.name);
+      await blobClient.delete();
+      this.context.log(`Deleted metadata blob: ${blob.name}`);
+    }
+
+    this.context.log(`Deleted scenario ${scenarioId} and all associated blobs`);
+  }
+
+  /**
    * Helper to convert stream to buffer.
    */
   private async streamToBuffer(readableStream: NodeJS.ReadableStream): Promise<Buffer> {

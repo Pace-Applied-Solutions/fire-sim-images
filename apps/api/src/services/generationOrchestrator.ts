@@ -4,7 +4,7 @@
  */
 
 import type { InvocationContext } from '@azure/functions';
-import type { GenerationRequest, GenerationResult, GeneratedImage, ViewPoint } from '@fire-sim/shared';
+import type { GenerationRequest, GenerationResult, GeneratedImage, ViewPoint, ScenarioMetadata } from '@fire-sim/shared';
 import { generatePrompts } from '@fire-sim/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageGeneratorService } from './imageGenerator.js';
@@ -343,24 +343,26 @@ export class GenerationOrchestrator {
         }
       }
 
-      // Step 7: Store scenario metadata
-      const metadata = {
-        scenarioId,
-        request,
-        seed: request.seed,
-        anchorViewpoint,
-        promptSetId: promptSet.id,
-        promptTemplateVersion: promptSet.templateVersion,
-        prompts: promptSet.prompts,
-        images,
-        anchorImage,
-        validation: validationResult,
-        estimatedCost: totalCost,
-        createdAt: progress.createdAt,
-        completedAt: new Date().toISOString(),
+      // Step 7: Store complete scenario metadata for gallery
+      const scenarioMetadata: ScenarioMetadata = {
+        id: scenarioId,
+        perimeter: request.perimeter,
+        inputs: request.inputs,
+        geoContext: request.geoContext,
+        requestedViews: request.requestedViews,
+        result: {
+          id: scenarioId,
+          status: progress.status,
+          images,
+          anchorImage,
+          seed: request.seed,
+          createdAt: progress.createdAt,
+          completedAt: new Date().toISOString(),
+        },
+        promptVersion: promptSet.templateVersion,
       };
 
-      await this.blobStorage.uploadMetadata(scenarioId, metadata);
+      await this.blobStorage.uploadMetadata(scenarioId, scenarioMetadata);
 
       // Update progress
       progress.images = images;

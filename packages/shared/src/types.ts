@@ -149,3 +149,42 @@ export interface ImageMetadata {
   isAnchor?: boolean; // True if this is the anchor/reference image
   usedReferenceImage?: boolean; // True if this image was generated using a reference
 }
+
+/**
+ * Complete scenario metadata stored with each generation.
+ * Used for gallery display and scenario history.
+ */
+export interface ScenarioMetadata {
+  id: string;
+  perimeter: FirePerimeter;
+  inputs: ScenarioInputs;
+  geoContext: GeoContext;
+  requestedViews: ViewPoint[];
+  result: GenerationResult;
+  promptVersion?: string; // Template version used for prompts
+}
+
+/**
+ * Summary of a scenario for gallery display.
+ * Lightweight version with essential display information.
+ */
+export interface ScenarioSummary {
+  id: string;
+  timestamp: string; // ISO 8601 timestamp
+  location: {
+    centroid: [number, number]; // [lng, lat]
+    placeName?: string; // Reverse-geocoded place name if available
+  };
+  conditions: {
+    temperature: number;
+    windSpeed: number;
+    windDirection: string;
+    humidity: number;
+    intensity: string;
+    fireDangerRating: string;
+  };
+  vegetation: string;
+  imageCount: number;
+  thumbnailUrl: string; // URL to representative thumbnail (e.g., aerial view)
+  promptVersion?: string;
+}
