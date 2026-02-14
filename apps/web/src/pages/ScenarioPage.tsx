@@ -1,5 +1,6 @@
 import React from 'react';
 import { Layout } from '../components/Layout';
+import { DemoControls } from '../components/DemoControls';
 import styles from './ScenarioPage.module.css';
 
 export const ScenarioPage: React.FC = () => {
@@ -7,12 +8,7 @@ export const ScenarioPage: React.FC = () => {
     <Layout
       sidebar={
         <div className={styles.sidebarContent}>
-          <p className={styles.placeholder}>
-            Scenario input controls will be placed here in Issue 5.
-          </p>
-          <p className={styles.helperText}>
-            Configure fire perimeter, weather conditions, and other parameters to generate realistic bushfire imagery.
-          </p>
+          <DemoControls />
         </div>
       }
       main={
