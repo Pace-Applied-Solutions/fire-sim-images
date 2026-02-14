@@ -11,6 +11,39 @@
   font-size: 0.875rem;
   line-height: 1.5;
   margin-bottom: var(--spacing-md);
+  text-align: center;
+}
+
+.generatingState {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border-default);
+  border-top-color: var(--color-accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progressText {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 .helperText {
