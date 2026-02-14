@@ -141,12 +141,12 @@ export async function queryAuditLogs(
 export function shutdownAuditLogging(): Promise<void> {
   if (telemetryClient) {
     return new Promise((resolve) => {
-      telemetryClient!.flush();
-      // Give it a moment to flush before resolving
-      setTimeout(() => {
-        console.log('[AuditLog] Audit logs flushed successfully');
-        resolve();
-      }, 1000);
+      telemetryClient!.flush({
+        callback: () => {
+          console.log('[AuditLog] Audit logs flushed successfully');
+          resolve();
+        },
+      });
     });
   }
   return Promise.resolve();

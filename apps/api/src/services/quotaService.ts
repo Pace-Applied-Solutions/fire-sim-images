@@ -71,8 +71,6 @@ export async function initializeQuotaService(serviceConfig: QuotaServiceConfig):
       config.storageAccountName,
       config.storageAccountKey
     );
-    
-    // Create table if it doesn't exist
     const tableService = new TableServiceClient(
       `https://${config.storageAccountName}.table.core.windows.net`,
       credential
