@@ -20,16 +20,47 @@ export interface FirePerimeter {
 }
 
 /**
+ * Fire Danger Rating categories based on Australian Fire Danger Rating System (AFDRS).
+ * Represents the named risk levels communicated to the public and emergency services.
+ */
+export type FireDangerRating =
+  | 'moderate'
+  | 'high'
+  | 'veryHigh'
+  | 'severe'
+  | 'extreme'
+  | 'catastrophic';
+
+/**
+ * Input mode for fire danger configuration.
+ * - 'weather': User specifies individual weather parameters, FDI is calculated
+ * - 'rating': User selects a named rating, weather parameters are set to typical values
+ * - 'fdi': User enters a specific FDI value, weather parameters are set to match
+ */
+export type FireDangerInputMode = 'weather' | 'rating' | 'fdi';
+
+/**
  * Scenario inputs provided by the trainer.
  */
 export interface ScenarioInputs {
-  windSpeed: number; // km/h
+  // Weather parameters
+  windSpeed: number; // km/h (0-120)
   windDirection: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW'; // Cardinal direction
-  temperature: number; // degrees Celsius
-  humidity: number; // percentage (0-100)
+  temperature: number; // degrees Celsius (5-50)
+  humidity: number; // percentage (5-100)
   timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
+
+  // Fire danger (calculated from weather or set explicitly)
+  fireDangerRating: FireDangerRating; // Named rating category
+  fireDangerIndex: number; // Calculated FDI value (0-150)
+  droughtFactor?: number; // Optional drought factor (0-10), defaults based on rating
+
+  // Fire characteristics
   intensity: 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
   fireStage: 'spotFire' | 'developing' | 'established' | 'major';
+
+  // UI state (not persisted to generation request)
+  inputMode?: FireDangerInputMode; // How the user is configuring fire danger
 }
 
 export type FuelLoadCategory = 'low' | 'moderate' | 'high' | 'veryHigh';

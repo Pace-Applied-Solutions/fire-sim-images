@@ -306,6 +306,157 @@
   opacity: 0.6;
 }
 
+/* Fire Danger Controls */
+.fireDangerModeToggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.modeButton {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.375rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.modeButton:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
+
+.modeButton:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: -2px;
+}
+
+.modeButtonActive {
+  background: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  color: #0f1419;
+  font-weight: 600;
+}
+
+.modeButtonActive:hover {
+  background: var(--color-accent-secondary);
+  border-color: var(--color-accent-secondary);
+}
+
+.fdiDisplay {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.fdiLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.fdiValue {
+  flex: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.fdiRating {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ratingModerate {
+  background: #0066cc;
+  color: white;
+}
+
+.ratingHigh {
+  background: #ffaa00;
+  color: #0f1419;
+}
+
+.ratingVeryHigh {
+  background: #ff6600;
+  color: white;
+}
+
+.ratingSevere {
+  background: #cc0000;
+  color: white;
+}
+
+.ratingExtreme {
+  background: #990000;
+  color: white;
+}
+
+.ratingCatastrophic {
+  background: #660000;
+  color: white;
+}
+
+.warning {
+  font-size: 0.75rem;
+  color: var(--color-status-warning);
+  padding: 0.5rem;
+  background: rgba(255, 170, 0, 0.1);
+  border-radius: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.ratingSegmentedControl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-bg-primary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-default);
+}
+
+.ratingSegment {
+  padding: 0.625rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.ratingSegment:hover {
+  background: rgba(255, 149, 0, 0.1);
+  color: var(--color-text-primary);
+}
+
+.ratingSegment:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: -2px;
+}
+
+.ratingSegmentActive {
+  font-weight: 600;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .segmentedControl {
@@ -316,5 +467,23 @@
   .segment {
     padding: 0.625rem 0.5rem;
     font-size: 0.8125rem;
+  }
+
+  .ratingSegmentedControl {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fireDangerModeToggle {
+    flex-direction: column;
+  }
+
+  .fdiDisplay {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .fdiValue {
+    text-align: left;
   }
 }
