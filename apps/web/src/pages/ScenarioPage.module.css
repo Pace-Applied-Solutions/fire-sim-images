@@ -1,0 +1,54 @@
+.sidebarContent,
+.resultsContent {
+  color: var(--color-text-secondary);
+}
+
+.placeholder {
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-tertiary);
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: var(--spacing-md);
+}
+
+.helperText {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+}
+
+.mapPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%);
+}
+
+.mapContent {
+  text-align: center;
+  padding: var(--spacing-2xl);
+}
+
+.mapIcon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: var(--spacing-lg);
+}
+
+.mapTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.mapDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  max-width: 400px;
+  margin: 0 auto;
+}
