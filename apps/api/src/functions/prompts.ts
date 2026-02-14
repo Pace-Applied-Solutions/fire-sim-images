@@ -63,12 +63,12 @@ export async function prompts(
     };
   } catch (error) {
     context.error('Error generating prompts:', error);
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     return {
       status: 500,
-      jsonBody: { 
+      jsonBody: {
         error: 'Failed to generate prompts',
         details: errorMessage,
       },

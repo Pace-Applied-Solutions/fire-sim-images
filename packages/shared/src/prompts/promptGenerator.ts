@@ -83,9 +83,11 @@ function generateNearbyFeatures(geoContext: GenerationRequest['geoContext']): st
     rural_residential: 'Rural properties are scattered through the area',
   };
 
+  // Map features to descriptions, falling back to the raw feature name if not mapped
+  // Filter out any empty or whitespace-only strings
   const descriptions = geoContext.nearbyFeatures
     .map((feature) => featureMap[feature] || feature)
-    .filter(Boolean);
+    .filter((desc) => desc.trim().length > 0);
 
   if (descriptions.length === 0) {
     return 'Remote bushland area.';
@@ -114,6 +116,12 @@ function determineSpreadDirection(windDirection: string): string {
 
 /**
  * Generates wind description from wind speed and direction.
+ * Wind strength classifications based on fire behavior impact:
+ * - Light: < 10 km/h - minimal fire spread influence
+ * - Moderate: 10-29 km/h - steady fire spread
+ * - Strong: 30-49 km/h - rapid fire spread and ember transport
+ * - Very Strong: 50-69 km/h - dangerous conditions, long-range spotting
+ * - Extreme: 70+ km/h - catastrophic fire behavior, extreme spotting
  */
 function generateWindDescription(windSpeed: number, windDirection: string): string {
   let strength = '';
