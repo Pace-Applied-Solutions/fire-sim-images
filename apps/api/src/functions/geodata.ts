@@ -208,7 +208,7 @@ export async function geodata(request: HttpRequest, context: InvocationContext):
 
     const response: GeoContext = {
       ...selected,
-      aspect: selected.aspect ?? aspectFromPolygon(coordinates),
+      aspect: selected.aspect,
     };
 
     cache.set(polygonHash, response);
