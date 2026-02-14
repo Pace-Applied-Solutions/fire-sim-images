@@ -298,7 +298,18 @@ export class GenerationOrchestrator {
     });
 
     // Execute with concurrency control
-    const results: Array<PromiseSettledResult<any>> = [];
+    const results: Array<PromiseSettledResult<{
+      viewpoint: ViewPoint;
+      imageData: Buffer | string;
+      metadata: {
+        model: string;
+        promptHash: string;
+        generationTime: number;
+        width: number;
+        height: number;
+        seed?: number;
+      };
+    }>> = [];
     for (let i = 0; i < tasks.length; i += maxConcurrent) {
       const batch = tasks.slice(i, i + maxConcurrent);
       const batchResults = await Promise.allSettled(batch);

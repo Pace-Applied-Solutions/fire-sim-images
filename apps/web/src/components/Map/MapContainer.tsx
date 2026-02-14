@@ -600,7 +600,7 @@ export const MapContainer = () => {
 				center: [longitude, latitude],
 				zoom: 14,
 				duration: 2000,
-				tessential: true,
+				essential: true,
 			});
 
 			addToast({

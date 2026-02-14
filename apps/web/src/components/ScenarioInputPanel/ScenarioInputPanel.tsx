@@ -189,7 +189,7 @@ export const ScenarioInputPanel: React.FC = () => {
           setGeoContext(context);
         } catch (error) {
           console.error('Failed to fetch geo context:', error);
-          addToast('Failed to load geographic context', 'error');
+          addToast({ type: 'error', message: 'Failed to load geographic context' });
         }
       }
     };
@@ -199,7 +199,7 @@ export const ScenarioInputPanel: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!perimeter || !geoContext) {
-      addToast('Draw a fire perimeter on the map first', 'error');
+      addToast({ type: 'error', message: 'Draw a fire perimeter on the map first' });
       return;
     }
 
@@ -225,7 +225,7 @@ export const ScenarioInputPanel: React.FC = () => {
         requestedViews,
       });
 
-      addToast('Generation started', 'success');
+      addToast({ type: 'success', message: 'Generation started' });
       console.log('Generation started:', startResponse);
 
       // Poll for completion
@@ -243,9 +243,9 @@ export const ScenarioInputPanel: React.FC = () => {
       setGenerationProgress(null);
 
       if (result.status === 'completed') {
-        addToast(`Generated ${result.images.length} images successfully`, 'success');
+        addToast({ type: 'success', message: `Generated ${result.images.length} images successfully` });
       } else if (result.status === 'failed') {
-        addToast(result.error || 'Generation failed', 'error');
+        addToast({ type: 'error', message: result.error || 'Generation failed' });
         setError(result.error || 'Generation failed');
         setScenarioState('error');
       }
@@ -255,7 +255,7 @@ export const ScenarioInputPanel: React.FC = () => {
       setError(errorMessage);
       setScenarioState('error');
       setGenerationProgress(null);
-      addToast(`Generation failed: ${errorMessage}`, 'error');
+      addToast({ type: 'error', message: `Generation failed: ${errorMessage}` });
     }
   };
 
