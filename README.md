@@ -52,13 +52,23 @@ The front-end provides a 3D map interface for drawing fire perimeters and settin
    npm install
    ```
 
-3. **Start development servers:**
+3. **Configure environment variables:**
+
+   Create a `.env` file in the root directory:
+
+   ```bash
+   VITE_MAPBOX_TOKEN=your_mapbox_token_here
+   ```
+
+   Get a free Mapbox token from https://account.mapbox.com/ (free tier: 50,000 map loads/month).
+
+4. **Start development servers:**
 
    ```bash
    npm run dev
    ```
 
-   This starts both the web app (port 3000) and API (port 7071) concurrently.
+   This starts both the web app (port 5173) and API (port 7071) concurrently.
 
 ## Development
 

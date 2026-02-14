@@ -4,11 +4,19 @@
  */
 
 /**
- * GeoJSON-style polygon representing a fire perimeter.
+ * GeoJSON Feature representing a fire perimeter polygon.
+ * Follows GeoJSON specification with additional properties for tracking.
  */
 export interface FirePerimeter {
-  type: 'Polygon';
-  coordinates: number[][][]; // [[[lng, lat], [lng, lat], ...]]
+  type: 'Feature';
+  geometry: {
+    type: 'Polygon';
+    coordinates: number[][][]; // [[[lng, lat], [lng, lat], ...]]
+  };
+  properties: {
+    drawn: boolean;
+    timestamp: string;
+  };
 }
 
 /**
