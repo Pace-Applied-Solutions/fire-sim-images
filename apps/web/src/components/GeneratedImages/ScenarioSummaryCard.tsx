@@ -147,7 +147,12 @@ function calculateCentroid(coordinates: number[][]): [number, number] {
 }
 
 /**
- * Calculate approximate area in hectares using shoelace formula
+ * Calculate approximate area in hectares using shoelace formula.
+ * 
+ * Note: This uses a flat-earth approximation which is suitable for small fire perimeters
+ * (< 100 km²) but may produce errors of up to 1% for larger areas or those far from
+ * the equator. For production use with large perimeters, consider using a proper
+ * projection-based calculation or geodesic area computation.
  */
 function calculateArea(perimeter: FirePerimeter): number {
   const coords = perimeter.geometry.coordinates[0];

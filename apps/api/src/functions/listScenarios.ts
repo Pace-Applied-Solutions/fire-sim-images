@@ -97,7 +97,7 @@ function createScenarioSummary(
     timestamp: metadata.result.createdAt,
     location: {
       centroid,
-      placeName: undefined, // TODO: Add reverse geocoding in future
+      placeName: undefined, // Reverse geocoding to be implemented in future enhancement
     },
     conditions: {
       temperature: metadata.inputs.temperature,
