@@ -221,7 +221,7 @@ These are the 15 implementation issues seeded in GitHub. Each will be assigned t
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 2 - Geospatial data integration (Issue 6)
+- **Current focus:** Phase 3 - Prompt and image output (Issue 8)
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.
@@ -336,6 +336,24 @@ Update this section after each issue or change.
     - Streamlined visual elements: tighter borders, simplified section headers, compact summary card
     - Maintained clear visual hierarchy, proper grouping, full keyboard accessibility
     - Layout optimized for laptop/wide tablet screens (1024px+) for expert/professional users
+  - **Issue 7 complete:** Prompt Generation Engine (Phase 3)
+    - Created `packages/shared/src/prompts/` module with structured template system
+    - Implemented multi-perspective prompt generation supporting all 12 viewpoints
+    - Created intensity-to-visual mapping for 6 intensity levels (low → catastrophic)
+    - Created time-of-day lighting descriptions for 6 time periods (dawn → night)
+    - Created viewpoint perspective descriptions for aerial, helicopter, ground, and ridge views
+    - Implemented prompt safety validation excluding unsafe terms from descriptive sections
+    - Added POST /api/prompts Azure Function endpoint for prompt generation
+    - Template versioning system (v1.0.0) for reproducibility
+    - Uses RFS/AFAC terminology: head fire, crown fire, spotting, pyrocumulus
+    - Tested with multiple scenarios covering different intensities, times, and viewpoints
+    - All prompts properly formatted with style, scene, fire, weather, perspective, and safety sections
+    - Code review and security scan completed with no issues
+- **Open risks:**
+  - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
+  - Azure OpenAI availability varies by region; may need fallback to East US 2
+  - Mapbox free tier limits: 50,000 map loads/month (sufficient for development and early use)
+- **Next milestone:** Phase 3 - AI Image Generation Pipeline (Issue 8)
   - **Address Search & Location Navigation:** Fast address search with autocomplete and geolocation support
     - Created `AddressSearch` component with Mapbox Geocoding API integration
     - Real-time autocomplete with 300ms debouncing to minimize API calls
