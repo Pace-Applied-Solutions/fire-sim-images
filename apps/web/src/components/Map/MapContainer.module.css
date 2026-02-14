@@ -214,11 +214,11 @@
 }
 
 :global(.mapboxgl-ctrl-group button:hover) {
-	background: var(--color-bg-hover) !important;
+	background: var(--color-border-hover) !important;
 }
 
 :global(.mapboxgl-ctrl-group button + button) {
-	border-top: 1px solid var(--color-border) !important;
+	border-top: 1px solid var(--color-border-default) !important;
 }
 
 /* Draw controls styling */
@@ -228,12 +228,12 @@
 }
 
 :global(.mapbox-gl-draw_ctrl-draw-btn:hover) {
-	background: var(--color-accent) !important;
+	background: var(--color-accent-primary) !important;
 	color: var(--color-bg-primary) !important;
 }
 
 :global(.mapbox-gl-draw_ctrl-draw-btn.active) {
-	background: var(--color-accent) !important;
+	background: var(--color-accent-primary) !important;
 	color: var(--color-bg-primary) !important;
 }
 
@@ -241,7 +241,7 @@
 :global(.mapboxgl-ctrl-scale) {
 	background: var(--color-bg-elevated) !important;
 	color: var(--color-text-primary) !important;
-	border: 2px solid var(--color-border) !important;
+	border: 2px solid var(--color-border-default) !important;
 	border-top: none !important;
 	padding: 0 4px !important;
 	border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
