@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
-import type { ScenarioInputs, FireDangerRating, FireDangerInputMode } from '@fire-sim/shared';
+import type { ScenarioInputs, FireDangerRating } from '@fire-sim/shared';
 import {
-  calculateFireDangerIndex,
-  getFDIRating,
   getWeatherProfileForRating,
-  getWeatherForFDI,
   validateWeatherParameters,
   formatRating,
-  FDI_THRESHOLDS,
+  getRatingDescription,
 } from '@fire-sim/shared';
 import styles from './ScenarioInputPanel.module.css';
 
 const PRESETS: Record<string, ScenarioInputs> = {
   grassfireModerate: {
+    fireDangerRating: 'high',
     windSpeed: 30,
     windDirection: 'NW',
     temperature: 30,
@@ -21,11 +19,9 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'afternoon',
     intensity: 'moderate',
     fireStage: 'established',
-    fireDangerRating: 'high',
-    fireDangerIndex: 18.5,
-    droughtFactor: 5.0,
   },
   forestfireSevere: {
+    fireDangerRating: 'severe',
     windSpeed: 50,
     windDirection: 'NW',
     temperature: 40,
@@ -33,11 +29,9 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'afternoon',
     intensity: 'veryHigh',
     fireStage: 'established',
-    fireDangerRating: 'severe',
-    fireDangerIndex: 62.0,
-    droughtFactor: 7.0,
   },
   nightOperation: {
+    fireDangerRating: 'moderate',
     windSpeed: 15,
     windDirection: 'W',
     temperature: 25,
@@ -45,11 +39,9 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'night',
     intensity: 'moderate',
     fireStage: 'established',
-    fireDangerRating: 'moderate',
-    fireDangerIndex: 8.5,
-    droughtFactor: 3.0,
   },
   extremeDay: {
+    fireDangerRating: 'extreme',
     windSpeed: 80,
     windDirection: 'NW',
     temperature: 45,
@@ -57,13 +49,11 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'midday',
     intensity: 'extreme',
     fireStage: 'major',
-    fireDangerRating: 'extreme',
-    fireDangerIndex: 85.0,
-    droughtFactor: 8.0,
   },
 };
 
 const DEFAULT_INPUTS: ScenarioInputs = {
+  fireDangerRating: 'veryHigh',
   windSpeed: 25,
   windDirection: 'NW',
   temperature: 35,
@@ -71,17 +61,12 @@ const DEFAULT_INPUTS: ScenarioInputs = {
   timeOfDay: 'afternoon',
   intensity: 'high',
   fireStage: 'established',
-  fireDangerRating: 'veryHigh',
-  fireDangerIndex: 32.0,
-  droughtFactor: 5.0,
-  inputMode: 'weather',
 };
 
 interface ValidationErrors {
   windSpeed?: string;
   temperature?: string;
   humidity?: string;
-  fireDangerIndex?: string;
 }
 
 export const ScenarioInputPanel: React.FC = () => {
@@ -90,7 +75,6 @@ export const ScenarioInputPanel: React.FC = () => {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [inputMode, setInputMode] = useState<FireDangerInputMode>('weather');
   const [sectionsOpen, setSectionsOpen] = useState({
     fireDanger: true,
     weather: true,
@@ -113,46 +97,14 @@ export const ScenarioInputPanel: React.FC = () => {
       newErrors.humidity = 'Humidity must be between 5 and 100%';
     }
 
-    if (newInputs.fireDangerIndex < 0 || newInputs.fireDangerIndex > 150) {
-      newErrors.fireDangerIndex = 'FDI must be between 0 and 150';
-    }
-
     return newErrors;
-  };
-
-  const recalculateFDI = (weatherInputs: Partial<ScenarioInputs>): ScenarioInputs => {
-    const updatedInputs = { ...inputs, ...weatherInputs };
-    const fdi = calculateFireDangerIndex({
-      temperature: updatedInputs.temperature,
-      humidity: updatedInputs.humidity,
-      windSpeed: updatedInputs.windSpeed,
-      droughtFactor: updatedInputs.droughtFactor || 5.0,
-    });
-    const rating = getFDIRating(fdi);
-
-    return {
-      ...updatedInputs,
-      fireDangerIndex: fdi,
-      fireDangerRating: rating,
-    };
   };
 
   const updateInput = <K extends keyof ScenarioInputs>(
     key: K,
     value: ScenarioInputs[K]
   ) => {
-    let newInputs: ScenarioInputs;
-
-    // If updating weather parameters in weather mode, recalculate FDI
-    if (
-      inputMode === 'weather' &&
-      (key === 'windSpeed' || key === 'temperature' || key === 'humidity' || key === 'droughtFactor')
-    ) {
-      newInputs = recalculateFDI({ [key]: value });
-    } else {
-      newInputs = { ...inputs, [key]: value };
-    }
-
+    const newInputs = { ...inputs, [key]: value };
     setInputs(newInputs);
     const newErrors = validateInputs(newInputs);
     setErrors(newErrors);
@@ -162,7 +114,6 @@ export const ScenarioInputPanel: React.FC = () => {
       temperature: newInputs.temperature,
       humidity: newInputs.humidity,
       windSpeed: newInputs.windSpeed,
-      droughtFactor: newInputs.droughtFactor || 5.0,
     });
     setWarnings(weatherWarnings);
 
@@ -172,54 +123,22 @@ export const ScenarioInputPanel: React.FC = () => {
     }
   };
 
-  const handleModeChange = (mode: FireDangerInputMode) => {
-    setInputMode(mode);
-    setSelectedPreset(''); // Clear preset when changing modes
-
-    // When switching modes, keep current values but change how they interact
-    const updatedInputs = { ...inputs, inputMode: mode };
-    setInputs(updatedInputs);
-  };
-
   const handleRatingChange = (rating: FireDangerRating) => {
+    // Update rating and load typical weather profile
     const profile = getWeatherProfileForRating(rating);
-    const fdi = calculateFireDangerIndex(profile);
 
     const newInputs: ScenarioInputs = {
       ...inputs,
-      ...profile,
       fireDangerRating: rating,
-      fireDangerIndex: fdi,
-      inputMode: 'rating',
+      temperature: profile.temperature,
+      humidity: profile.humidity,
+      windSpeed: profile.windSpeed,
     };
 
     setInputs(newInputs);
-    setInputMode('rating');
     setErrors({});
     setWarnings([]);
     setScenarioInputs(newInputs);
-  };
-
-  const handleFDIChange = (fdi: number) => {
-    const profile = getWeatherForFDI(fdi);
-    const rating = getFDIRating(fdi);
-
-    const newInputs: ScenarioInputs = {
-      ...inputs,
-      ...profile,
-      fireDangerIndex: fdi,
-      fireDangerRating: rating,
-      inputMode: 'fdi',
-    };
-
-    setInputs(newInputs);
-    setInputMode('fdi');
-    const newErrors = validateInputs(newInputs);
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setScenarioInputs(newInputs);
-    }
   };
 
   const applyPreset = (presetKey: string) => {
@@ -227,7 +146,6 @@ export const ScenarioInputPanel: React.FC = () => {
       const presetInputs = PRESETS[presetKey];
       setInputs(presetInputs);
       setSelectedPreset(presetKey);
-      setInputMode(presetInputs.inputMode || 'weather');
       setErrors({});
       setWarnings([]);
       setScenarioInputs(presetInputs);
@@ -280,7 +198,7 @@ export const ScenarioInputPanel: React.FC = () => {
       night: 'night',
     };
 
-    return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)} (FDI ${inputs.fireDangerIndex}). Intensity: ${intensityMap[inputs.intensity]}.`;
+    return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)}. Intensity: ${intensityMap[inputs.intensity]}.`;
   };
 
   const getRatingClassName = (rating: FireDangerRating): string => {
@@ -323,135 +241,51 @@ export const ScenarioInputPanel: React.FC = () => {
           onClick={() => toggleSection('fireDanger')}
           aria-expanded={sectionsOpen.fireDanger}
         >
-          <h3 className={styles.sectionTitle}>Fire Danger</h3>
+          <h3 className={styles.sectionTitle}>Fire Danger Rating (AFDRS)</h3>
           <span className={styles.chevron}>{sectionsOpen.fireDanger ? '▼' : '▶'}</span>
         </button>
 
         {sectionsOpen.fireDanger && (
           <div className={styles.sectionContent}>
-            {/* Input Mode Toggle */}
+            {/* Fire Danger Rating Selector */}
             <div className={styles.field}>
-              <label className={styles.label}>Configuration mode</label>
-              <div className={styles.fireDangerModeToggle}>
-                <button
-                  onClick={() => handleModeChange('weather')}
-                  className={`${styles.modeButton} ${
-                    inputMode === 'weather' ? styles.modeButtonActive : ''
-                  }`}
-                >
-                  Weather
-                </button>
-                <button
-                  onClick={() => handleModeChange('rating')}
-                  className={`${styles.modeButton} ${
-                    inputMode === 'rating' ? styles.modeButtonActive : ''
-                  }`}
-                >
-                  Rating
-                </button>
-                <button
-                  onClick={() => handleModeChange('fdi')}
-                  className={`${styles.modeButton} ${
-                    inputMode === 'fdi' ? styles.modeButtonActive : ''
-                  }`}
-                >
-                  FDI Value
-                </button>
+              <label className={styles.label}>Select fire danger rating</label>
+              <div className={styles.ratingSegmentedControl}>
+                {(['moderate', 'high', 'veryHigh', 'severe', 'extreme', 'catastrophic'] as const).map(
+                  (rating) => (
+                    <button
+                      key={rating}
+                      onClick={() => handleRatingChange(rating)}
+                      className={`${styles.ratingSegment} ${
+                        inputs.fireDangerRating === rating ? styles.ratingSegmentActive : ''
+                      }`}
+                      style={{
+                        backgroundColor: inputs.fireDangerRating === rating ? getRatingClassName(rating).split(' ')[1] : undefined,
+                        color: inputs.fireDangerRating === rating ? 'white' : undefined,
+                      }}
+                      aria-pressed={inputs.fireDangerRating === rating}
+                    >
+                      {formatRating(rating)}
+                    </button>
+                  )
+                )}
               </div>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem', lineHeight: 1.4 }}>
+                {getRatingDescription(inputs.fireDangerRating)}
+              </p>
             </div>
 
-            {/* Fire Danger Rating Selector (when in rating mode) */}
-            {inputMode === 'rating' && (
-              <div className={styles.field}>
-                <label className={styles.label}>Fire danger rating</label>
-                <div className={styles.ratingSegmentedControl}>
-                  {(['moderate', 'high', 'veryHigh', 'severe', 'extreme', 'catastrophic'] as const).map(
-                    (rating) => (
-                      <button
-                        key={rating}
-                        onClick={() => handleRatingChange(rating)}
-                        className={`${styles.ratingSegment} ${
-                          inputs.fireDangerRating === rating ? styles.ratingSegmentActive : ''
-                        }`}
-                        style={{
-                          backgroundColor: inputs.fireDangerRating === rating ? getRatingClassName(rating).split(' ')[1] : undefined,
-                          color: inputs.fireDangerRating === rating ? 'white' : undefined,
-                        }}
-                        aria-pressed={inputs.fireDangerRating === rating}
-                      >
-                        {formatRating(rating)}
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* FDI Direct Input (when in fdi mode) */}
-            {inputMode === 'fdi' && (
-              <div className={styles.field}>
-                <label htmlFor="fdi-value" className={styles.label}>
-                  Fire Danger Index (FDI)
-                </label>
-                <div className={styles.sliderGroup}>
-                  <input
-                    id="fdi-value"
-                    type="range"
-                    min="0"
-                    max="150"
-                    step="0.1"
-                    value={inputs.fireDangerIndex}
-                    onChange={(e) => handleFDIChange(Number(e.target.value))}
-                    className={styles.slider}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    max="150"
-                    step="0.1"
-                    value={inputs.fireDangerIndex}
-                    onChange={(e) => handleFDIChange(Number(e.target.value))}
-                    className={styles.numberInput}
-                    aria-label="FDI number input"
-                  />
-                </div>
-                {errors.fireDangerIndex && <span className={styles.error}>{errors.fireDangerIndex}</span>}
-              </div>
-            )}
-
-            {/* FDI Display (always shown) */}
+            {/* Current Rating Display */}
             <div className={styles.fdiDisplay}>
-              <span className={styles.fdiLabel}>Current FDI:</span>
-              <span className={styles.fdiValue}>{inputs.fireDangerIndex.toFixed(1)}</span>
+              <span className={styles.fdiLabel}>Current rating:</span>
               <span className={getRatingClassName(inputs.fireDangerRating)}>
                 {formatRating(inputs.fireDangerRating)}
               </span>
             </div>
 
-            {/* FDI Ranges Reference */}
-            <div className={styles.field}>
-              <details>
-                <summary className={styles.label} style={{ cursor: 'pointer' }}>
-                  FDI ranges reference
-                </summary>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem' }}>
-                  {Object.entries(FDI_THRESHOLDS).map(([rating, { min, max }]) => (
-                    <div key={rating} style={{ marginBottom: '0.25rem' }}>
-                      <strong>{formatRating(rating as FireDangerRating)}:</strong> {min.toFixed(0)}–{max.toFixed(0)}
-                    </div>
-                  ))}
-                </div>
-              </details>
-            </div>
-
-            {/* Warnings */}
-            {warnings.length > 0 && (
-              <div className={styles.warning}>
-                {warnings.map((warning, idx) => (
-                  <div key={idx}>⚠️ {warning}</div>
-                ))}
-              </div>
-            )}
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginTop: '0.75rem', fontStyle: 'italic' }}>
+              Selecting a rating sets typical weather conditions. You can adjust individual weather parameters below.
+            </p>
           </div>
         )}
       </section>
@@ -469,12 +303,6 @@ export const ScenarioInputPanel: React.FC = () => {
 
         {sectionsOpen.weather && (
           <div className={styles.sectionContent}>
-            {inputMode !== 'weather' && (
-              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-tertiary)', marginBottom: '0.75rem' }}>
-                Weather parameters set by {inputMode === 'rating' ? 'rating' : 'FDI'}. Switch to Weather mode to adjust individually.
-              </p>
-            )}
-
             {/* Wind Speed */}
             <div className={styles.field}>
               <label htmlFor="wind-speed" className={styles.label}>
@@ -489,7 +317,6 @@ export const ScenarioInputPanel: React.FC = () => {
                   value={inputs.windSpeed}
                   onChange={(e) => updateInput('windSpeed', Number(e.target.value))}
                   className={styles.slider}
-                  disabled={inputMode !== 'weather'}
                 />
                 <input
                   type="number"
@@ -498,7 +325,6 @@ export const ScenarioInputPanel: React.FC = () => {
                   value={inputs.windSpeed}
                   onChange={(e) => updateInput('windSpeed', Number(e.target.value))}
                   className={styles.numberInput}
-                  disabled={inputMode !== 'weather'}
                   aria-label="Wind speed number input"
                 />
               </div>
@@ -546,7 +372,6 @@ export const ScenarioInputPanel: React.FC = () => {
                   value={inputs.temperature}
                   onChange={(e) => updateInput('temperature', Number(e.target.value))}
                   className={`${styles.slider} ${styles.sliderHeat}`}
-                  disabled={inputMode !== 'weather'}
                 />
                 <input
                   type="number"
@@ -555,7 +380,6 @@ export const ScenarioInputPanel: React.FC = () => {
                   value={inputs.temperature}
                   onChange={(e) => updateInput('temperature', Number(e.target.value))}
                   className={styles.numberInput}
-                  disabled={inputMode !== 'weather'}
                   aria-label="Temperature number input"
                 />
               </div>
@@ -576,7 +400,6 @@ export const ScenarioInputPanel: React.FC = () => {
                   value={inputs.humidity}
                   onChange={(e) => updateInput('humidity', Number(e.target.value))}
                   className={styles.slider}
-                  disabled={inputMode !== 'weather'}
                 />
                 <input
                   type="number"
@@ -585,47 +408,20 @@ export const ScenarioInputPanel: React.FC = () => {
                   value={inputs.humidity}
                   onChange={(e) => updateInput('humidity', Number(e.target.value))}
                   className={styles.numberInput}
-                  disabled={inputMode !== 'weather'}
                   aria-label="Humidity number input"
                 />
               </div>
               {errors.humidity && <span className={styles.error}>{errors.humidity}</span>}
             </div>
 
-            {/* Drought Factor (optional advanced control) */}
-            <div className={styles.field}>
-              <details>
-                <summary className={styles.label} style={{ cursor: 'pointer' }}>
-                  Drought factor (advanced)
-                </summary>
-                <div className={styles.sliderGroup} style={{ marginTop: '0.5rem' }}>
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={inputs.droughtFactor || 5.0}
-                    onChange={(e) => updateInput('droughtFactor', Number(e.target.value))}
-                    className={styles.slider}
-                    disabled={inputMode !== 'weather'}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={inputs.droughtFactor || 5.0}
-                    onChange={(e) => updateInput('droughtFactor', Number(e.target.value))}
-                    className={styles.numberInput}
-                    disabled={inputMode !== 'weather'}
-                    aria-label="Drought factor input"
-                  />
-                </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem' }}>
-                  Drought Factor (0-10) represents fuel dryness. Default: 5.0 (moderate).
-                </p>
-              </details>
-            </div>
+            {/* Warnings */}
+            {warnings.length > 0 && (
+              <div className={styles.warning}>
+                {warnings.map((warning, idx) => (
+                  <div key={idx}>⚠️ {warning}</div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>

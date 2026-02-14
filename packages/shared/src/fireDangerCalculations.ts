@@ -1,26 +1,17 @@
 /**
- * Fire Danger Index calculations based on McArthur FFDI and GFDI formulas.
+ * Fire Danger Rating and Behaviour Characteristics
+ *
+ * This module implements the Australian Fire Danger Rating System (AFDRS)
+ * and provides fire behaviour characteristics for different vegetation types.
  *
  * References:
- * - McArthur, A.G. (1967). Fire Behaviour in Eucalypt Forests. Leaflet 107.
- * - McArthur, A.G. (1966). Weather and Grassland Fire Behaviour. Leaflet 100.
- * - Noble, I.R., Gill, A.M., & Bary, G.A.V. (1980). McArthur's fire-danger meters
- *   expressed as equations. Australian Journal of Ecology, 5(2), 201-203.
- * - Bureau of Meteorology Fire Weather guidelines
- * - AFAC Australian Fire Danger Rating System (AFDRS)
+ * - Bureau of Meteorology - Australian Fire Danger Rating System
+ * - AFAC (Australasian Fire and Emergency Services Authorities Council)
+ * - Cheney, P., & Sullivan, A. (2008). Grassfires: Fuel, Weather and Fire Behaviour.
+ * - Cruz, M.G., & Alexander, M.E. (2013). Fire rates of spread predictions.
  */
 
 import type { FireDangerRating } from './types';
-
-/**
- * Parameters for FDI calculation
- */
-export interface FDICalculationParams {
-  temperature: number; // °C (5-50)
-  humidity: number; // % (5-100)
-  windSpeed: number; // km/h (0-120)
-  droughtFactor?: number; // 0-10, defaults to 5.0
-}
 
 /**
  * Weather profile representing typical conditions for a fire danger rating
@@ -29,149 +20,200 @@ export interface WeatherProfile {
   temperature: number;
   humidity: number;
   windSpeed: number;
-  droughtFactor: number;
 }
 
 /**
- * FDI thresholds for each fire danger rating category.
- * Based on AFDRS and Bureau of Meteorology standards.
+ * Fire behaviour characteristics for a given rating and vegetation type
  */
-export const FDI_THRESHOLDS: Record<FireDangerRating, { min: number; max: number }> = {
-  moderate: { min: 0, max: 11.9 },
-  high: { min: 12, max: 23.9 },
-  veryHigh: { min: 24, max: 49.9 },
-  severe: { min: 50, max: 74.9 },
-  extreme: { min: 75, max: 99.9 },
-  catastrophic: { min: 100, max: 150 },
-};
+export interface FireBehaviour {
+  flameHeight: { min: number; max: number }; // meters
+  rateOfSpread: { min: number; max: number }; // km/h
+  spottingDistance: string; // descriptive range
+  intensity: 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
+  descriptor: string; // qualitative description for prompts
+}
 
 /**
- * Typical weather profiles for each fire danger rating.
- * These represent conditions commonly associated with each rating level.
- * Users can adjust individual parameters after selecting a rating.
+ * Typical weather profiles for each AFDRS rating level.
+ * These represent common conditions associated with each rating.
  */
 export const RATING_WEATHER_PROFILES: Record<FireDangerRating, WeatherProfile> = {
   moderate: {
     temperature: 22,
     humidity: 50,
     windSpeed: 12,
-    droughtFactor: 3.0,
   },
   high: {
     temperature: 28,
     humidity: 30,
     windSpeed: 25,
-    droughtFactor: 5.0,
   },
   veryHigh: {
     temperature: 35,
     humidity: 20,
     windSpeed: 40,
-    droughtFactor: 6.0,
   },
   severe: {
     temperature: 40,
     humidity: 12,
     windSpeed: 60,
-    droughtFactor: 7.0,
   },
   extreme: {
     temperature: 43,
     humidity: 8,
     windSpeed: 80,
-    droughtFactor: 8.0,
   },
   catastrophic: {
     temperature: 46,
     humidity: 5,
     windSpeed: 100,
-    droughtFactor: 10.0,
   },
 };
 
 /**
- * Calculate McArthur Forest Fire Danger Index (FFDI) Mark 5.
- *
- * Formula: FFDI = 2.0 * exp(-0.45 + 0.987 * ln(DF) - 0.0345 * RH + 0.0338 * T + 0.0234 * WS)
- *
- * @param params Weather and drought parameters
- * @returns FFDI value (0-150, typically)
+ * Fire behaviour characteristics by vegetation type and rating.
+ * Based on published fire behaviour research and operational guidelines.
  */
-export function calculateFFDI(params: FDICalculationParams): number {
-  const { temperature, humidity, windSpeed, droughtFactor = 5.0 } = params;
-
-  // Validate inputs
-  if (droughtFactor <= 0) {
-    throw new Error('Drought factor must be greater than 0');
-  }
-
-  // McArthur FFDI formula (Mark 5)
-  const exponent =
-    -0.45 +
-    0.987 * Math.log(droughtFactor) -
-    0.0345 * humidity +
-    0.0338 * temperature +
-    0.0234 * windSpeed;
-
-  const ffdi = 2.0 * Math.exp(exponent);
-
-  // Clamp to reasonable bounds (0-150)
-  return Math.max(0, Math.min(150, ffdi));
-}
-
-/**
- * Calculate McArthur Grassland Fire Danger Index (GFDI).
- *
- * Simplified formula for fully cured grassland (100% curing assumed).
- *
- * Formula: GFDI = 3.35 * WS * sqrt(1 + RH/100) * sqrt(10 - 0.25*(T - RH)) * (1 - exp(-0.0345*T))
- *
- * @param params Weather parameters
- * @returns GFDI value (0-150, typically)
- */
-export function calculateGFDI(params: FDICalculationParams): number {
-  const { temperature, humidity, windSpeed } = params;
-
-  // GFDI formula components
-  const moistureTerm = Math.sqrt(1 + humidity / 100);
-  const tempDiffTerm = Math.sqrt(Math.max(0, 10 - 0.25 * (temperature - humidity)));
-  const tempExponentialTerm = 1 - Math.exp(-0.0345 * temperature);
-
-  const gfdi = 3.35 * windSpeed * moistureTerm * tempDiffTerm * tempExponentialTerm;
-
-  // Clamp to reasonable bounds (0-150)
-  return Math.max(0, Math.min(150, gfdi));
-}
-
-/**
- * Calculate a generalized Fire Danger Index suitable for training scenarios.
- *
- * This uses the FFDI formula as it is more widely recognized and applicable
- * across various vegetation types. For grass-specific scenarios, GFDI could
- * be used instead (see calculateGFDI).
- *
- * @param params Weather and drought parameters
- * @returns FDI value rounded to 1 decimal place
- */
-export function calculateFireDangerIndex(params: FDICalculationParams): number {
-  const fdi = calculateFFDI(params);
-  return Math.round(fdi * 10) / 10; // Round to 1 decimal place
-}
-
-/**
- * Determine the fire danger rating category for a given FDI value.
- *
- * @param fdi Fire Danger Index value
- * @returns The corresponding fire danger rating category
- */
-export function getFDIRating(fdi: number): FireDangerRating {
-  if (fdi >= FDI_THRESHOLDS.catastrophic.min) return 'catastrophic';
-  if (fdi >= FDI_THRESHOLDS.extreme.min) return 'extreme';
-  if (fdi >= FDI_THRESHOLDS.severe.min) return 'severe';
-  if (fdi >= FDI_THRESHOLDS.veryHigh.min) return 'veryHigh';
-  if (fdi >= FDI_THRESHOLDS.high.min) return 'high';
-  return 'moderate';
-}
+export const FIRE_BEHAVIOUR_BY_VEGETATION: Record<
+  string,
+  Record<FireDangerRating, FireBehaviour>
+> = {
+  'Dry Sclerophyll Forest': {
+    moderate: {
+      flameHeight: { min: 1, max: 2 },
+      rateOfSpread: { min: 0.5, max: 1 },
+      spottingDistance: '<100 m',
+      intensity: 'low',
+      descriptor: 'Controlled fire with 1-2m flames, light smoke, minimal spotting',
+    },
+    high: {
+      flameHeight: { min: 2, max: 4 },
+      rateOfSpread: { min: 1, max: 2 },
+      spottingDistance: '100-200 m',
+      intensity: 'moderate',
+      descriptor: 'Active fire with 2-4m flames, moderate smoke column, some ember activity',
+    },
+    veryHigh: {
+      flameHeight: { min: 4, max: 8 },
+      rateOfSpread: { min: 2, max: 4 },
+      spottingDistance: '200-500 m',
+      intensity: 'high',
+      descriptor: 'Intense fire with 4-8m flames, large smoke plume, active spotting ahead',
+    },
+    severe: {
+      flameHeight: { min: 8, max: 15 },
+      rateOfSpread: { min: 4, max: 6 },
+      spottingDistance: '500-1000 m',
+      intensity: 'veryHigh',
+      descriptor:
+        'Very intense fire with 8-15m towering flames, dense black smoke column, heavy spotting',
+    },
+    extreme: {
+      flameHeight: { min: 15, max: 25 },
+      rateOfSpread: { min: 6, max: 10 },
+      spottingDistance: '1-2 km',
+      intensity: 'extreme',
+      descriptor:
+        'Catastrophic fire with 15-25m flames, pyrocumulonimbus development, extreme spotting and fire whirls',
+    },
+    catastrophic: {
+      flameHeight: { min: 25, max: 40 },
+      rateOfSpread: { min: 10, max: 20 },
+      spottingDistance: '2+ km',
+      intensity: 'extreme',
+      descriptor:
+        'Unprecedented fire intensity with 25+ meter flames, fire-generated weather, massive fire front',
+    },
+  },
+  Grassland: {
+    moderate: {
+      flameHeight: { min: 0.5, max: 1 },
+      rateOfSpread: { min: 2, max: 4 },
+      spottingDistance: 'Minimal',
+      intensity: 'low',
+      descriptor: 'Fast-moving grass fire with low flames, light smoke',
+    },
+    high: {
+      flameHeight: { min: 1, max: 2 },
+      rateOfSpread: { min: 4, max: 8 },
+      spottingDistance: '<50 m',
+      intensity: 'moderate',
+      descriptor: 'Rapid grass fire with 1-2m flames, moderate smoke, short-range spotting',
+    },
+    veryHigh: {
+      flameHeight: { min: 2, max: 3 },
+      rateOfSpread: { min: 8, max: 15 },
+      spottingDistance: '50-100 m',
+      intensity: 'high',
+      descriptor: 'Very rapid grass fire with 2-3m flames, active spotting',
+    },
+    severe: {
+      flameHeight: { min: 3, max: 5 },
+      rateOfSpread: { min: 15, max: 25 },
+      spottingDistance: '100-200 m',
+      intensity: 'veryHigh',
+      descriptor: 'Extremely rapid grass fire with 3-5m flames, heavy ember showers',
+    },
+    extreme: {
+      flameHeight: { min: 5, max: 8 },
+      rateOfSpread: { min: 25, max: 40 },
+      spottingDistance: '200-500 m',
+      intensity: 'extreme',
+      descriptor: 'Explosive grass fire spread with 5-8m flames, extreme spotting',
+    },
+    catastrophic: {
+      flameHeight: { min: 8, max: 12 },
+      rateOfSpread: { min: 40, max: 60 },
+      spottingDistance: '500+ m',
+      intensity: 'extreme',
+      descriptor: 'Catastrophic grass fire with 8+ meter flames, near-instantaneous spread',
+    },
+  },
+  Heath: {
+    moderate: {
+      flameHeight: { min: 1, max: 1.5 },
+      rateOfSpread: { min: 0.3, max: 0.8 },
+      spottingDistance: 'Minimal',
+      intensity: 'low',
+      descriptor: 'Slow-burning heath fire with 1-1.5m flames',
+    },
+    high: {
+      flameHeight: { min: 1.5, max: 3 },
+      rateOfSpread: { min: 0.8, max: 1.5 },
+      spottingDistance: '50-100 m',
+      intensity: 'moderate',
+      descriptor: 'Active heath fire with 1.5-3m flames, moderate spotting',
+    },
+    veryHigh: {
+      flameHeight: { min: 3, max: 6 },
+      rateOfSpread: { min: 1.5, max: 3 },
+      spottingDistance: '100-300 m',
+      intensity: 'high',
+      descriptor: 'Intense heath fire with 3-6m flames, active ember activity',
+    },
+    severe: {
+      flameHeight: { min: 6, max: 10 },
+      rateOfSpread: { min: 3, max: 5 },
+      spottingDistance: '300-700 m',
+      intensity: 'veryHigh',
+      descriptor: 'Very intense heath fire with 6-10m flames, heavy spotting',
+    },
+    extreme: {
+      flameHeight: { min: 10, max: 18 },
+      rateOfSpread: { min: 5, max: 8 },
+      spottingDistance: '700-1500 m',
+      intensity: 'extreme',
+      descriptor: 'Extreme heath fire with 10-18m flames, massive ember storms',
+    },
+    catastrophic: {
+      flameHeight: { min: 18, max: 25 },
+      rateOfSpread: { min: 8, max: 12 },
+      spottingDistance: '1500+ m',
+      intensity: 'extreme',
+      descriptor: 'Catastrophic heath fire with 18+ meter flames, extreme fire behaviour',
+    },
+  },
+};
 
 /**
  * Get the typical weather profile for a given fire danger rating.
@@ -184,84 +226,34 @@ export function getWeatherProfileForRating(rating: FireDangerRating): WeatherPro
 }
 
 /**
- * Get a representative FDI value for a fire danger rating (midpoint of range).
+ * Get fire behaviour characteristics for a given rating and vegetation type.
  *
  * @param rating Fire danger rating category
- * @returns A typical FDI value for that rating
+ * @param vegetationType Vegetation classification
+ * @returns Fire behaviour characteristics
  */
-export function getTypicalFDIForRating(rating: FireDangerRating): number {
-  const { min, max } = FDI_THRESHOLDS[rating];
-  // For catastrophic, use 110 as representative rather than midpoint to avoid extreme values
-  if (rating === 'catastrophic') return 110;
-  return Math.round((min + max) / 2);
-}
-
-/**
- * Calculate weather parameters that would produce a target FDI value.
- *
- * This uses an iterative approach starting from a rating's typical profile
- * and adjusting temperature to reach the target FDI.
- *
- * @param targetFDI Desired FDI value
- * @returns Weather parameters that approximate the target FDI
- */
-export function getWeatherForFDI(targetFDI: number): WeatherProfile {
-  // Start with the profile for the target FDI's rating
-  const rating = getFDIRating(targetFDI);
-  const baseProfile = getWeatherProfileForRating(rating);
-
-  // If the target is close to the typical FDI for this rating, use the base profile
-  const baseFDI = calculateFireDangerIndex(baseProfile);
-  if (Math.abs(baseFDI - targetFDI) < 2) {
-    return baseProfile;
+export function getFireBehaviour(
+  rating: FireDangerRating,
+  vegetationType: string
+): FireBehaviour {
+  // Try exact match first
+  if (FIRE_BEHAVIOUR_BY_VEGETATION[vegetationType]) {
+    return FIRE_BEHAVIOUR_BY_VEGETATION[vegetationType][rating];
   }
 
-  // Adjust temperature to reach target FDI (simple linear adjustment)
-  // Temperature has coefficient 0.0338 in FFDI formula
-  const fdiDiff = targetFDI - baseFDI;
-  const tempAdjustment = fdiDiff * 2; // Approximate adjustment factor
-
-  return {
-    ...baseProfile,
-    temperature: Math.max(5, Math.min(50, baseProfile.temperature + tempAdjustment)),
-  };
-}
-
-/**
- * Validate that weather parameters are physically plausible.
- *
- * @param params Weather parameters to validate
- * @returns Array of warning messages (empty if valid)
- */
-export function validateWeatherParameters(params: FDICalculationParams): string[] {
-  const warnings: string[] = [];
-
-  // Check for physically unlikely combinations
-  if (params.temperature < 15 && params.humidity < 20) {
-    warnings.push('Very low humidity with low temperature is uncommon');
+  // Fall back to similar vegetation types
+  if (vegetationType.includes('Forest') || vegetationType.includes('Woodland')) {
+    return FIRE_BEHAVIOUR_BY_VEGETATION['Dry Sclerophyll Forest'][rating];
+  }
+  if (vegetationType.includes('Grass')) {
+    return FIRE_BEHAVIOUR_BY_VEGETATION['Grassland'][rating];
+  }
+  if (vegetationType.includes('Heath') || vegetationType.includes('Scrub')) {
+    return FIRE_BEHAVIOUR_BY_VEGETATION['Heath'][rating];
   }
 
-  if (params.temperature > 40 && params.humidity > 50) {
-    warnings.push('High humidity with extreme temperature is unusual');
-  }
-
-  if (params.windSpeed > 80) {
-    warnings.push('Wind speeds above 80 km/h represent severe storm conditions');
-  }
-
-  // Check for parameter consistency with calculated FDI
-  const fdi = calculateFireDangerIndex(params);
-  const rating = getFDIRating(fdi);
-
-  if (rating === 'catastrophic' && params.windSpeed < 30) {
-    warnings.push('Catastrophic fire danger with calm winds is highly improbable');
-  }
-
-  if (rating === 'moderate' && (params.temperature > 38 || params.windSpeed > 60)) {
-    warnings.push('Moderate fire danger with extreme conditions is contradictory');
-  }
-
-  return warnings;
+  // Default fallback to dry forest
+  return FIRE_BEHAVIOUR_BY_VEGETATION['Dry Sclerophyll Forest'][rating];
 }
 
 /**
@@ -299,4 +291,51 @@ export function getRatingColor(rating: FireDangerRating): string {
     catastrophic: '#660000', // Very dark red / maroon
   };
   return colorMap[rating];
+}
+
+/**
+ * Get the description text for a fire danger rating.
+ *
+ * @param rating Fire danger rating category
+ * @returns Description of what the rating means
+ */
+export function getRatingDescription(rating: FireDangerRating): string {
+  const descriptions: Record<FireDangerRating, string> = {
+    moderate: 'Most fires can be controlled.',
+    high: 'Fires can be dangerous.',
+    veryHigh: 'Fires will be very dangerous and unpredictable.',
+    severe: 'Fires will be extremely dangerous and spread quickly.',
+    extreme: 'Fires will be uncontrollable, unpredictable and extremely dangerous.',
+    catastrophic: 'If a fire starts and takes hold, lives are likely to be lost.',
+  };
+  return descriptions[rating];
+}
+
+/**
+ * Validate that weather parameters are plausible for the scenario.
+ *
+ * @param params Weather parameters to validate
+ * @returns Array of warning messages (empty if valid)
+ */
+export function validateWeatherParameters(params: {
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+}): string[] {
+  const warnings: string[] = [];
+
+  // Check for physically unlikely combinations
+  if (params.temperature < 15 && params.humidity < 20) {
+    warnings.push('Very low humidity with low temperature is uncommon');
+  }
+
+  if (params.temperature > 40 && params.humidity > 50) {
+    warnings.push('High humidity with extreme temperature is unusual');
+  }
+
+  if (params.windSpeed > 80) {
+    warnings.push('Wind speeds above 80 km/h represent severe storm conditions');
+  }
+
+  return warnings;
 }

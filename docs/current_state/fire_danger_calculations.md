@@ -1,178 +1,160 @@
-# Fire Danger Index Calculations
+# Fire Danger Rating and Behaviour Reference
 
 ## Overview
-This document describes the fire danger calculation methodologies implemented in the bushfire simulation inject tool. The calculations are based on established Australian fire science standards to ensure credible and accurate fire behavior representation for training purposes.
+This document describes the fire danger rating system and fire behaviour characteristics used in the bushfire simulation inject tool. The implementation follows the **Australian Fire Danger Rating System (AFDRS)**, which is the national standard for communicating fire danger across Australia.
 
-## Fire Danger Rating Systems
+## Australian Fire Danger Rating System (AFDRS)
 
-### Australian Fire Danger Rating System (AFDRS)
-The AFDRS is the national standard for communicating fire danger in Australia. It uses a four-level system:
-- **Moderate** (Low to Moderate in some contexts)
-- **High**
-- **Extreme**
-- **Catastrophic** (Code Red in Victoria)
+The AFDRS provides a consistent national approach to fire danger ratings. It uses **six rating levels** that describe the potential consequences of a fire:
+
+| Rating | Numerical Range | Description |
+|--------|----------------|-------------|
+| **Moderate** | 0-11 | Most fires can be controlled. |
+| **High** | 12-23 | Fires can be dangerous. |
+| **Very High** | 24-49 | Fires will be very dangerous and unpredictable. |
+| **Severe** | 50-74 | Fires will be extremely dangerous and spread quickly. |
+| **Extreme** | 75-99 | Fires will be uncontrollable, unpredictable and extremely dangerous. |
+| **Catastrophic** | 100+ | If a fire starts and takes hold, lives are likely to be lost. |
 
 **Reference:** Bureau of Meteorology & AFAC (Australasian Fire and Emergency Services Authorities Council)
 
-### McArthur Forest Fire Danger Index (FFDI)
-The McArthur FFDI is a widely used metric for assessing fire danger in forested areas. It considers:
-- **Temperature** (°C)
-- **Relative Humidity** (%)
-- **Wind Speed** (km/h)
-- **Drought Factor** (0-10, representing fuel dryness)
+## Fire Behaviour Characteristics
 
-**Formula (Mark 5):**
-```
-FFDI = 2.0 * exp(-0.45 + 0.987 * ln(DF) - 0.0345 * RH + 0.0338 * T + 0.0234 * WS)
-```
+Fire behaviour varies significantly based on both the **fire danger rating** and the **vegetation type**. The characteristics below represent typical expected behaviour for training scenarios.
 
-Where:
-- `DF` = Drought Factor (0-10)
-- `RH` = Relative Humidity (%)
-- `T` = Temperature (°C)
-- `WS` = Wind Speed (km/h)
+### Fire Behaviour by Rating and Vegetation
 
-**Rating Thresholds:**
-- 0-11: Low to Moderate
-- 12-23: High
-- 24-49: Very High
-- 50-74: Severe
-- 75-99: Extreme
-- 100+: Catastrophic
+#### Dry Sclerophyll Forest
 
-**Reference:** McArthur, A.G. (1967). Fire Behaviour in Eucalypt Forests. Commonwealth of Australia Forestry and Timber Bureau Leaflet 107.
+| Rating | Flame Height | Rate of Spread | Spotting Distance | Intensity |
+|--------|-------------|----------------|-------------------|-----------|
+| Moderate | 1-2 m | 0.5-1 km/h | <100 m | Low |
+| High | 2-4 m | 1-2 km/h | 100-200 m | Moderate |
+| Very High | 4-8 m | 2-4 km/h | 200-500 m | High |
+| Severe | 8-15 m | 4-6 km/h | 500-1000 m | Very High |
+| Extreme | 15-25 m | 6-10 km/h | 1-2 km | Extreme |
+| Catastrophic | 25+ m | 10+ km/h | 2+ km | Extreme |
 
-### McArthur Grassland Fire Danger Index (GFDI)
-The GFDI is used for grassland and open country fire danger assessment.
+#### Grassland
 
-**Formula:**
-```
-GFDI = 3.35 * WS * sqrt(1 + RH/100) * sqrt(10 - 0.25 * (T - RH)) * (1.0 - exp(-0.0345 * T))
-```
+| Rating | Flame Height | Rate of Spread | Spotting Distance | Intensity |
+|--------|-------------|----------------|-------------------|-----------|
+| Moderate | 0.5-1 m | 2-4 km/h | Minimal | Low |
+| High | 1-2 m | 4-8 km/h | <50 m | Moderate |
+| Very High | 2-3 m | 8-15 km/h | 50-100 m | High |
+| Severe | 3-5 m | 15-25 km/h | 100-200 m | Very High |
+| Extreme | 5-8 m | 25-40 km/h | 200-500 m | Extreme |
+| Catastrophic | 8+ m | 40+ km/h | 500+ m | Extreme |
 
-For cured grasslands (>70% curing), a curing factor is applied:
-```
-GFDI_cured = GFDI * (Curing / 100)
-```
+#### Heath and Scrubland
 
-**Rating Thresholds:**
-- 0-11: Low to Moderate
-- 12-23: High
-- 24-49: Very High
-- 50+: Severe to Catastrophic
+| Rating | Flame Height | Rate of Spread | Spotting Distance | Intensity |
+|--------|-------------|----------------|-------------------|-----------|
+| Moderate | 1-1.5 m | 0.3-0.8 km/h | Minimal | Low |
+| High | 1.5-3 m | 0.8-1.5 km/h | 50-100 m | Moderate |
+| Very High | 3-6 m | 1.5-3 km/h | 100-300 m | High |
+| Severe | 6-10 m | 3-5 km/h | 300-700 m | Very High |
+| Extreme | 10-18 m | 5-8 km/h | 700-1500 m | Extreme |
+| Catastrophic | 18+ m | 8+ km/h | 1500+ m | Extreme |
 
-**Reference:** McArthur, A.G. (1966). Weather and Grassland Fire Behaviour. Commonwealth of Australia Forestry and Timber Bureau Leaflet 100.
+### Fire Behaviour Descriptors for AI Prompts
+
+These qualitative descriptors help translate fire danger ratings and behaviour into natural language for AI image generation:
+
+**Moderate:**
+- "Controlled fire with manageable flames"
+- "Light smoke, minimal spotting"
+- "Ground-level flames, slow spread"
+
+**High:**
+- "Active fire with consistent flame development"
+- "Moderate smoke column"
+- "Some ember activity"
+
+**Very High:**
+- "Intense fire with tall flames"
+- "Large smoke plume"
+- "Active spotting ahead of main fire"
+
+**Severe:**
+- "Very intense fire with towering flames"
+- "Dense black smoke, towering convection column"
+- "Heavy spotting, rapid spread"
+
+**Extreme:**
+- "Catastrophic fire behaviour"
+- "Massive pyrocumulonimbus development"
+- "Extreme spotting, fire whirls, ember storms"
+
+**Catastrophic:**
+- "Unprecedented fire intensity"
+- "Fire-generated weather phenomena"
+- "Massive fire front, complete fuel consumption"
+
+## Weather Context
+
+While AFDRS ratings are the primary control, weather parameters provide important scenario context:
+
+- **Temperature**: Affects fuel moisture and atmospheric stability
+- **Humidity**: Influences fuel availability and fire intensity
+- **Wind Speed**: Primary driver of spread rate and spotting
+- **Wind Direction**: Determines fire spread direction and flank positions
+
+Typical weather conditions associated with each rating:
+
+| Rating | Temperature | Humidity | Wind Speed |
+|--------|-------------|----------|------------|
+| Moderate | 15-25°C | 40-70% | 5-15 km/h |
+| High | 25-32°C | 25-40% | 15-30 km/h |
+| Very High | 32-38°C | 15-25% | 30-50 km/h |
+| Severe | 38-42°C | 10-15% | 50-70 km/h |
+| Extreme | 42-45°C | 6-10% | 70-90 km/h |
+| Catastrophic | 45+°C | <6% | 90+ km/h |
 
 ## Implementation Approach
 
-### Simplified FDI for Training Tool
-For the purposes of this training simulation tool, we implement a **generalized Fire Danger Index** that:
+### For Training Scenarios
 
-1. **Combines FFDI and GFDI principles** into a unified metric
-2. **Uses accessible weather parameters** (temperature, humidity, wind speed)
-3. **Assumes moderate drought conditions** (DF = 5.0) when not explicitly provided
-4. **Assumes moderate grass curing** (70%) for grassland contexts
+1. **User selects AFDRS rating** (primary control)
+2. **System retrieves vegetation type** from geospatial data
+3. **Fire behaviour characteristics are determined** based on rating + vegetation
+4. **Weather parameters** can be adjusted for scenario context
+5. **AI prompts are generated** using behaviour descriptors and characteristics
 
-### Default Drought Factor Assumptions
-Since the tool focuses on scenario creation rather than operational forecasting, we use the following defaults:
-- **Standard scenarios:** DF = 5.0 (moderate drought stress)
-- **Extreme scenarios:** DF = 8.0 (high drought stress)
-- **Night/humid scenarios:** DF = 3.0 (low drought stress)
+### Example Scenario
 
-Users can adjust weather parameters to achieve the desired FDI outcome.
+```
+Rating: Severe
+Vegetation: Dry Sclerophyll Forest
+Weather: 40°C, 12% RH, 60 km/h NW winds
 
-### Bidirectional Calculation Strategy
+Expected Behaviour:
+- Flame height: 8-15 meters
+- Rate of spread: 4-6 km/h
+- Spotting: 500-1000 meters ahead
+- Intensity: Very High
 
-#### From Weather to FDI (Forward Calculation)
-When users adjust temperature, humidity, or wind speed:
-1. Calculate FFDI using current weather parameters and assumed DF
-2. Map FFDI to named rating category
-3. Update UI to reflect calculated FDI and rating
-
-#### From Rating to Weather (Reverse Calculation)
-When users select a named rating (e.g., "Extreme"):
-1. Look up typical weather parameters for that rating
-2. Apply those parameters to input controls
-3. Calculate and display corresponding FDI
-4. Allow users to fine-tune individual parameters
-
-#### From FDI to Weather (Direct Input)
-When users enter a specific FDI value:
-1. Find the rating category for that FDI
-2. Apply typical weather parameters for that rating
-3. Allow adjustment while maintaining approximate FDI
-
-## Typical Weather Profiles by Rating
-
-Based on Bureau of Meteorology guidance and AFAC standards:
-
-| Rating | FDI Range | Temp (°C) | Humidity (%) | Wind (km/h) | DF |
-|--------|-----------|-----------|--------------|-------------|-----|
-| Low-Moderate | 0-11 | 15-25 | 40-70 | 5-15 | 3.0 |
-| High | 12-23 | 25-32 | 25-40 | 15-30 | 5.0 |
-| Very High | 24-49 | 32-38 | 15-25 | 30-50 | 6.0 |
-| Severe | 50-74 | 38-42 | 10-15 | 50-70 | 7.0 |
-| Extreme | 75-99 | 42-45 | 6-10 | 70-90 | 8.0 |
-| Catastrophic | 100+ | 45+ | <6 | 90+ | 10.0 |
-
-**Note:** These are representative values. Actual fire danger depends on local conditions, vegetation type, and recent rainfall.
-
-## Edge Cases and Validation
-
-### Invalid Parameter Combinations
-- **Very low humidity + low temperature:** Physically unlikely; show warning
-- **High humidity + extreme FDI:** Contradictory; recalculate FDI automatically
-- **Calm winds + catastrophic rating:** Highly improbable; flag to user
-
-### Numerical Boundaries
-- FDI clamped to 0-150 range (values >150 are theoretically possible but extremely rare)
-- Temperature: 5-50°C (training context range)
-- Humidity: 5-100%
-- Wind: 0-120 km/h
-
-### Precision and Display
-- FDI displayed to 1 decimal place
-- Calculations use full floating-point precision internally
-- Rating transitions occur at threshold boundaries (e.g., 50.0 = Severe, 49.9 = Very High)
-
-## Calculation Validation
-
-All calculations have been validated against:
-1. Bureau of Meteorology published FDI tables
-2. AFAC training materials
-3. NSW Rural Fire Service operational guidelines
-
-## Future Enhancements
-
-### Potential Additions (Out of Current Scope)
-- **Keetch-Byram Drought Index (KBDI):** More sophisticated drought measure
-- **Soil Dryness Index (SDI):** Australian replacement for KBDI
-- **Grass Curing:** Direct input for grassland fire scenarios
-- **Fuel Moisture Content:** Direct measurement integration
-- **C-Haines Index:** Atmospheric instability factor for plume dynamics
-
-### Integration with Geospatial Data
-Future versions could derive drought factor from:
-- Historical rainfall data
-- Vegetation indices (NDVI from satellite)
-- Soil moisture datasets
+Prompt Description:
+"A severe bushfire in dry eucalypt forest with 8-15 meter flames,
+dense black smoke forming a towering convection column, heavy spotting
+500-1000 meters ahead of the fire front, driven by 60 km/h northwesterly
+winds on a 40 degree day with 12% humidity"
+```
 
 ## References
 
-1. McArthur, A.G. (1967). *Fire Behaviour in Eucalypt Forests.* Commonwealth of Australia Forestry and Timber Bureau Leaflet 107.
+1. Bureau of Meteorology (2024). *Australian Fire Danger Rating System.* http://www.bom.gov.au/australia/fire-danger-rating/
 
-2. McArthur, A.G. (1966). *Weather and Grassland Fire Behaviour.* Commonwealth of Australia Forestry and Timber Bureau Leaflet 100.
+2. AFAC (Australasian Fire and Emergency Services Authorities Council). *AFDRS Implementation Guide.*
 
-3. Bureau of Meteorology (2024). *Fire Weather.* http://www.bom.gov.au/weather-services/fire-weather-centre/
+3. Cheney, P., & Sullivan, A. (2008). *Grassfires: Fuel, Weather and Fire Behaviour.* CSIRO Publishing.
 
-4. AFAC (Australasian Fire and Emergency Services Authorities Council). *Australian Fire Danger Rating System (AFDRS).* https://www.afac.com.au/initiative/afdrs
+4. Cruz, M.G., & Alexander, M.E. (2013). *Uncertainty associated with model predictions of surface and crown fire rates of spread.* Environmental Modelling & Software, 47, 16-28.
 
-5. Noble, I.R., Gill, A.M., & Bary, G.A.V. (1980). *McArthur's fire-danger meters expressed as equations.* Australian Journal of Ecology, 5(2), 201-203.
-
-6. NSW Rural Fire Service. *Bush Fire Environmental Assessment Code (BFEAC).* Version 3.1.
+5. NSW Rural Fire Service. *Bush Fire Coordinating Committee Operations Manual.*
 
 ---
 
-*Document Version: 1.0*
+*Document Version: 2.0*
 *Last Updated: 2026-02-14*
-*Maintained by: Fire Simulation Tool Development Team*
+*Updated to reflect AFDRS as primary system, removed legacy McArthur calculations*
