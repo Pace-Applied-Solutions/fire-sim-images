@@ -9,6 +9,7 @@ import { generatePrompts } from '@fire-sim/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageGeneratorService } from './imageGenerator.js';
 import { BlobStorageService } from './blobStorage.js';
+import { ConsistencyValidator } from '../validation/consistencyValidator.js';
 
 export interface GenerationProgress {
   scenarioId: string;
@@ -30,10 +31,12 @@ const progressStore = new Map<string, GenerationProgress>();
 export class GenerationOrchestrator {
   private imageGenerator: ImageGeneratorService;
   private blobStorage: BlobStorageService;
+  private consistencyValidator: ConsistencyValidator;
 
   constructor(private context: InvocationContext) {
     this.imageGenerator = new ImageGeneratorService(context);
     this.blobStorage = new BlobStorageService(context);
+    this.consistencyValidator = new ConsistencyValidator();
   }
 
   /**
@@ -312,7 +315,32 @@ export class GenerationOrchestrator {
         }
       }
 
-      // Step 6: Store scenario metadata
+      // Step 6: Validate consistency
+      let validationResult;
+      if (images.length > 1) {
+        this.context.log('Running consistency validation', { scenarioId });
+        validationResult = this.consistencyValidator.validateImageSet(
+          images,
+          request.inputs,
+          anchorImage
+        );
+
+        const report = this.consistencyValidator.generateReport(validationResult);
+        this.context.log('Consistency validation complete', {
+          scenarioId,
+          score: validationResult.score,
+          passed: validationResult.passed,
+        });
+        this.context.log(report);
+
+        // Add validation warnings to error field if score is low
+        if (!validationResult.passed && validationResult.warnings.length > 0) {
+          const warningMessage = `Consistency warnings: ${validationResult.warnings.join('; ')}`;
+          progress.error = progress.error ? `${progress.error}. ${warningMessage}` : warningMessage;
+        }
+      }
+
+      // Step 7: Store scenario metadata
       const metadata = {
         scenarioId,
         request,
@@ -323,6 +351,7 @@ export class GenerationOrchestrator {
         prompts: promptSet.prompts,
         images,
         anchorImage,
+        validation: validationResult,
         estimatedCost: totalCost,
         createdAt: progress.createdAt,
         completedAt: new Date().toISOString(),
