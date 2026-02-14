@@ -288,17 +288,20 @@ Update this section after each issue or change.
   - Genericized agency-specific references across docs and UI copy for broader fire service use
   - Fixed Azure Functions entrypoint imports to resolve local start module resolution
   - **Issue 6 progress:** Added `/api/geodata` Azure Function returning cached GeoContext lookups (vegetation, elevation, slope, aspect, features) using NSW profile heuristics with low-confidence fallback and vegetation descriptor mapping in shared constants
-  - **Fire Danger Controls Enhancement:** Enhanced sidebar with comprehensive fire danger input and accurate weather-driven risk setting
-    - Created comprehensive fire danger calculation documentation (`docs/current_state/fire_danger_calculations.md`) with McArthur FFDI/GFDI formulas, AFDRS ratings, and references
-    - Added `fireDangerCalculations.ts` module with calculateFFDI, calculateGFDI, getFDIRating, getWeatherProfileForRating functions
-    - Updated ScenarioInputs type with fireDangerRating, fireDangerIndex, droughtFactor, and inputMode fields
-    - Enhanced ScenarioInputPanel with three input modes: Weather (granular control), Rating (AFDRS categories), FDI (direct index input)
-    - Implemented bidirectional sync: weather → FDI calculation, rating → typical weather, FDI → matched weather parameters
-    - Updated all four presets with accurate FDI values and drought factors
-    - Added real-time weather validation warnings for implausible parameter combinations
+  - **Fire Danger Controls (AFDRS-based):** Enhanced sidebar with Australian Fire Danger Rating System controls
+    - Replaced outdated McArthur FFDI/GFDI calculations with modern AFDRS approach
+    - Rewrote fire danger documentation (`docs/current_state/fire_danger_calculations.md`) to focus on AFDRS rating levels and vegetation-specific fire behaviour
+    - Simplified `fireDangerCalculations.ts` to map AFDRS ratings to known fire behaviour characteristics per vegetation type
+    - Added fire behaviour data tables: flame height, rate of spread, spotting distance, intensity descriptors
+    - Vegetation types covered: Dry Sclerophyll Forest, Grassland, Heath/Scrubland
+    - Simplified ScenarioInputs type: removed fireDangerIndex, droughtFactor, inputMode fields
+    - Streamlined ScenarioInputPanel: single AFDRS rating selector (Moderate → Catastrophic) with weather as context
+    - Each rating loads typical weather profile (temperature, humidity, wind speed) that can be fine-tuned individually
+    - Removed complex three-mode input system and bidirectional FDI sync logic
+    - Updated all four presets to use simplified AFDRS-based structure
+    - Real-time weather validation warnings for implausible parameter combinations
     - Styled fire danger controls with AFDRS standard colors (blue to dark red gradient)
-    - Added collapsible FDI ranges reference and advanced drought factor control
-    - All calculations based on published Australian fire science standards (McArthur 1966/1967, Bureau of Meteorology, AFAC)
+    - System now provides trainers with vegetation-specific fire behaviour for each rating level rather than calculating risk indices
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
