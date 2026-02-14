@@ -26,11 +26,11 @@ Purpose: Keep all work aligned to the master plan and the project vision.
 
 ## Guardrails
 
-- Prefer NSW and Australian authoritative datasets.
+- Prefer authoritative regional and national datasets.
 - Prioritize geographic accuracy over artistic style.
-- Keep outputs safe, credible, and aligned with RFS terminology.
+- Keep outputs safe, credible, and aligned with fire service terminology.
 - Maintain modularity so models and services can be swapped later.
-- All data stays within the NSW RFS Azure environment.
+- All data stays within the target agency's Azure environment.
 
 ## Technical Guidance (Best Practices)
 
