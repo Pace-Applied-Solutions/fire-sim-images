@@ -20,7 +20,6 @@ Azure environment provisioned and accessible.
 GitHub repo initialised with background.md and master-plan.md.
 All required API keys and service access confirmed.
 
-
 🗺️ Issue #2: Front-End Mapping Interface
 
 Objective:
@@ -42,7 +41,6 @@ Users can draw a fire perimeter and set parameters.
 Map renders 3D terrain and contours.
 Inputs are correctly packaged for backend API.
 
-
 🌿 Issue #3: Geospatial Data Integration
 
 Objective:
@@ -63,7 +61,6 @@ Success Criteria:
 Given a polygon, backend returns vegetation type and terrain summary.
 Data is accurate and performant for typical fire sizes.
 
-
 🧠 Issue #4: Prompt Generation Logic
 
 Objective:
@@ -82,7 +79,6 @@ Success Criteria:
 
 Prompts are generated dynamically and produce consistent, realistic outputs.
 Prompt structure is modular and testable.
-
 
 🖼️ Issue #5: AI Image Generation
 
@@ -104,7 +100,6 @@ Success Criteria:
 Images are generated and stored successfully.
 Output quality meets training realism expectations.
 
-
 🔄 Issue #6: Multi-Perspective Rendering
 
 Objective:
@@ -123,7 +118,6 @@ Success Criteria:
 
 At least 4–5 distinct, coherent images are generated per scenario.
 Images reflect correct terrain and fire placement.
-
 
 🎞️ Issue #7: Video Generation Pipeline
 
@@ -146,7 +140,6 @@ Success Criteria:
 A 4–10 second video is generated and viewable in the frontend.
 Fire and smoke motion is realistic and matches scenario.
 
-
 🧪 Issue #8: Testing & Iteration
 
 Objective:
@@ -165,7 +158,6 @@ Success Criteria:
 
 Outputs are rated as realistic and useful by trainers.
 Prompt and model adjustments improve consistency and quality.
-
 
 🔐 Issue #9: Infrastructure & Security
 
@@ -186,7 +178,6 @@ Success Criteria:
 
 Only authorised users can access the tool.
 Logs and metrics are available for usage and error tracking.
-
 
 🚀 Issue #10: Future Enhancements & Roadmap
 
