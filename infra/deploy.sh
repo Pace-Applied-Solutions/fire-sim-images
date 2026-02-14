@@ -147,6 +147,7 @@ else
 fi
 
 echo -e "${YELLOW}Validating deployment in ${LOCATION}...${NC}"
+set +e
 VALIDATION_RESULT=$(az deployment group validate \
     --resource-group "$RESOURCE_GROUP" \
     --template-file main.bicep \
@@ -154,8 +155,10 @@ VALIDATION_RESULT=$(az deployment group validate \
     --parameters location="$LOCATION" \
     --query "properties.provisioningState" \
     -o tsv 2>/tmp/firesim-validate.err)
+VALIDATION_EXIT_CODE=$?
+set -e
 
-if [ "$VALIDATION_RESULT" != "Succeeded" ]; then
+if [ $VALIDATION_EXIT_CODE -ne 0 ] || [ "$VALIDATION_RESULT" != "Succeeded" ]; then
     VALIDATION_ERROR=$(cat /tmp/firesim-validate.err)
     echo -e "${RED}Validation failed${NC}"
     if [ -n "$VALIDATION_ERROR" ]; then

@@ -40,17 +40,14 @@ param storageSku string = 'Standard_LRS'
 ])
 param keyVaultSku string = 'standard'
 
-@description('Azure OpenAI SKU name')
-param openAISku string = 'S0'
+@description('Azure AI Foundry project path (workspace/project)')
+param foundryProjectPath string
 
-@description('Azure OpenAI model deployment name')
-param openAIModelName string = 'dall-e-3'
+@description('Azure AI Foundry project region')
+param foundryProjectRegion string = 'eastus'
 
-@description('Azure OpenAI model version')
-param openAIModelVersion string = '3.0'
-
-@description('Azure OpenAI model capacity')
-param openAIModelCapacity int = 1
+@description('Image model to use in Foundry')
+param foundryImageModel string = 'stable-image-core'
 
 // Variables
 var resourceNamePrefix = 'firesim-${environmentName}'
@@ -96,17 +93,25 @@ module keyVault './modules/keyVault.bicep' = {
   }
 }
 
-// Deploy Azure OpenAI
-module openAI './modules/openai.bicep' = {
-  name: 'openai-deployment'
-  params: {
-    name: openAIName
-    location: location
-    sku: openAISku
-    tags: tags
-    modelName: openAIModelName
-    modelVersion: openAIModelVersion
-    modelCapacity: openAIModelCapacity
+// Store Foundry project settings in Key Vault
+resource foundryProjectPathSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVault.outputs.name}/Foundry--ProjectPath'
+  properties: {
+    value: foundryProjectPath
+  }
+}
+
+resource foundryProjectRegionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVault.outputs.name}/Foundry--ProjectRegion'
+  properties: {
+    value: foundryProjectRegion
+  }
+}
+
+resource foundryImageModelSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVault.outputs.name}/Foundry--ImageModel'
+  properties: {
+    value: foundryImageModel
   }
 }
 
@@ -124,6 +129,6 @@ output keyVaultName string = keyVault.outputs.name
 output keyVaultId string = keyVault.outputs.id
 output keyVaultUri string = keyVault.outputs.uri
 
-output openAIName string = openAI.outputs.name
-output openAIEndpoint string = openAI.outputs.endpoint
-output openAIModelDeploymentName string = openAI.outputs.modelDeploymentName
+output foundryProjectPath string = foundryProjectPath
+output foundryProjectRegion string = foundryProjectRegion
+output foundryImageModel string = foundryImageModel
