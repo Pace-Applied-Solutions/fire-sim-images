@@ -63,6 +63,22 @@ const DEFAULT_INPUTS: ScenarioInputs = {
   fireStage: 'established',
 };
 
+const RATING_CLASS_MAP: Record<FireDangerRating, string> = {
+  noRating: styles.ratingNoRating,
+  moderate: styles.ratingModerate,
+  high: styles.ratingHigh,
+  extreme: styles.ratingExtreme,
+  catastrophic: styles.ratingCatastrophic,
+};
+
+const RATING_INTENSITY_MAP: Record<FireDangerRating, ScenarioInputs['intensity']> = {
+  noRating: 'low',
+  moderate: 'moderate',
+  high: 'high',
+  extreme: 'extreme',
+  catastrophic: 'catastrophic',
+};
+
 interface ValidationErrors {
   windSpeed?: string;
   temperature?: string;
@@ -124,6 +140,7 @@ export const ScenarioInputPanel: React.FC = () => {
     const newInputs: ScenarioInputs = {
       ...inputs,
       fireDangerRating: rating,
+      intensity: RATING_INTENSITY_MAP[rating],
       temperature: profile.temperature,
       humidity: profile.humidity,
       windSpeed: profile.windSpeed,
@@ -138,11 +155,12 @@ export const ScenarioInputPanel: React.FC = () => {
   const applyPreset = (presetKey: string) => {
     if (presetKey && PRESETS[presetKey]) {
       const presetInputs = PRESETS[presetKey];
-      setInputs(presetInputs);
+      const intensityFromRating = RATING_INTENSITY_MAP[presetInputs.fireDangerRating];
+      setInputs({ ...presetInputs, intensity: intensityFromRating });
       setSelectedPreset(presetKey);
       setErrors({});
       setWarnings([]);
-      setScenarioInputs(presetInputs);
+      setScenarioInputs({ ...presetInputs, intensity: intensityFromRating });
     }
   };
 
@@ -168,6 +186,7 @@ export const ScenarioInputPanel: React.FC = () => {
       low: 'Low',
       moderate: 'Moderate',
       high: 'High',
+      catastrophic: 'Catastrophic',
       veryHigh: 'Very High',
       extreme: 'Extreme',
     };
@@ -189,17 +208,6 @@ export const ScenarioInputPanel: React.FC = () => {
     };
 
     return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)}. Intensity: ${intensityMap[inputs.intensity]}.`;
-  };
-
-  const getRatingClassName = (rating: FireDangerRating): string => {
-    const classMap: Record<FireDangerRating, string> = {
-      noRating: styles.ratingNoRating,
-      moderate: styles.ratingModerate,
-      high: styles.ratingHigh,
-      extreme: styles.ratingExtreme,
-      catastrophic: styles.ratingCatastrophic,
-    };
-    return `${styles.fdiRating} ${classMap[rating]}`;
   };
 
   return (
@@ -233,40 +241,20 @@ export const ScenarioInputPanel: React.FC = () => {
             {/* Fire Danger Rating Selector */}
             <div className={styles.field}>
               <label className={styles.label}>Select fire danger rating</label>
-              <div className={styles.ratingSegmentedControl}>
-                {(['noRating', 'moderate', 'high', 'extreme', 'catastrophic'] as const).map(
-                  (rating) => (
-                    <button
-                      key={rating}
-                      onClick={() => handleRatingChange(rating)}
-                      className={`${styles.ratingSegment} ${
-                        inputs.fireDangerRating === rating ? styles.ratingSegmentActive : ''
-                      }`}
-                      style={{
-                        backgroundColor: inputs.fireDangerRating === rating ? getRatingClassName(rating).split(' ')[1] : undefined,
-                        color: inputs.fireDangerRating === rating ? 'white' : undefined,
-                      }}
-                      aria-pressed={inputs.fireDangerRating === rating}
-                    >
-                      {formatRating(rating)}
-                    </button>
-                  )
-                )}
-              </div>
-              <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem', lineHeight: 1.4 }}>
-                {getRatingDescription(inputs.fireDangerRating)}
-              </p>
+              <select
+                className={`${styles.ratingSelect} ${RATING_CLASS_MAP[inputs.fireDangerRating]}`}
+                value={inputs.fireDangerRating}
+                onChange={(e) => handleRatingChange(e.target.value as FireDangerRating)}
+              >
+                <option value="noRating">No Rating</option>
+                <option value="moderate">Moderate</option>
+                <option value="high">High</option>
+                <option value="extreme">Extreme</option>
+                <option value="catastrophic">Catastrophic</option>
+              </select>
             </div>
 
-            {/* Current Rating Display */}
-            <div className={styles.fdiDisplay}>
-              <span className={styles.fdiLabel}>Current rating:</span>
-              <span className={getRatingClassName(inputs.fireDangerRating)}>
-                {formatRating(inputs.fireDangerRating)}
-              </span>
-            </div>
-
-            <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem', fontStyle: 'italic' }}>
+            <p className={styles.ratingHint}>
               Selecting a rating sets typical weather conditions. You can adjust individual weather parameters below.
             </p>
           </div>
@@ -408,27 +396,6 @@ export const ScenarioInputPanel: React.FC = () => {
         </div>
 
         <div className={styles.sectionContent}>
-            {/* Fire Intensity */}
-            <div className={styles.field}>
-              <label className={styles.label}>Fire intensity</label>
-              <div className={styles.segmentedControl}>
-                {(['low', 'moderate', 'high', 'veryHigh', 'extreme'] as const).map(
-                  (intensity) => (
-                    <button
-                      key={intensity}
-                      onClick={() => updateInput('intensity', intensity)}
-                      className={`${styles.segment} ${
-                        inputs.intensity === intensity ? styles.segmentActive : ''
-                      }`}
-                      aria-pressed={inputs.intensity === intensity}
-                    >
-                      {intensity === 'veryHigh' ? 'Very High' : intensity.charAt(0).toUpperCase() + intensity.slice(1)}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-
             {/* Fire Stage */}
             <div className={styles.field}>
               <label htmlFor="fire-stage" className={styles.label}>

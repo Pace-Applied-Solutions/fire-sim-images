@@ -50,7 +50,7 @@ export interface ScenarioInputs {
   timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
 
   // Fire characteristics
-  intensity: 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
+  intensity: 'low' | 'moderate' | 'high' | 'extreme' | 'catastrophic' | 'veryHigh';
   fireStage: 'spotFire' | 'developing' | 'established' | 'major';
 }
 

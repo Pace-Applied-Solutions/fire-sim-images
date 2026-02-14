@@ -298,6 +298,12 @@ Update this section after each issue or change.
   - Replaced draw toolbar with emoji-based map controls
   - Moved map guidance banner to top with arrow callout and crosshair cursor in draw mode
   - Tightened map guidance layout and simplified copy
+  - Switched fire danger rating to compact dropdown with badge
+  - Simplified rating dropdown to use colored select only
+  - Tied fire intensity to fire danger rating and removed manual override
+  - Removed duplicate current rating display in fire danger section
+  - Removed fire intensity UI from the sidebar
+  - Aligned catastrophic rating with internal intensity mapping
   - **Issue 6 progress:** Added `/api/geodata` Azure Function returning cached GeoContext lookups (vegetation, elevation, slope, aspect, features) using NSW profile heuristics with low-confidence fallback and vegetation descriptor mapping in shared constants
   - **Fire Danger Controls (AFDRS-based):** Enhanced sidebar with Australian Fire Danger Rating System controls
     - Replaced outdated McArthur FFDI/GFDI calculations with modern AFDRS approach

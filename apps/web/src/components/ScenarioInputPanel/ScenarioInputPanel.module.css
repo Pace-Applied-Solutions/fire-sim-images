@@ -335,39 +335,6 @@
   border-color: var(--color-accent-secondary);
 }
 
-.fdiDisplay {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-default);
-  border-radius: 0.375rem;
-  margin-top: 0.375rem;
-}
-
-.fdiLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.fdiValue {
-  flex: 1;
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-align: right;
-  color: var(--color-text-primary);
-}
-
-.fdiRating {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
 
 .ratingNoRating {
   background: #f3f4f6;
@@ -440,6 +407,40 @@
 .ratingSegmentActive {
   font-weight: 600;
 }
+
+
+.ratingSelect {
+  flex: 1;
+  padding: 0.375rem 0.625rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.375rem;
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 150ms;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ratingSelect:hover {
+  border-color: var(--color-border-hover);
+}
+
+.ratingSelect:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
+}
+
+.ratingHint {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  margin-top: 0.375rem;
+  font-style: italic;
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
