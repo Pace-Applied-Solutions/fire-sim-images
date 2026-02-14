@@ -11,11 +11,16 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
+    "@azure-rest/ai-content-safety": "^1.0.1",
+    "@azure/data-tables": "^13.3.2",
     "@azure/functions": "^4.5.0",
     "@azure/identity": "^4.2.0",
     "@azure/keyvault-secrets": "^4.8.0",
     "@azure/storage-blob": "^12.31.0",
     "@fire-sim/shared": "*",
+    "@types/jsonwebtoken": "^9.0.10",
+    "applicationinsights": "^3.13.0",
+    "jsonwebtoken": "^9.0.3",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
