@@ -17,18 +17,13 @@ import {
 /**
  * Blocked terms that should never appear in prompts.
  * These terms may trigger AI content filters or produce unsafe/inappropriate content.
+ * Note: Terms like "people" and "animal" are allowed in negative prompts (e.g., "No people, no animals")
  */
 const BLOCKED_TERMS = [
   'explosion',
-  'destruction',
   'casualties',
   'violence',
   'death',
-  'people',
-  'human',
-  'person',
-  'animal',
-  'wildlife',
   'injury',
   'victim',
   'destroy',
@@ -36,10 +31,13 @@ const BLOCKED_TERMS = [
 ];
 
 /**
- * Validates that a prompt does not contain blocked terms.
+ * Validates that a prompt does not contain blocked terms in the descriptive sections.
+ * The safety section is excluded from validation as it contains negative terms.
  */
-function validatePromptSafety(promptText: string): { valid: boolean; blockedTerms: string[] } {
-  const lowerPrompt = promptText.toLowerCase();
+function validatePromptSafety(promptText: string, safetySection: string): { valid: boolean; blockedTerms: string[] } {
+  // Remove the safety section from validation as it contains negative terms
+  const descriptiveText = promptText.replace(safetySection, '');
+  const lowerPrompt = descriptiveText.toLowerCase();
   const found = BLOCKED_TERMS.filter((term) => lowerPrompt.includes(term));
   return {
     valid: found.length === 0,
@@ -210,8 +208,8 @@ export function generatePrompts(
   for (const viewpoint of request.requestedViews) {
     const promptText = composePrompt(template, data, viewpoint);
 
-    // Validate prompt safety
-    const validation = validatePromptSafety(promptText);
+    // Validate prompt safety (excluding the safety section which contains negative terms)
+    const validation = validatePromptSafety(promptText, template.sections.safety);
     if (!validation.valid) {
       throw new Error(
         `Prompt contains blocked terms: ${validation.blockedTerms.join(', ')}. ` +

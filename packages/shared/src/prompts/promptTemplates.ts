@@ -120,9 +120,9 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
 
     weather: (data) =>
       `Temperature is ${data.temperature}°C with ${data.humidity}% relative humidity. ` +
-      `${data.windSpeed} km/h ${data.windDirection} wind. ${data.timeOfDayLighting}`,
+      `${data.windSpeed} km/h ${data.windDirection} wind. ${data.timeOfDayLighting}.`,
 
-    perspective: (viewpoint) => VIEWPOINT_PERSPECTIVES[viewpoint],
+    perspective: (viewpoint) => `${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
 
     safety: 'No people, no animals, no text, no watermarks. No fantasy elements.',
   },
