@@ -7,7 +7,7 @@ import { useAppStore } from '../store/appStore';
 import styles from './ScenarioPage.module.css';
 
 export const ScenarioPage: React.FC = () => {
-  const { generationResult, generationProgress, scenarioState } = useAppStore();
+  const { generationResult, generationProgress, scenarioState, perimeter, scenarioInputs, geoContext } = useAppStore();
 
   const renderResults = () => {
     if (scenarioState === 'generating' && generationProgress) {
@@ -20,7 +20,14 @@ export const ScenarioPage: React.FC = () => {
     }
 
     if (generationResult) {
-      return <GeneratedImages result={generationResult} />;
+      return (
+        <GeneratedImages 
+          result={generationResult}
+          perimeter={perimeter || undefined}
+          inputs={scenarioInputs || undefined}
+          geoContext={geoContext || undefined}
+        />
+      );
     }
 
     return (
