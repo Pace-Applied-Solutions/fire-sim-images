@@ -353,11 +353,24 @@ Update this section after each issue or change.
     - Tested with multiple scenarios covering different intensities, times, and viewpoints
     - All prompts properly formatted with style, scene, fire, weather, perspective, and safety sections
     - Code review and security scan completed with no issues
+  - **Issue 9 complete:** Multi-Perspective Rendering & Consistency (Phase 3)
+    - Implemented two-pass generation: aerial view as anchor → derived views with reference
+    - Extended ImageGenOptions with referenceImage, referenceStrength, mapScreenshot fields
+    - Created map screenshot capture utility supporting all 12 viewpoints
+    - Implemented consistent seed management (auto-generated 0-1,000,000 range)
+    - Created ConsistencyValidator with 4-dimension validation (smoke, fire size, lighting, color)
+    - Weighted scoring system (0-100) with 70% passing threshold
+    - Built ImageComparison component with grid, side-by-side, and carousel views
+    - Added anchor image badges and reference usage indicators in UI
+    - Created ImagePostProcessor infrastructure ready for sharp integration
+    - Comprehensive documentation in docs/current_state/multi_perspective_consistency.md
+    - All builds pass, 0 security vulnerabilities, code review feedback addressed
+    - Ready for production image processing and regeneration API endpoint (future enhancements)
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month (sufficient for development and early use)
-- **Next milestone:** Phase 3 - AI Image Generation Pipeline (Issue 8)
+- **Next milestone:** Phase 3 - Results Gallery & Scenario History (Issue 10)
   - **Address Search & Location Navigation:** Fast address search with autocomplete and geolocation support
     - Created `AddressSearch` component with Mapbox Geocoding API integration
     - Real-time autocomplete with 300ms debouncing to minimize API calls

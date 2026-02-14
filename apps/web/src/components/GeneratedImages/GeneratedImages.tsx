@@ -2,15 +2,22 @@
  * Component to display generated images from the generation results.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { GenerationResult } from '@fire-sim/shared';
+import { ImageComparison } from '../ImageComparison';
 import styles from './GeneratedImages.module.css';
 
 interface GeneratedImagesProps {
   result: GenerationResult;
+  onRegenerateImage?: (viewpoint: string) => void;
 }
 
-export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ result }) => {
+export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ 
+  result,
+  onRegenerateImage,
+}) => {
+  const [showComparison, setShowComparison] = useState(false);
+
   if (result.status === 'pending' || result.status === 'in_progress') {
     return (
       <div className={styles.container}>
@@ -43,16 +50,79 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ result }) => {
     );
   }
 
+  // Show comparison view if requested
+  if (showComparison) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.comparisonHeader}>
+          <button
+            className={styles.backButton}
+            onClick={() => setShowComparison(false)}
+          >
+            ← Back to Grid
+          </button>
+        </div>
+        <ImageComparison
+          images={result.images}
+          anchorImage={result.anchorImage}
+          seed={result.seed}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>Generated Images</h3>
-        <p className={styles.count}>
-          {result.images.length} {result.images.length === 1 ? 'image' : 'images'}
-        </p>
+        <div className={styles.headerLeft}>
+          <h3 className={styles.title}>Generated Images</h3>
+          <p className={styles.count}>
+            {result.images.length} {result.images.length === 1 ? 'image' : 'images'}
+          </p>
+          {result.seed !== undefined && (
+            <span className={styles.seed} title="Consistency seed used for all images">
+              Seed: {result.seed}
+            </span>
+          )}
+        </div>
+        <button
+          className={styles.compareButton}
+          onClick={() => setShowComparison(true)}
+        >
+          Compare Views
+        </button>
       </div>
 
       <div className={styles.grid}>
+        {result.anchorImage && (
+          <div className={`${styles.imageCard} ${styles.anchorCard}`}>
+            <div className={styles.imageWrapper}>
+              <img
+                src={result.anchorImage.url}
+                alt={`${result.anchorImage.viewPoint} view`}
+                className={styles.image}
+                loading="lazy"
+              />
+              <div className={styles.anchorBadge}>Anchor</div>
+            </div>
+            <div className={styles.imageInfo}>
+              <h4 className={styles.viewpoint}>{formatViewpoint(result.anchorImage.viewPoint)}</h4>
+              <p className={styles.metadata}>
+                {result.anchorImage.metadata.width} × {result.anchorImage.metadata.height} • {result.anchorImage.metadata.model}
+              </p>
+            </div>
+            <div className={styles.actions}>
+              <a
+                href={result.anchorImage.url}
+                download={`${result.anchorImage.viewPoint}.png`}
+                className={styles.downloadButton}
+                title="Download image"
+              >
+                Download
+              </a>
+            </div>
+          </div>
+        )}
         {result.images.map((image) => (
           <div key={image.viewPoint} className={styles.imageCard}>
             <div className={styles.imageWrapper}>
@@ -62,6 +132,11 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ result }) => {
                 className={styles.image}
                 loading="lazy"
               />
+              {image.metadata.usedReferenceImage && (
+                <div className={styles.referenceBadge} title="Generated using anchor reference">
+                  🔗
+                </div>
+              )}
             </div>
             <div className={styles.imageInfo}>
               <h4 className={styles.viewpoint}>{formatViewpoint(image.viewPoint)}</h4>
@@ -78,6 +153,15 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ result }) => {
               >
                 Download
               </a>
+              {onRegenerateImage && (
+                <button
+                  className={styles.regenerateButton}
+                  onClick={() => onRegenerateImage(image.viewPoint)}
+                  title="Regenerate this view"
+                >
+                  🔄
+                </button>
+              )}
             </div>
           </div>
         ))}
