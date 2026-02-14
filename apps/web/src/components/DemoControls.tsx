@@ -4,10 +4,10 @@ import { useToastStore } from '../store/toastStore';
 import styles from './DemoControls.module.css';
 
 export const DemoControls: React.FC = () => {
-  const { scenarioState, setScenarioState } = useAppStore();
+  const { setScenarioState } = useAppStore();
   const { addToast } = useToastStore();
 
-  const handleStateChange = (newState: typeof scenarioState) => {
+  const handleStateChange = (newState: Parameters<typeof setScenarioState>[0]) => {
     setScenarioState(newState);
     addToast({
       type: 'info',

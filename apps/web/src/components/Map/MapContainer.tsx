@@ -130,7 +130,7 @@ export const MapContainer = () => {
 			if (drawRef.current && map) {
 				try {
 					map.removeControl(drawRef.current);
-				} catch (e) {
+				} catch {
 					// Ignore cleanup errors
 				}
 			}
@@ -252,8 +252,8 @@ export const MapContainer = () => {
 
 	// Handle polygon draw/update
 	const handleDrawUpdate = useCallback(
-		(e: any) => {
-			const features = e.features;
+		(event: { features?: Feature[] }) => {
+			const features = event.features;
 			if (!features || features.length === 0) return;
 
 			const feature = features[0] as Feature<Polygon>;

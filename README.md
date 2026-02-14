@@ -121,7 +121,7 @@ The `@fire-sim/shared` package defines core domain types used by both front-end 
 
 - `FirePerimeter` — GeoJSON polygon for fire boundaries
 - `ScenarioInputs` — Wind, temperature, humidity, time, intensity
-- `GeoContext` — Vegetation, slope, elevation, aspect
+- `GeoContext` — Vegetation and subtype, fuel load, elevation and slope stats, aspect, nearby features, data source
 - `ViewPoint` — Perspective options (aerial, ground, ridge)
 - `GenerationRequest` — Complete scenario generation payload
 - `GenerationResult` — Generated images and metadata
