@@ -1,7 +1,7 @@
 import functions from '@azure/functions';
 import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import type { GenerationRequest, GenerationResult } from '@fire-sim/shared';
-import { getFoundryConfig } from '../foundryConfig.js';
+import { getFoundryConfig } from '../foundryConfig.ts';
 
 const { app } = functions;
 

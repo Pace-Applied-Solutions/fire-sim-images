@@ -47,72 +47,77 @@
 	box-shadow: var(--shadow-md);
 }
 
-/* Address Search Container */
-.searchContainer {
+/* Map Toolbar */
+.mapToolbar {
 	position: absolute;
 	top: 16px;
-	left: 16px;
+	left: 72px;
+	right: 72px;
+	padding: 6px;
 	z-index: 20;
-	max-width: 400px;
-	width: calc(100% - 440px); /* Account for: left margin (16px) + draw controls (~56px) + right margin (16px) + viewpoint controls (~352px) */
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	background: var(--color-bg-elevated);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
 }
 
-@media (max-width: 1200px) {
-	.searchContainer {
-		width: calc(100% - 240px); /* Adjust for smaller viewpoint controls */
-	}
+.toolbarSearch {
+	flex: 1;
+	min-width: 220px;
+	max-width: 420px;
+}
+
+.toolbarHint {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-md);
+	padding: 2px 6px;
+	color: var(--color-text-secondary);
+}
+
+.toolbarHintText {
+	line-height: var(--line-height-relaxed);
+}
+
+.toolbarHintTitle {
+	font-size: 0.9rem;
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-accent);
+	margin-bottom: 2px;
+}
+
+.toolbarHintText p {
+	font-size: 0.75rem;
+	margin-bottom: 0;
+}
+
+.toolbarHintArrow {
+	font-size: 1.1rem;
+	color: var(--color-accent-primary);
+	flex-shrink: 0;
 }
 
 @media (max-width: 900px) {
-	.searchContainer {
-		width: calc(100% - 92px); /* Account for draw controls only */
-	}
-}
-
-@media (max-width: 768px) {
-	.searchContainer {
-		width: calc(100% - 32px);
-		max-width: none;
+	.mapToolbar {
 		left: 16px;
 		right: 16px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.toolbarSearch {
+		max-width: none;
+		width: 100%;
 	}
 }
 
 /* Viewpoint Controls */
 .viewpointControls {
-	position: absolute;
-	top: 16px;
-	left: 50%;
-	transform: translateX(-50%);
-	background: var(--color-bg-elevated);
-	border-radius: var(--radius-lg);
-	padding: 6px 8px;
-	box-shadow: var(--shadow-lg);
-	z-index: 5;
 	display: flex;
 	align-items: center;
-	max-width: calc(100% - 480px); /* Account for left controls (420px) + right controls (60px) */
-}
-
-@media (max-width: 1200px) {
-	.viewpointControls {
-		max-width: calc(100% - 280px); /* Tighter fit */
-	}
-}
-
-@media (max-width: 900px) {
-	.viewpointControls {
-		left: 16px;
-		right: 16px;
-		transform: none;
-		justify-content: center;
-		max-width: calc(100% - 32px);
-	}
-
-	.viewpointButtons {
-		flex-wrap: wrap;
-		justify-content: center;
-	}
+	margin-left: 6px;
 }
 
 .viewpointButtons {
@@ -401,6 +406,18 @@
 :global(.mapboxgl-ctrl-group button) {
 	width: 32px;
 	height: 32px;
+}
+
+:global(.mapboxgl-ctrl-group button.mapboxgl-ctrl-compass) {
+	width: 38px;
+	height: 38px;
+	background: var(--color-bg-primary) !important;
+	border: 1px solid var(--color-border-default) !important;
+	box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), var(--shadow-md);
+}
+
+:global(.mapboxgl-ctrl-compass .mapboxgl-ctrl-compass-arrow) {
+	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
 }
 
 :global(.mapboxgl-ctrl-group button:hover) {

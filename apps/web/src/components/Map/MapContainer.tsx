@@ -170,8 +170,18 @@ export const MapContainer = () => {
 			'top-left'
 		);
 
+		// Add compass-only control at bottom-right for quick bearing reference
+		map.addControl(
+			new mapboxgl.NavigationControl({
+				showCompass: true,
+				showZoom: false,
+				visualizePitch: true,
+			}),
+			'bottom-right'
+		);
+
 		// Add scale bar
-		map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
+		map.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
 
 		// Setup 3D terrain once style loads
 		map.on('load', () => {
@@ -590,7 +600,7 @@ export const MapContainer = () => {
 				center: [longitude, latitude],
 				zoom: 14,
 				duration: 2000,
-				essential: true,
+				tessential: true,
 			});
 
 			addToast({
@@ -678,13 +688,85 @@ export const MapContainer = () => {
 				</button>
 			</div>
 
-			{/* Address Search */}
+			{/* Map Toolbar */}
 			{isMapLoaded && (
-				<div className={styles.searchContainer}>
-					<AddressSearch
-						onLocationSelect={handleLocationSelect}
-						onGeolocationRequest={handleGeolocationRequest}
-					/>
+				<div className={styles.mapToolbar}>
+					<div className={styles.toolbarSearch}>
+						<AddressSearch
+							onLocationSelect={handleLocationSelect}
+							onGeolocationRequest={handleGeolocationRequest}
+						/>
+					</div>
+					{!perimeter && (
+						<div className={styles.toolbarHint}>
+							<div className={styles.toolbarHintText}>
+								<div className={styles.toolbarHintTitle}>Start drawing with ⬠</div>
+								<p>Click on the map to place the perimeter</p>
+							</div>
+							<div className={styles.toolbarHintArrow} aria-hidden="true">
+								→
+							</div>
+						</div>
+					)}
+					{metadata && (
+						<div className={styles.viewpointControls}>
+							<div className={styles.viewpointButtons}>
+								<button
+									onClick={toggleViewMode}
+									className={styles.viewpointToggle}
+									aria-pressed={viewMode === 'ground'}
+									aria-label={
+										viewMode === 'helicopter'
+											? 'Switch to fire truck perspective'
+											: 'Switch to helicopter perspective'
+									}
+									title={
+										viewMode === 'helicopter'
+											? 'Switch to fire truck perspective'
+											: 'Switch to helicopter perspective'
+									}
+									type="button"
+								>
+									{viewMode === 'helicopter' ? '🚁' : '🚒'}
+								</button>
+								{(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
+									(direction) => (
+										<button
+											key={direction}
+											onClick={() => handleDirectionSelect(direction)}
+											className={`${styles.viewpointBtn} ${
+												currentDirection === direction ? styles.viewpointBtnActive : ''
+											}`}
+											title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
+												direction === 'above' ? 'above' : `from ${direction}`
+											}`}
+											aria-pressed={currentDirection === direction}
+											type="button"
+										>
+											{direction === 'north'
+												? 'N'
+												: direction === 'south'
+													? 'S'
+													: direction === 'east'
+														? 'E'
+														: direction === 'west'
+															? 'W'
+															: '⬆'}
+										</button>
+									)
+								)}
+								<button
+									onClick={captureMapView}
+									className={styles.viewpointCapture}
+									title="Capture current view"
+									aria-label="Capture current view"
+									type="button"
+								>
+									📷
+								</button>
+							</div>
+						</div>
+					)}
 				</div>
 			)}
 
@@ -692,67 +774,6 @@ export const MapContainer = () => {
 				<div className={styles.mapError}>
 					<div className={styles.mapErrorTitle}>Map unavailable</div>
 					<p className={styles.mapErrorText}>{mapError}</p>
-				</div>
-			)}
-
-			{/* Viewpoint Controls */}
-			{metadata && (
-				<div className={styles.viewpointControls}>
-					<div className={styles.viewpointButtons}>
-						<button
-							onClick={toggleViewMode}
-							className={styles.viewpointToggle}
-							aria-pressed={viewMode === 'ground'}
-							aria-label={
-								viewMode === 'helicopter'
-									? 'Switch to fire truck perspective'
-									: 'Switch to helicopter perspective'
-							}
-							title={
-								viewMode === 'helicopter'
-									? 'Switch to fire truck perspective'
-									: 'Switch to helicopter perspective'
-							}
-							type="button"
-						>
-							{viewMode === 'helicopter' ? '🚁' : '🚒'}
-						</button>
-						{(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
-							(direction) => (
-								<button
-									key={direction}
-									onClick={() => handleDirectionSelect(direction)}
-									className={`${styles.viewpointBtn} ${
-										currentDirection === direction ? styles.viewpointBtnActive : ''
-									}`}
-									title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
-										direction === 'above' ? 'above' : `from ${direction}`
-									}`}
-									aria-pressed={currentDirection === direction}
-									type="button"
-								>
-									{direction === 'north'
-										? 'N'
-										: direction === 'south'
-											? 'S'
-											: direction === 'east'
-												? 'E'
-												: direction === 'west'
-													? 'W'
-													: '⬆'}
-								</button>
-							)
-						)}
-						<button
-							onClick={captureMapView}
-							className={styles.viewpointCapture}
-							title="Capture current view"
-							aria-label="Capture current view"
-							type="button"
-						>
-							📷
-						</button>
-					</div>
 				</div>
 			)}
 
@@ -783,18 +804,6 @@ export const MapContainer = () => {
 				</div>
 			)}
 
-			{/* Instructions */}
-			{!perimeter && isMapLoaded && (
-				<div className={styles.instructions}>
-					<div className={styles.instructionsText}>
-						<div className={styles.instructionsTitle}>Start drawing with ⬠</div>
-						<p>Click on the map to place the perimeter</p>
-					</div>
-					<div className={styles.instructionsArrow} aria-hidden="true">
-						→
-					</div>
-				</div>
-			)}
 		</div>
 	);
 };

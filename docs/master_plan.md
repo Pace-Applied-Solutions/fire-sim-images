@@ -298,6 +298,10 @@ Update this section after each issue or change.
   - Replaced draw toolbar with emoji-based map controls
   - Moved map guidance banner to top with arrow callout and crosshair cursor in draw mode
   - Tightened map guidance layout and simplified copy
+  - Moved initial draw hint into the unified map toolbar and swapped it with NSEW controls once available
+  - Added spacing between the address search and viewpoint controls in the toolbar
+  - Added a bottom-right Mapbox compass control for bearing awareness
+  - Boosted compass contrast and size for better visibility at high pitch
   - Switched fire danger rating to compact dropdown with badge
   - Simplified rating dropdown to use colored select only
   - Tied fire intensity to fire danger rating and removed manual override
@@ -380,6 +384,7 @@ Update this section after each issue or change.
   - **Infra Tooling:** Fixed Key Vault secret naming for Foundry settings in main.bicep
   - **Infra Tooling:** Added explicit Key Vault dependency for Foundry secret creation
   - **Foundry Integration:** API now reads Foundry settings from Key Vault with env fallback and logs active config
+  - **Map UI:** Unified address search and viewpoint controls into a single top toolbar to prevent overlap with map controls
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
