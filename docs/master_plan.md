@@ -336,6 +336,10 @@ Update this section after each issue or change.
     - Streamlined visual elements: tighter borders, simplified section headers, compact summary card
     - Maintained clear visual hierarchy, proper grouping, full keyboard accessibility
     - Layout optimized for laptop/wide tablet screens (1024px+) for expert/professional users
+  - **Infra Tooling:** Set default resource group names in infra deployment script for faster validation runs
+  - **Infra Tooling:** Deployment script now overrides the template location parameter for validation and deployment
+  - **Infra Tooling:** Deployment script now validates and deploys only in eastus2 (no multi-location attempts)
+  - **Infra Tooling:** Switched OpenAI deployment to DALL-E (dalle) model name to align with available quota
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2

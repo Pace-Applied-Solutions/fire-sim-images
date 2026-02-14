@@ -1,4 +1,4 @@
-// Azure OpenAI Service with DALL-E 3 model deployment
+// Azure OpenAI Service with DALL-E model deployment
 // Used for generating photorealistic bushfire imagery
 
 @description('The name of the Azure OpenAI resource')
@@ -14,10 +14,10 @@ param sku string = 'S0'
 param tags object = {}
 
 @description('Model name to deploy')
-param modelName string = 'dall-e-3'
+param modelName string = 'dalle'
 
 @description('Model version')
-param modelVersion string = '3.0'
+param modelVersion string = '2.0'
 
 @description('Model capacity (throughput units)')
 param modelCapacity int = 1
