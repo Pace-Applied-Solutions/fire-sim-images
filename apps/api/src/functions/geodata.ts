@@ -1,6 +1,9 @@
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import functions from '@azure/functions';
+import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import crypto from 'node:crypto';
-import { GeoContext } from '@fire-sim/shared';
+import type { GeoContext } from '@fire-sim/shared';
+
+const { app } = functions;
 
 type PolygonCoordinates = number[][][];
 type GeoJsonBody = { geometry?: { type?: string; coordinates?: unknown } };

@@ -287,6 +287,14 @@ Update this section after each issue or change.
   - Dependency alignment: downgraded ESLint to a version compatible with @typescript-eslint and reinstalled npm dependencies across root, api, and web
   - Genericized agency-specific references across docs and UI copy for broader fire service use
   - Fixed Azure Functions entrypoint imports to resolve local start module resolution
+  - Updated root dev script to run web + API concurrently
+  - Added map error overlay to surface missing token or load failures
+  - Clarified Mapbox env setup for the web app in README
+  - Fixed Mapbox map init under React StrictMode by resetting refs on cleanup
+  - Built shared package before API dev start to fix module resolution
+  - Updated Azure Functions imports for CommonJS compatibility
+  - Switched shared type imports to type-only to avoid runtime export errors
+  - Updated geodata function imports for CommonJS + type-only usage
   - **Issue 6 progress:** Added `/api/geodata` Azure Function returning cached GeoContext lookups (vegetation, elevation, slope, aspect, features) using NSW profile heuristics with low-confidence fallback and vegetation descriptor mapping in shared constants
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)

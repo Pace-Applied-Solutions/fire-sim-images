@@ -54,7 +54,7 @@ The front-end provides a 3D map interface for drawing fire perimeters and settin
 
 3. **Configure environment variables:**
 
-   Create a `.env` file in the root directory:
+   Create an `.env.local` file in [apps/web](apps/web):
 
    ```bash
    VITE_MAPBOX_TOKEN=your_mapbox_token_here

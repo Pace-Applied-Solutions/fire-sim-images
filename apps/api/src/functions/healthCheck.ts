@@ -1,4 +1,7 @@
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import functions from '@azure/functions';
+import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+
+const { app } = functions;
 
 /**
  * Health check endpoint for the API.

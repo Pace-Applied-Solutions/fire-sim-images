@@ -1,5 +1,8 @@
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { GenerationRequest, GenerationResult } from '@fire-sim/shared';
+import functions from '@azure/functions';
+import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import type { GenerationRequest, GenerationResult } from '@fire-sim/shared';
+
+const { app } = functions;
 
 /**
  * HTTP-triggered function to handle scenario generation requests.

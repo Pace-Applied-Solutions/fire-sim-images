@@ -36,6 +36,7 @@ export const MapContainer = () => {
 	const [isMapLoaded, setIsMapLoaded] = useState(false);
 	const [perimeter, setPerimeter] = useState<FirePerimeter | null>(null);
 	const [metadata, setMetadata] = useState<PerimeterMetadata | null>(null);
+	const [mapError, setMapError] = useState<string | null>(null);
 
 	const { setPerimeter: setAppPerimeter, setState } = useAppStore();
 	const { addToast } = useToastStore();
@@ -46,6 +47,7 @@ export const MapContainer = () => {
 
 		// Check for token
 		if (!MAPBOX_TOKEN) {
+			setMapError('Mapbox token not configured. Add VITE_MAPBOX_TOKEN to your .env file.');
 			addToast({
 				type: 'error',
 				message:
@@ -110,6 +112,7 @@ export const MapContainer = () => {
 			});
 
 			setIsMapLoaded(true);
+			setMapError(null);
 			addToast({
 				type: 'success',
 				message: '3D map loaded successfully',
@@ -119,6 +122,7 @@ export const MapContainer = () => {
 		// Handle map errors
 		map.on('error', (e) => {
 			console.error('Map error:', e);
+			setMapError('Map failed to load. Check your Mapbox token and network access.');
 			addToast({
 				type: 'error',
 				message: 'Map error occurred. Check console for details.',
@@ -135,6 +139,9 @@ export const MapContainer = () => {
 				}
 			}
 			map.remove();
+			drawRef.current = null;
+			mapRef.current = null;
+			setIsMapLoaded(false);
 		};
 	}, [addToast]);
 
@@ -412,6 +419,13 @@ export const MapContainer = () => {
 	return (
 		<div className={styles.container}>
 			<div ref={mapContainerRef} className={styles.map} />
+
+			{mapError && (
+				<div className={styles.mapError}>
+					<div className={styles.mapErrorTitle}>Map unavailable</div>
+					<p className={styles.mapErrorText}>{mapError}</p>
+				</div>
+			)}
 
 			{/* Viewpoint Controls */}
 			{metadata && (
