@@ -175,18 +175,25 @@ Key architectural principles include keeping data within the NSW RFS Azure envir
 
 ## 10. Issue Map (Authoritative Work Breakdown)
 
-These align with [docs/suggested_issues.md](docs/suggested_issues.md) and serve as the master work list.
+These are the 15 implementation issues seeded in GitHub. Each will be assigned to the coding agent in sequence. Original seed ideas are in [docs/suggested_issues.md](docs/suggested_issues.md).
 
-1. Project setup and requirements.
-2. Front-end mapping interface.
-3. Geospatial data integration.
-4. Prompt generation logic.
-5. AI image generation.
-6. Multi-perspective rendering.
-7. Video generation pipeline.
-8. Testing and iteration.
-9. Infrastructure and security.
-10. Future enhancements and roadmap.
+| # | Issue Title | Phase | GitHub |
+|---|---|---|---|
+| 1 | Project Scaffolding & Repository Structure | Phase 0 | [#1](https://github.com/richardthorek/fire-sim-images/issues/1) |
+| 2 | Azure Infrastructure as Code (Bicep) | Phase 0 | [#2](https://github.com/richardthorek/fire-sim-images/issues/2) |
+| 3 | Front-End Shell, Design System & Navigation | Phase 1 | [#3](https://github.com/richardthorek/fire-sim-images/issues/3) |
+| 4 | 3D Map Integration & Fire Perimeter Drawing | Phase 1 | [#4](https://github.com/richardthorek/fire-sim-images/issues/4) |
+| 5 | Scenario Input Panel & Parameter Controls | Phase 1 | [#6](https://github.com/richardthorek/fire-sim-images/issues/6) |
+| 6 | Geospatial Data Integration (Azure Functions) | Phase 2 | [#7](https://github.com/richardthorek/fire-sim-images/issues/7) |
+| 7 | Prompt Generation Engine | Phase 3 | [#8](https://github.com/richardthorek/fire-sim-images/issues/8) |
+| 8 | AI Image Generation Pipeline | Phase 3 | [#9](https://github.com/richardthorek/fire-sim-images/issues/9) |
+| 9 | Multi-Perspective Rendering & Consistency | Phase 3 | [#10](https://github.com/richardthorek/fire-sim-images/issues/10) |
+| 10 | Results Gallery & Scenario History | Phase 3 | [#11](https://github.com/richardthorek/fire-sim-images/issues/11) |
+| 11 | Video Generation Pipeline | Phase 4 | [#12](https://github.com/richardthorek/fire-sim-images/issues/12) |
+| 12 | Authentication, Authorization & Content Safety | Phase 5 | [#13](https://github.com/richardthorek/fire-sim-images/issues/13) |
+| 13 | Observability, Monitoring & Structured Logging | Phase 5 | [#14](https://github.com/richardthorek/fire-sim-images/issues/14) |
+| 14 | End-to-End Testing & Trainer Validation | Phase 5 | [#15](https://github.com/richardthorek/fire-sim-images/issues/15) |
+| 15 | CI/CD Pipeline, Documentation & Future Roadmap | Phase 5 | [#16](https://github.com/richardthorek/fire-sim-images/issues/16) |
 
 ## 11. Deliverables
 
@@ -208,9 +215,12 @@ These align with [docs/suggested_issues.md](docs/suggested_issues.md) and serve 
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 0 - Project setup (Issue 1)
+- **Current focus:** Phase 1 — Map interface and scenario inputs
 - **Completed milestones:**
-  - Added one-page project description and technical guidance to the master plan
+  - Master plan created as single source of truth.
+  - Background research, tech considerations, and suggested issues documented.
+  - Copilot instructions file created.
+  - 15 comprehensive GitHub issues designed and seeded.
   - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
     - Monorepo structure with npm workspaces
     - Shared types package (@fire-sim/shared) with core domain types
@@ -219,8 +229,9 @@ Update this section after each issue or change.
     - Development tooling (ESLint, Prettier, TypeScript strict mode)
     - Updated README with comprehensive setup instructions
 - **Open risks:**
-  - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
-- **Next milestone:** Phase 1 - Map interface and scenario inputs
+  - Azure OpenAI GPT-Image availability in Australia East region unconfirmed.
+  - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments).
+- **Next milestone:** Phase 0 — Issue 2 (Azure Infrastructure as Code), then Phase 1
 
 ## 14. Change Control Process
 
