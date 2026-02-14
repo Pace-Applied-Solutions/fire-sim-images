@@ -148,13 +148,14 @@ fi
 
 echo -e "${YELLOW}Validating deployment in ${LOCATION}...${NC}"
 set +e
-VALIDATION_RESULT=$(AZURE_CORE_ONLY_SHOW_ERRORS=1 az deployment group validate \
+VALIDATION_OUTPUT=$(AZURE_CORE_ONLY_SHOW_ERRORS=1 az deployment group validate \
     --resource-group "$RESOURCE_GROUP" \
     --template-file main.bicep \
     --parameters "$PARAM_FILE" \
     --parameters location="$LOCATION" \
     --query "properties.provisioningState" \
     -o tsv 2>/tmp/firesim-validate.err)
+VALIDATION_RESULT=$(echo "$VALIDATION_OUTPUT" | tail -n 1)
 VALIDATION_EXIT_CODE=$?
 set -e
 

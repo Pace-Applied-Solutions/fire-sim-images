@@ -17,6 +17,9 @@ param sku string = 'Free'
 @description('Tags to apply to the resource')
 param tags object = {}
 
+@description('Additional app settings for the Static Web App')
+param appSettings object = {}
+
 // Static Web App resource
 resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
   name: name
@@ -48,11 +51,10 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
 resource appSettings 'Microsoft.Web/staticSites/config@2023-01-01' = {
   parent: staticWebApp
   name: 'appsettings'
-  properties: {
-    // Runtime settings for Azure Functions
+  properties: union({
     FUNCTIONS_WORKER_RUNTIME: 'node'
     AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
-  }
+  }, appSettings)
 }
 
 // Outputs

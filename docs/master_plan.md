@@ -375,8 +375,11 @@ Update this section after each issue or change.
   - **Infra Tooling:** Deployment script now validates and deploys only in eastus2 (no multi-location attempts)
   - **Infra Tooling:** Deployment validation now handles nonzero exit codes while still checking provisioningState
   - **Infra Tooling:** Suppressed non-error CLI output during validation to avoid parsing noise
+  - **Infra Tooling:** Switched dev Static Web App SKU to Standard to avoid Free SKU validation errors in eastus2
   - **Infra Tooling:** Removed Azure OpenAI deployment and stored Azure AI Foundry project settings in Key Vault (stable-image-core)
   - **Infra Tooling:** Fixed Key Vault secret naming for Foundry settings in main.bicep
+  - **Infra Tooling:** Added explicit Key Vault dependency for Foundry secret creation
+  - **Foundry Integration:** API now reads Foundry settings from Key Vault with env fallback and logs active config
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2

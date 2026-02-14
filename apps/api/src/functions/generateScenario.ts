@@ -1,6 +1,7 @@
 import functions from '@azure/functions';
 import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import type { GenerationRequest, GenerationResult } from '@fire-sim/shared';
+import { getFoundryConfig } from '../foundryConfig.js';
 
 const { app } = functions;
 
@@ -24,6 +25,13 @@ export async function generateScenario(
         jsonBody: { error: 'Missing required fields' },
       };
     }
+
+    const foundryConfig = await getFoundryConfig(context);
+    context.log('Foundry config loaded.', {
+      projectPath: foundryConfig.projectPath,
+      projectRegion: foundryConfig.projectRegion,
+      imageModel: foundryConfig.imageModel,
+    });
 
     // Placeholder response
     const result: GenerationResult = {

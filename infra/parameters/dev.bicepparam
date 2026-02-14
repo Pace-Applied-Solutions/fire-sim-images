@@ -6,7 +6,7 @@ param environmentName = 'dev'
 param location = 'australiaeast'
 
 // Static Web App
-param staticWebAppSku = 'Free'
+param staticWebAppSku = 'Standard'
 
 // Storage Account
 param storageSku = 'Standard_LRS'

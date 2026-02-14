@@ -63,6 +63,12 @@ module staticWebApp './modules/staticWebApp.bicep' = {
     location: location
     sku: staticWebAppSku
     tags: tags
+    appSettings: {
+      FOUNDRY_PROJECT_PATH: foundryProjectPath
+      FOUNDRY_PROJECT_REGION: foundryProjectRegion
+      FOUNDRY_IMAGE_MODEL: foundryImageModel
+      KEY_VAULT_URI: 'https://${keyVaultName}.vault.azure.net/'
+    }
   }
 }
 
@@ -95,6 +101,9 @@ module keyVault './modules/keyVault.bicep' = {
 // Store Foundry project settings in Key Vault
 resource foundryProjectPathSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/Foundry--ProjectPath'
+  dependsOn: [
+    keyVault
+  ]
   properties: {
     value: foundryProjectPath
   }
@@ -102,6 +111,9 @@ resource foundryProjectPathSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01'
 
 resource foundryProjectRegionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/Foundry--ProjectRegion'
+  dependsOn: [
+    keyVault
+  ]
   properties: {
     value: foundryProjectRegion
   }
@@ -109,6 +121,9 @@ resource foundryProjectRegionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-0
 
 resource foundryImageModelSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/Foundry--ImageModel'
+  dependsOn: [
+    keyVault
+  ]
   properties: {
     value: foundryImageModel
   }
