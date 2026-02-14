@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NSW RFS Fire Simulation Infrastructure Deployment Script
+# Fire Simulation Infrastructure Deployment Script
 # Deploys Azure resources using Bicep templates
 
 set -e
@@ -13,10 +13,15 @@ NC='\033[0m' # No Color
 
 # Default values
 ENVIRONMENT="dev"
+DEFAULT_RESOURCE_GROUP_DEV="firesim-rg-dev"
+DEFAULT_RESOURCE_GROUP_PROD="firesim-rg-prod"
 RESOURCE_GROUP=""
-LOCATION="australiaeast"
+LOCATION="eastus2"
 VALIDATE_ONLY=false
 AUTO_APPROVE=false
+CLEANUP_MODE=false
+
+
 
 # Function to print usage
 print_usage() {
@@ -24,16 +29,18 @@ print_usage() {
     echo ""
     echo "Options:"
     echo "  -e, --environment   Environment name (dev or prod). Default: dev"
-    echo "  -g, --group         Resource group name (required)"
-    echo "  -l, --location      Azure region. Default: australiaeast"
+    echo "  -g, --group         Resource group name (default: firesim-rg-dev or firesim-rg-prod)"
+    echo "  -l, --location      Azure region. Default: eastus2"
     echo "  -v, --validate      Validate only, do not deploy"
     echo "  -y, --yes           Auto-approve deployment (skip confirmation)"
+    echo "  -c, --complete      Use complete mode (delete resources not in template)"
     echo "  -h, --help          Show this help message"
     echo ""
     echo "Examples:"
-    echo "  ./deploy.sh -g firesim-rg-dev -e dev"
-    echo "  ./deploy.sh -g firesim-rg-prod -e prod -v"
+    echo "  ./deploy.sh -e dev"
+    echo "  ./deploy.sh -e prod -v"
     echo "  ./deploy.sh -g firesim-rg-dev -e dev -y"
+    echo "  ./deploy.sh -e dev -y -c"
 }
 
 # Parse command line arguments
@@ -59,6 +66,10 @@ while [[ $# -gt 0 ]]; do
             AUTO_APPROVE=true
             shift
             ;;
+        -c|--complete)
+            CLEANUP_MODE=true
+            shift
+            ;;
         -h|--help)
             print_usage
             exit 0
@@ -71,16 +82,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate required parameters
-if [ -z "$RESOURCE_GROUP" ]; then
-    echo -e "${RED}Error: Resource group name is required${NC}"
-    print_usage
-    exit 1
-fi
-
 if [ "$ENVIRONMENT" != "dev" ] && [ "$ENVIRONMENT" != "prod" ]; then
     echo -e "${RED}Error: Environment must be 'dev' or 'prod'${NC}"
     exit 1
+fi
+
+if [ -z "$RESOURCE_GROUP" ]; then
+    if [ "$ENVIRONMENT" = "prod" ]; then
+        RESOURCE_GROUP="$DEFAULT_RESOURCE_GROUP_PROD"
+    else
+        RESOURCE_GROUP="$DEFAULT_RESOURCE_GROUP_DEV"
+    fi
 fi
 
 PARAM_FILE="parameters/${ENVIRONMENT}.bicepparam"
@@ -90,7 +102,7 @@ if [ ! -f "$PARAM_FILE" ]; then
     exit 1
 fi
 
-echo -e "${GREEN}=== NSW RFS Fire Simulation Infrastructure Deployment ===${NC}"
+echo -e "${GREEN}=== Fire Simulation Infrastructure Deployment ===${NC}"
 echo "Environment: $ENVIRONMENT"
 echo "Resource Group: $RESOURCE_GROUP"
 echo "Location: $LOCATION"
@@ -134,25 +146,23 @@ else
     echo -e "${GREEN}Resource group already exists: $RESOURCE_GROUP${NC}"
 fi
 
-# Validate deployment
-echo -e "${YELLOW}Validating deployment...${NC}"
+echo -e "${YELLOW}Validating deployment in ${LOCATION}...${NC}"
 VALIDATION_RESULT=$(az deployment group validate \
     --resource-group "$RESOURCE_GROUP" \
     --template-file main.bicep \
     --parameters "$PARAM_FILE" \
+    --parameters location="$LOCATION" \
     --query "properties.provisioningState" \
-    -o tsv)
+    -o tsv 2>/tmp/firesim-validate.err)
 
 if [ "$VALIDATION_RESULT" != "Succeeded" ]; then
+    VALIDATION_ERROR=$(cat /tmp/firesim-validate.err)
     echo -e "${RED}Validation failed${NC}"
-    az deployment group validate \
-        --resource-group "$RESOURCE_GROUP" \
-        --template-file main.bicep \
-        --parameters "$PARAM_FILE"
+    if [ -n "$VALIDATION_ERROR" ]; then
+        echo -e "${RED}${VALIDATION_ERROR}${NC}"
+    fi
     exit 1
 fi
-
-echo -e "${GREEN}Validation succeeded${NC}"
 
 # Exit if validate only
 if [ "$VALIDATE_ONLY" = true ]; then
@@ -163,28 +173,32 @@ fi
 # Deploy infrastructure
 echo -e "${YELLOW}Starting deployment...${NC}"
 DEPLOYMENT_NAME="firesim-${ENVIRONMENT}-$(date +%Y%m%d-%H%M%S)"
+MODE_ARGS=""
+if [ "$CLEANUP_MODE" = true ]; then
+    MODE_ARGS="--mode Complete"
+fi
 
-az deployment group create \
+echo -e "${YELLOW}Deploying in ${LOCATION}...${NC}"
+if ! az deployment group create \
     --resource-group "$RESOURCE_GROUP" \
     --template-file main.bicep \
     --parameters "$PARAM_FILE" \
+    --parameters location="$LOCATION" \
     --name "$DEPLOYMENT_NAME" \
-    --verbose
-
-# Check deployment status
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Deployment completed successfully${NC}"
-    echo ""
-    echo "Deployment outputs:"
-    az deployment group show \
-        --resource-group "$RESOURCE_GROUP" \
-        --name "$DEPLOYMENT_NAME" \
-        --query properties.outputs \
-        -o json
-else
+    $MODE_ARGS \
+    --verbose; then
     echo -e "${RED}Deployment failed${NC}"
     exit 1
 fi
+
+echo -e "${GREEN}Deployment completed successfully${NC}"
+echo ""
+echo "Deployment outputs:"
+az deployment group show \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$DEPLOYMENT_NAME" \
+    --query properties.outputs \
+    -o json
 
 echo ""
 echo -e "${GREEN}=== Deployment Complete ===${NC}"
