@@ -36,12 +36,12 @@ Recent advances in generative AI provide several strong options for creating pho
 
 **Table 1: Image model comparison**
 
-| Image Model | Inputs and Control | Output Quality and Resolution | Deployment and Cost | Suitability for Bushfire Simulation |
-| --- | --- | --- | --- | --- |
-| OpenAI DALL-E 3 / GPT-Image (API) | Text prompts; image edits via GPT-Image 1.5; no direct mask input | High-quality 1024x1024 images; may simplify complex scenes [2] | Cloud API (OpenAI/Azure), pay-per-use | Strong realism and easy integration; weaker spatial control |
-| Stable Diffusion (SDXL) | Text plus img2img and ControlNet (depth, masks, sketches) | High photorealism at 1024x1024; upscaling supported | Self-hosted GPU or managed endpoints; no per-image fees | Best control and geographic accuracy; higher complexity |
-| Midjourney v5/v6 | Text prompts and optional reference images | Very high visual quality; up to 1024px plus upscaling [2] | SaaS via Discord; subscription pricing | Excellent for manual creation, not automation |
-| SDXL + ControlNet (variant) | Multi-input: text, depth, normals, fire mask | Highest alignment to terrain and fire geometry | Same as SDXL; requires extra checkpoints | Best spatial alignment; highest compute cost |
+| Image Model                       | Inputs and Control                                                | Output Quality and Resolution                                  | Deployment and Cost                                     | Suitability for Bushfire Simulation                         |
+| --------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| OpenAI DALL-E 3 / GPT-Image (API) | Text prompts; image edits via GPT-Image 1.5; no direct mask input | High-quality 1024x1024 images; may simplify complex scenes [2] | Cloud API (OpenAI/Azure), pay-per-use                   | Strong realism and easy integration; weaker spatial control |
+| Stable Diffusion (SDXL)           | Text plus img2img and ControlNet (depth, masks, sketches)         | High photorealism at 1024x1024; upscaling supported            | Self-hosted GPU or managed endpoints; no per-image fees | Best control and geographic accuracy; higher complexity     |
+| Midjourney v5/v6                  | Text prompts and optional reference images                        | Very high visual quality; up to 1024px plus upscaling [2]      | SaaS via Discord; subscription pricing                  | Excellent for manual creation, not automation               |
+| SDXL + ControlNet (variant)       | Multi-input: text, depth, normals, fire mask                      | Highest alignment to terrain and fire geometry                 | Same as SDXL; requires extra checkpoints                | Best spatial alignment; highest compute cost                |
 
 ## Video Generation Models
 
@@ -67,11 +67,11 @@ Generating a full minute of continuous, photoreal wildfire video is still fronti
 
 **Table 2: Video model comparison**
 
-| Video Model | Inputs and Control | Output Quality and Length | Integration and Cost | Suitability for Bushfire Simulation |
-| --- | --- | --- | --- | --- |
-| Runway Gen-2 | Text-to-video or image-to-video; motion brush; camera controls [7] | ~4 sec clips, up to ~16 sec extensions; ~720p | Web app; subscription; enterprise options | Best quality, limited automation |
-| Pika Labs | Image-to-video; motion degree and aspect controls [1] | ~3 sec clips; ~576p | Discord bot; freemium | Good for quick animations; manual workflow |
-| Stable Video Diffusion | Text-to-video or image-to-video [5] | 14-25 frames, ~4 sec at ~6 fps [4] | Self-hosted on Azure GPU | Best for internal pipelines; short clips |
+| Video Model            | Inputs and Control                                                 | Output Quality and Length                     | Integration and Cost                      | Suitability for Bushfire Simulation        |
+| ---------------------- | ------------------------------------------------------------------ | --------------------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| Runway Gen-2           | Text-to-video or image-to-video; motion brush; camera controls [7] | ~4 sec clips, up to ~16 sec extensions; ~720p | Web app; subscription; enterprise options | Best quality, limited automation           |
+| Pika Labs              | Image-to-video; motion degree and aspect controls [1]              | ~3 sec clips; ~576p                           | Discord bot; freemium                     | Good for quick animations; manual workflow |
+| Stable Video Diffusion | Text-to-video or image-to-video [5]                                | 14-25 frames, ~4 sec at ~6 fps [4]            | Self-hosted on Azure GPU                  | Best for internal pipelines; short clips   |
 
 ## Comprehensive Project Description
 

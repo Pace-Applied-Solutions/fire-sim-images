@@ -208,10 +208,19 @@ These align with [docs/suggested_issues.md](docs/suggested_issues.md) and serve 
 
 Update this section after each issue or change.
 
-- **Current focus:** Not started
-- **Completed milestones:** Added one-page project description and technical guidance to the master plan
-- **Open risks:** None recorded
-- **Next milestone:** Phase 0 - Project setup
+- **Current focus:** Phase 0 - Project setup (Issue 1)
+- **Completed milestones:**
+  - Added one-page project description and technical guidance to the master plan
+  - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
+    - Monorepo structure with npm workspaces
+    - Shared types package (@fire-sim/shared) with core domain types
+    - React web app (apps/web) with Vite + TypeScript
+    - Azure Functions API (apps/api) with v4 programming model
+    - Development tooling (ESLint, Prettier, TypeScript strict mode)
+    - Updated README with comprehensive setup instructions
+- **Open risks:**
+  - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
+- **Next milestone:** Phase 1 - Map interface and scenario inputs
 
 ## 14. Change Control Process
 
