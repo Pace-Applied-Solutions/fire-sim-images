@@ -8,6 +8,9 @@ export interface ImageGenOptions {
   quality?: 'standard' | 'high';
   style?: 'natural' | 'vivid';
   seed?: number;
+  referenceImage?: string | Buffer; // Base64 data URL or Buffer for reference/anchor image
+  referenceStrength?: number; // 0-1, how much to adhere to reference (0.5 default)
+  mapScreenshot?: string | Buffer; // Map view screenshot for terrain grounding
 }
 
 export interface ImageGenResult {

@@ -17,6 +17,8 @@ export interface GenerationProgress {
   completedImages: number;
   failedImages: number;
   images: GeneratedImage[];
+  anchorImage?: GeneratedImage;
+  seed?: number;
   error?: string;
   createdAt: string;
   updatedAt: string;
@@ -41,6 +43,9 @@ export class GenerationOrchestrator {
     const scenarioId = uuidv4();
     const timestamp = new Date().toISOString();
 
+    // Generate seed if not provided (for consistency across viewpoints)
+    const seed = request.seed ?? Math.floor(Math.random() * 1000000);
+
     // Initialize progress tracking
     const progress: GenerationProgress = {
       scenarioId,
@@ -59,10 +64,11 @@ export class GenerationOrchestrator {
       scenarioId,
       requestedViews: request.requestedViews,
       totalImages: progress.totalImages,
+      seed,
     });
 
     // Start generation asynchronously (don't await)
-    this.executeGeneration(scenarioId, request).catch((error) => {
+    this.executeGeneration(scenarioId, { ...request, seed }).catch((error) => {
       this.context.error('Generation orchestration failed', { scenarioId, error });
     });
 
@@ -89,6 +95,8 @@ export class GenerationOrchestrator {
       id: scenarioId,
       status: progress.status,
       images: progress.images,
+      anchorImage: progress.anchorImage,
+      seed: progress.seed,
       createdAt: progress.createdAt,
       completedAt: progress.status === 'completed' || progress.status === 'failed' 
         ? progress.updatedAt 
@@ -100,7 +108,9 @@ export class GenerationOrchestrator {
   }
 
   /**
-   * Execute the full generation pipeline.
+   * Execute the full generation pipeline with anchor image strategy.
+   * Pass 1: Generate aerial view as anchor
+   * Pass 2: Generate remaining views using anchor as reference
    */
   private async executeGeneration(
     scenarioId: string,
@@ -115,28 +125,111 @@ export class GenerationOrchestrator {
       this.context.log('Generating prompts', { scenarioId });
       const promptSet = generatePrompts(request);
 
-      // Step 2: Generate images for each viewpoint
-      // Enforce max 10 images per scenario
+      // Step 2: Determine anchor viewpoint (prefer aerial, fallback to first available)
       const maxImages = 10;
       const viewpointsToGenerate = request.requestedViews.slice(0, maxImages);
+      const anchorViewpoint = viewpointsToGenerate.includes('aerial')
+        ? 'aerial'
+        : viewpointsToGenerate.includes('helicopter_above')
+          ? 'helicopter_above'
+          : viewpointsToGenerate[0];
 
-      this.context.log('Starting image generation', {
+      this.context.log('Starting anchor image generation', {
         scenarioId,
-        totalViewpoints: viewpointsToGenerate.length,
-        maxConcurrent: this.imageGenerator.getMaxConcurrent(),
+        anchorViewpoint,
+        seed: request.seed,
       });
 
-      // Generate images with concurrency control
-      const results = await this.generateImagesWithConcurrency(
-        scenarioId,
-        promptSet.prompts,
-        viewpointsToGenerate,
-        this.imageGenerator.getMaxConcurrent()
+      // Step 3: Generate anchor image first
+      let anchorImage: GeneratedImage | undefined;
+      let anchorImageData: Buffer | undefined;
+      const anchorPrompt = promptSet.prompts.find((p) => p.viewpoint === anchorViewpoint);
+
+      if (anchorPrompt) {
+        try {
+          const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
+            seed: request.seed,
+          });
+
+          // Upload anchor image
+          const blobUrl = await this.blobStorage.uploadImage(
+            scenarioId,
+            anchorViewpoint,
+            result.imageData as Buffer,
+            {
+              contentType: 'image/png',
+              metadata: {
+                model: result.metadata.model,
+                promptHash: result.metadata.promptHash,
+                generationTime: result.metadata.generationTime.toString(),
+                isAnchor: 'true',
+              },
+            }
+          );
+
+          const sasUrl = await this.blobStorage.generateSASUrl(blobUrl, {
+            expiresInHours: 24,
+            permissions: 'r',
+          });
+
+          anchorImage = {
+            viewPoint: anchorViewpoint,
+            url: sasUrl,
+            metadata: {
+              width: result.metadata.width,
+              height: result.metadata.height,
+              prompt: anchorPrompt.promptText,
+              model: result.metadata.model,
+              seed: request.seed,
+              generatedAt: new Date().toISOString(),
+              isAnchor: true,
+            },
+          };
+
+          anchorImageData = result.imageData as Buffer;
+          progress.completedImages++;
+          progress.anchorImage = anchorImage;
+          progress.seed = request.seed;
+
+          this.context.log('Anchor image generated', {
+            scenarioId,
+            viewpoint: anchorViewpoint,
+          });
+        } catch (error) {
+          this.context.error('Anchor image generation failed', {
+            scenarioId,
+            viewpoint: anchorViewpoint,
+            error,
+          });
+          progress.failedImages++;
+        }
+      }
+
+      // Step 4: Generate remaining viewpoints with anchor reference
+      const remainingViewpoints = viewpointsToGenerate.filter(
+        (v) => v !== anchorViewpoint
       );
 
-      // Step 3: Upload images to blob storage and generate SAS URLs
-      const images: GeneratedImage[] = [];
-      let totalCost = 0;
+      this.context.log('Starting derived views generation', {
+        scenarioId,
+        totalViewpoints: remainingViewpoints.length,
+        maxConcurrent: this.imageGenerator.getMaxConcurrent(),
+        usingAnchorReference: !!anchorImageData,
+      });
+
+      const results = await this.generateImagesWithReference(
+        scenarioId,
+        promptSet.prompts,
+        remainingViewpoints,
+        this.imageGenerator.getMaxConcurrent(),
+        request.seed,
+        anchorImageData,
+        request.mapScreenshots
+      );
+
+      // Step 5: Upload images to blob storage and generate SAS URLs
+      const images: GeneratedImage[] = anchorImage ? [anchorImage] : [];
+      let totalCost = anchorImage ? 0.04 : 0;
 
       for (const result of results) {
         if (result.status === 'fulfilled') {
@@ -165,6 +258,7 @@ export class GenerationOrchestrator {
                   model: metadata.model,
                   promptHash: metadata.promptHash,
                   generationTime: metadata.generationTime.toString(),
+                  usedReference: !!anchorImageData ? 'true' : 'false',
                 },
               }
             );
@@ -183,8 +277,9 @@ export class GenerationOrchestrator {
                 height: metadata.height,
                 prompt: promptSet.prompts.find((p) => p.viewpoint === viewpoint)?.promptText || '',
                 model: metadata.model,
-                seed: metadata.seed,
+                seed: request.seed,
                 generatedAt: new Date().toISOString(),
+                usedReferenceImage: !!anchorImageData,
               },
             };
 
@@ -217,14 +312,17 @@ export class GenerationOrchestrator {
         }
       }
 
-      // Step 4: Store scenario metadata
+      // Step 6: Store scenario metadata
       const metadata = {
         scenarioId,
         request,
+        seed: request.seed,
+        anchorViewpoint,
         promptSetId: promptSet.id,
         promptTemplateVersion: promptSet.templateVersion,
         prompts: promptSet.prompts,
         images,
+        anchorImage,
         estimatedCost: totalCost,
         createdAt: progress.createdAt,
         completedAt: new Date().toISOString(),
@@ -247,6 +345,7 @@ export class GenerationOrchestrator {
         completedImages: progress.completedImages,
         failedImages: progress.failedImages,
         estimatedCost: totalCost,
+        seed: request.seed,
       });
     } catch (error) {
       this.context.error('Generation pipeline failed', { scenarioId, error });
@@ -257,13 +356,16 @@ export class GenerationOrchestrator {
   }
 
   /**
-   * Generate images with concurrency control.
+   * Generate images with reference image and concurrency control.
    */
-  private async generateImagesWithConcurrency(
+  private async generateImagesWithReference(
     scenarioId: string,
     prompts: Array<{ viewpoint: ViewPoint; promptText: string }>,
     viewpoints: ViewPoint[],
-    maxConcurrent: number
+    maxConcurrent: number,
+    seed?: number,
+    anchorImage?: Buffer,
+    mapScreenshots?: Record<ViewPoint, string>
   ): Promise<Array<PromiseSettledResult<{
     viewpoint: ViewPoint;
     imageData: Buffer | string;
@@ -283,7 +385,15 @@ export class GenerationOrchestrator {
       }
 
       try {
-        const result = await this.imageGenerator.generateImage(prompt.promptText);
+        // Get map screenshot for this viewpoint if available
+        const mapScreenshot = mapScreenshots?.[viewpoint];
+
+        const result = await this.imageGenerator.generateImage(prompt.promptText, {
+          seed,
+          referenceImage: anchorImage,
+          referenceStrength: 0.5, // 50% adherence to reference
+          mapScreenshot,
+        });
         return {
           viewpoint,
           imageData: result.imageData,
