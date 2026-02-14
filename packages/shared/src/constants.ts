@@ -61,7 +61,6 @@ export const VEGETATION_TYPES = [
   'Rainforest',
   'Cumberland Plain Woodland',
   'Riverine Forest',
-  'Grassland',
   'Swamp Sclerophyll Forest',
   'Coastal Sand Heath',
   'Alpine Complex',
