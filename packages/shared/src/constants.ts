@@ -56,11 +56,16 @@ export const VEGETATION_TYPES = [
   'Dry Sclerophyll Forest',
   'Wet Sclerophyll Forest',
   'Grassy Woodland',
-  'Rainforest',
   'Grassland',
-  'Heathland',
-  'Wetland',
+  'Heath',
+  'Rainforest',
+  'Cumberland Plain Woodland',
+  'Riverine Forest',
+  'Grassland',
+  'Swamp Sclerophyll Forest',
+  'Coastal Sand Heath',
   'Alpine Complex',
+  'Plantation Forest',
   'Cleared/Urban',
 ] as const;
 
@@ -73,3 +78,21 @@ export const GENERATION_CONFIG = {
   defaultImageHeight: 1024,
   timeoutSeconds: 300,
 } as const;
+
+/**
+ * Vegetation descriptors mapped to natural language for prompts.
+ */
+export const VEGETATION_DESCRIPTORS: Record<string, string> = {
+  'Dry Sclerophyll Forest': 'dry eucalyptus forest with sparse understorey and leaf litter',
+  'Wet Sclerophyll Forest': 'tall wet eucalyptus forest with dense fern understorey',
+  Grassland: 'open grassland with cured dry grass',
+  Heath: 'low dense coastal heath and scrubland',
+  Rainforest: 'subtropical rainforest with dense canopy',
+  'Grassy Woodland': 'open woodland with scattered eucalypts over native grasses',
+  'Cumberland Plain Woodland': 'dry woodland on shale with sparse canopy and grassy groundlayer',
+  'Riverine Forest': 'eucalypt forest along waterways with moist understorey',
+  'Swamp Sclerophyll Forest': 'wet sclerophyll forest on poorly drained soils with paperbark and swamp mahogany',
+  'Coastal Sand Heath': 'wind-shaped coastal heath on sandy ridges with banksia and tea-tree',
+  'Alpine Complex': 'alpine heath and grass mosaic with stunted shrubs and herbfields',
+  'Plantation Forest': 'structured plantation rows with dense fuel between tree lines',
+};

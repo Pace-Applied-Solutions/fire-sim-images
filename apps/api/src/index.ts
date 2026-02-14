@@ -5,3 +5,4 @@
 
 import './functions/healthCheck.ts';
 import './functions/generateScenario.ts';
+import './functions/geodata.ts';

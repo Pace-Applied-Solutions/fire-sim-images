@@ -32,14 +32,30 @@ export interface ScenarioInputs {
   fireStage: 'spotFire' | 'developing' | 'established' | 'major';
 }
 
+export type FuelLoadCategory = 'low' | 'moderate' | 'high' | 'veryHigh';
+
+export type CardinalAspect = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
+export interface RangeStatistic {
+  min: number;
+  max: number;
+  mean: number;
+}
+
 /**
  * Geographic context derived from geospatial datasets.
  */
 export interface GeoContext {
-  vegetationType: string; // e.g., "Dry Sclerophyll Forest", "Grassland"
-  slope: number; // degrees
-  elevation: number; // meters above sea level
-  aspect: number; // degrees (0 = North, 90 = East, etc.)
+  vegetationType: string;
+  vegetationSubtype?: string;
+  fuelLoad?: FuelLoadCategory;
+  dominantSpecies?: string[];
+  elevation: RangeStatistic;
+  slope: RangeStatistic;
+  aspect: CardinalAspect;
+  nearbyFeatures?: string[];
+  dataSource: string;
+  confidence: 'low' | 'medium' | 'high';
 }
 
 /**
