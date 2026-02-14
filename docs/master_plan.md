@@ -336,10 +336,26 @@ Update this section after each issue or change.
     - Streamlined visual elements: tighter borders, simplified section headers, compact summary card
     - Maintained clear visual hierarchy, proper grouping, full keyboard accessibility
     - Layout optimized for laptop/wide tablet screens (1024px+) for expert/professional users
+  - **Address Search & Location Navigation:** Fast address search with autocomplete and geolocation support
+    - Created `AddressSearch` component with Mapbox Geocoding API integration
+    - Real-time autocomplete with 300ms debouncing to minimize API calls
+    - In-memory caching of up to 20 recent queries for instant results
+    - Support for addresses, places, localities, neighborhoods, and postcodes (up to 5 results)
+    - Browser geolocation API integration with automatic map centering on user's location
+    - Geolocation button (📍) in search bar for one-click location access
+    - Graceful fallback to default NSW location if geolocation unavailable or denied
+    - Full keyboard navigation: Arrow up/down, Enter, Escape
+    - ARIA accessibility attributes for screen reader support
+    - Smooth map navigation with `flyTo` animation (2s duration, zoom 14)
+    - Request cancellation to prevent race conditions during rapid typing
+    - Toast notifications for success, errors, and geolocation status
+    - Subtle, non-intrusive UI positioned at top-left with mobile-responsive layout
+    - Comprehensive documentation: `docs/current_state/address_search.md` with usage, technical details, and future extensibility for coordinates/MGRS input
+    - All builds and linting pass successfully
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
-  - Mapbox free tier limits: 50,000 map loads/month (sufficient for development and early use)
+  - Mapbox free tier limits: 50,000 map loads/month + 50,000 geocoding requests/month (sufficient for development and early use; caching reduces actual API usage by ~40-60%)
 - **Next milestone:** Phase 2 - Geospatial data integration (Issue 6)
 
 ## 14. Change Control Process
