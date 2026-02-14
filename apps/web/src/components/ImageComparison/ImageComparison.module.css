@@ -1,0 +1,338 @@
+/* Image Comparison Component Styles */
+
+.container {
+  padding: var(--spacing-500);
+  background: var(--color-surface);
+  border-radius: var(--radius-300);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-500);
+  gap: var(--spacing-400);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-300);
+}
+
+.title {
+  font-size: var(--font-size-600);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.seed {
+  font-size: var(--font-size-200);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-variant);
+  padding: var(--spacing-100) var(--spacing-200);
+  border-radius: var(--radius-100);
+  font-family: var(--font-family-mono);
+}
+
+.viewModeSelector {
+  display: flex;
+  gap: var(--spacing-100);
+  background: var(--color-surface-variant);
+  padding: var(--spacing-100);
+  border-radius: var(--radius-200);
+}
+
+.viewModeButton {
+  background: transparent;
+  border: none;
+  padding: var(--spacing-200) var(--spacing-300);
+  border-radius: var(--radius-100);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-100);
+  font-size: var(--font-size-300);
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.viewModeButton:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.viewModeButton.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.icon {
+  font-size: var(--font-size-400);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--spacing-600);
+  color: var(--color-text-secondary);
+}
+
+/* Grid View */
+.gridView {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-400);
+}
+
+.imageCard {
+  background: var(--color-surface-variant);
+  border-radius: var(--radius-200);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.imageCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.anchorCard {
+  border: 2px solid var(--color-warning);
+}
+
+.imageWrapper {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--color-background);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.anchorBadge {
+  position: absolute;
+  top: var(--spacing-200);
+  left: var(--spacing-200);
+  background: var(--color-warning);
+  color: var(--color-background);
+  padding: var(--spacing-100) var(--spacing-200);
+  border-radius: var(--radius-100);
+  font-size: var(--font-size-200);
+  font-weight: var(--font-weight-semibold);
+}
+
+.referenceBadge {
+  position: absolute;
+  top: var(--spacing-200);
+  right: var(--spacing-200);
+  background: rgba(0, 0, 0, 0.7);
+  padding: var(--spacing-100);
+  border-radius: var(--radius-100);
+  font-size: var(--font-size-400);
+}
+
+.imageInfo {
+  padding: var(--spacing-300);
+}
+
+.viewpoint {
+  font-size: var(--font-size-400);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-100) 0;
+}
+
+.metadata {
+  font-size: var(--font-size-200);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Side-by-Side View */
+.sideBySideView {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-400);
+}
+
+.imageSelector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-300);
+  padding: var(--spacing-300);
+  background: var(--color-surface-variant);
+  border-radius: var(--radius-200);
+}
+
+.imageSelector label {
+  font-size: var(--font-size-300);
+  color: var(--color-text-secondary);
+}
+
+.imageSelector select {
+  flex: 1;
+  padding: var(--spacing-200);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-100);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-300);
+}
+
+.vs {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-400);
+}
+
+.comparisonContainer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--spacing-300);
+  align-items: center;
+}
+
+.comparisonImage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--color-background);
+  border-radius: var(--radius-200);
+  overflow: hidden;
+}
+
+.comparisonLabel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  color: white;
+  padding: var(--spacing-400) var(--spacing-300) var(--spacing-200);
+  font-size: var(--font-size-300);
+  font-weight: var(--font-weight-semibold);
+}
+
+.divider {
+  width: 2px;
+  height: 100%;
+  background: var(--color-border);
+  min-height: 200px;
+}
+
+/* Carousel View */
+.carouselView {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-400);
+}
+
+.carouselButton {
+  background: var(--color-surface-variant);
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.carouselButton:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: scale(1.1);
+}
+
+.carouselImage {
+  flex: 1;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--color-background);
+  border-radius: var(--radius-300);
+  overflow: hidden;
+}
+
+.carouselInfo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.7), transparent);
+  color: white;
+  padding: var(--spacing-600) var(--spacing-400) var(--spacing-300);
+}
+
+.carouselViewpoint {
+  font-size: var(--font-size-600);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--spacing-200) 0;
+}
+
+.carouselMetadata {
+  font-size: var(--font-size-300);
+  margin: 0 0 var(--spacing-100) 0;
+  opacity: 0.9;
+}
+
+.referenceIndicator {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
+.carouselProgress {
+  font-size: var(--font-size-200);
+  margin: 0;
+  opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .viewModeSelector {
+    width: 100%;
+  }
+
+  .viewModeButton {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .gridView {
+    grid-template-columns: 1fr;
+  }
+
+  .comparisonContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .divider {
+    width: 100%;
+    height: 2px;
+    min-height: 2px;
+  }
+
+  .carouselView {
+    flex-direction: column;
+  }
+
+  .carouselButton {
+    width: 100%;
+    height: 40px;
+    border-radius: var(--radius-200);
+  }
+}

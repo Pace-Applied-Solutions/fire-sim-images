@@ -108,6 +108,8 @@ export interface GenerationRequest {
   inputs: ScenarioInputs;
   geoContext: GeoContext;
   requestedViews: ViewPoint[];
+  seed?: number; // Consistent seed for reproducibility across all viewpoints
+  mapScreenshots?: Record<ViewPoint, string>; // Map view screenshots for terrain reference (base64 data URLs)
 }
 
 /**
@@ -117,6 +119,8 @@ export interface GenerationResult {
   id: string;
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   images: GeneratedImage[];
+  anchorImage?: GeneratedImage; // Aerial view used as reference for other views
+  seed?: number; // Consistent seed used across all viewpoints
   createdAt: string; // ISO 8601 timestamp
   completedAt?: string; // ISO 8601 timestamp
   error?: string;
@@ -142,6 +146,8 @@ export interface ImageMetadata {
   model: string;
   seed?: number;
   generatedAt: string; // ISO 8601 timestamp
+  isAnchor?: boolean; // True if this is the anchor/reference image
+  usedReferenceImage?: boolean; // True if this image was generated using a reference
 }
 
 /**
