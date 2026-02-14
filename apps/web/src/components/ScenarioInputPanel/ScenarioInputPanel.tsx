@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
-import type { ScenarioInputs } from '@fire-sim/shared';
+import type { ScenarioInputs, FireDangerRating } from '@fire-sim/shared';
+import {
+  getWeatherProfileForRating,
+  validateWeatherParameters,
+  formatRating,
+  getRatingDescription,
+} from '@fire-sim/shared';
 import styles from './ScenarioInputPanel.module.css';
 
 const PRESETS: Record<string, ScenarioInputs> = {
   grassfireModerate: {
+    fireDangerRating: 'high',
     windSpeed: 30,
     windDirection: 'NW',
     temperature: 30,
@@ -14,6 +21,7 @@ const PRESETS: Record<string, ScenarioInputs> = {
     fireStage: 'established',
   },
   forestfireSevere: {
+    fireDangerRating: 'extreme',
     windSpeed: 50,
     windDirection: 'NW',
     temperature: 40,
@@ -23,6 +31,7 @@ const PRESETS: Record<string, ScenarioInputs> = {
     fireStage: 'established',
   },
   nightOperation: {
+    fireDangerRating: 'moderate',
     windSpeed: 15,
     windDirection: 'W',
     temperature: 25,
@@ -32,6 +41,7 @@ const PRESETS: Record<string, ScenarioInputs> = {
     fireStage: 'established',
   },
   extremeDay: {
+    fireDangerRating: 'extreme',
     windSpeed: 80,
     windDirection: 'NW',
     temperature: 45,
@@ -43,6 +53,7 @@ const PRESETS: Record<string, ScenarioInputs> = {
 };
 
 const DEFAULT_INPUTS: ScenarioInputs = {
+  fireDangerRating: 'high',
   windSpeed: 25,
   windDirection: 'NW',
   temperature: 35,
@@ -62,8 +73,10 @@ export const ScenarioInputPanel: React.FC = () => {
   const { perimeter, setScenarioState, setScenarioInputs } = useAppStore();
   const [inputs, setInputs] = useState<ScenarioInputs>(DEFAULT_INPUTS);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [sectionsOpen, setSectionsOpen] = useState({
+    fireDanger: true,
     weather: true,
     fire: true,
     timing: true,
@@ -96,10 +109,36 @@ export const ScenarioInputPanel: React.FC = () => {
     const newErrors = validateInputs(newInputs);
     setErrors(newErrors);
 
+    // Check for weather warnings
+    const weatherWarnings = validateWeatherParameters({
+      temperature: newInputs.temperature,
+      humidity: newInputs.humidity,
+      windSpeed: newInputs.windSpeed,
+    });
+    setWarnings(weatherWarnings);
+
     // Persist to store if valid
     if (Object.keys(newErrors).length === 0) {
       setScenarioInputs(newInputs);
     }
+  };
+
+  const handleRatingChange = (rating: FireDangerRating) => {
+    // Update rating and load typical weather profile
+    const profile = getWeatherProfileForRating(rating);
+
+    const newInputs: ScenarioInputs = {
+      ...inputs,
+      fireDangerRating: rating,
+      temperature: profile.temperature,
+      humidity: profile.humidity,
+      windSpeed: profile.windSpeed,
+    };
+
+    setInputs(newInputs);
+    setErrors({});
+    setWarnings([]);
+    setScenarioInputs(newInputs);
   };
 
   const applyPreset = (presetKey: string) => {
@@ -108,6 +147,7 @@ export const ScenarioInputPanel: React.FC = () => {
       setInputs(presetInputs);
       setSelectedPreset(presetKey);
       setErrors({});
+      setWarnings([]);
       setScenarioInputs(presetInputs);
     }
   };
@@ -158,7 +198,18 @@ export const ScenarioInputPanel: React.FC = () => {
       night: 'night',
     };
 
-    return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Intensity: ${intensityMap[inputs.intensity]}.`;
+    return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)}. Intensity: ${intensityMap[inputs.intensity]}.`;
+  };
+
+  const getRatingClassName = (rating: FireDangerRating): string => {
+    const classMap: Record<FireDangerRating, string> = {
+      noRating: styles.ratingNoRating,
+      moderate: styles.ratingModerate,
+      high: styles.ratingHigh,
+      extreme: styles.ratingExtreme,
+      catastrophic: styles.ratingCatastrophic,
+    };
+    return `${styles.fdiRating} ${classMap[rating]}`;
   };
 
   return (
@@ -181,6 +232,62 @@ export const ScenarioInputPanel: React.FC = () => {
           <option value="extremeDay">Extreme day</option>
         </select>
       </div>
+
+      {/* Fire Danger Section */}
+      <section className={styles.section}>
+        <button
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('fireDanger')}
+          aria-expanded={sectionsOpen.fireDanger}
+        >
+          <h3 className={styles.sectionTitle}>Fire Danger Rating (AFDRS)</h3>
+          <span className={styles.chevron}>{sectionsOpen.fireDanger ? '▼' : '▶'}</span>
+        </button>
+
+        {sectionsOpen.fireDanger && (
+          <div className={styles.sectionContent}>
+            {/* Fire Danger Rating Selector */}
+            <div className={styles.field}>
+              <label className={styles.label}>Select fire danger rating</label>
+              <div className={styles.ratingSegmentedControl}>
+                {(['noRating', 'moderate', 'high', 'extreme', 'catastrophic'] as const).map(
+                  (rating) => (
+                    <button
+                      key={rating}
+                      onClick={() => handleRatingChange(rating)}
+                      className={`${styles.ratingSegment} ${
+                        inputs.fireDangerRating === rating ? styles.ratingSegmentActive : ''
+                      }`}
+                      style={{
+                        backgroundColor: inputs.fireDangerRating === rating ? getRatingClassName(rating).split(' ')[1] : undefined,
+                        color: inputs.fireDangerRating === rating ? 'white' : undefined,
+                      }}
+                      aria-pressed={inputs.fireDangerRating === rating}
+                    >
+                      {formatRating(rating)}
+                    </button>
+                  )
+                )}
+              </div>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem', lineHeight: 1.4 }}>
+                {getRatingDescription(inputs.fireDangerRating)}
+              </p>
+            </div>
+
+            {/* Current Rating Display */}
+            <div className={styles.fdiDisplay}>
+              <span className={styles.fdiLabel}>Current rating:</span>
+              <span className={getRatingClassName(inputs.fireDangerRating)}>
+                {formatRating(inputs.fireDangerRating)}
+              </span>
+            </div>
+
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginTop: '0.75rem', fontStyle: 'italic' }}>
+              Selecting a rating sets typical weather conditions. You can adjust individual weather parameters below.
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* Weather Section */}
       <section className={styles.section}>
@@ -305,6 +412,15 @@ export const ScenarioInputPanel: React.FC = () => {
               </div>
               {errors.humidity && <span className={styles.error}>{errors.humidity}</span>}
             </div>
+
+            {/* Warnings */}
+            {warnings.length > 0 && (
+              <div className={styles.warning}>
+                {warnings.map((warning, idx) => (
+                  <div key={idx}>⚠️ {warning}</div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
