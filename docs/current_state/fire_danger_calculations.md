@@ -11,9 +11,9 @@ The AFDRS provides a consistent national approach to fire danger ratings across 
 |--------|-------|----------------|-------------|
 | **No Rating** | White | No action required | Minimal fire danger. Fires are still possible but not expected to pose a risk to community safety. |
 | **Moderate** | Green | Plan and prepare | Most fires can be controlled. Stay updated and be ready to act if there is a fire. |
-| **High** | Orange | Be ready to act | Fires can be dangerous. There's a heightened risk, so be alert for fires and decide what you will do if a fire starts. |
-| **Extreme** | Red | Take action now to protect your life and property | The risk is high. If a fire starts, you and your property may be at serious risk. |
-| **Catastrophic** | Black | For your survival, leave bushfire risk areas | These are the most dangerous conditions. For personal safety, leaving early is the only safe option. |
+| **High** | Yellow | Be ready to act | Fires can be dangerous. There's a heightened risk, so be alert for fires and decide what you will do if a fire starts. |
+| **Extreme** | Orange | Take action now to protect your life and property | The risk is high. If a fire starts, you and your property may be at serious risk. |
+| **Catastrophic** | Red | For your survival, leave bushfire risk areas | These are the most dangerous conditions. For personal safety, leaving early is the only safe option. |
 
 **Reference:** https://afdrs.com.au/ — Australian Fire Danger Rating System (Bureau of Meteorology & AFAC)
 

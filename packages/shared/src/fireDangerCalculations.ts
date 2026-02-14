@@ -258,10 +258,10 @@ export function formatRating(rating: FireDangerRating): string {
 export function getRatingColor(rating: FireDangerRating): string {
   const colorMap: Record<FireDangerRating, string> = {
     noRating: '#ffffff', // White
-    moderate: '#22c55e', // Green (Moderate)
-    high: '#fb923c', // Orange (High)
-    extreme: '#ef4444', // Red (Extreme)
-    catastrophic: '#1f2937', // Black/Dark Gray (Catastrophic)
+    moderate: '#22c55e', // Green
+    high: '#eab308', // Yellow
+    extreme: '#f97316', // Orange
+    catastrophic: '#dc2626', // Red
   };
   return colorMap[rating];
 }

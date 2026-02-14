@@ -29,11 +29,11 @@ export interface FirePerimeter {
  * Reference: https://afdrs.com.au/
  */
 export type FireDangerRating =
-  | 'noRating'   // Below moderate threshold (no action required)
-  | 'moderate'   // Plan and prepare (Green/Yellow)
-  | 'high'       // Be ready to act (Yellow/Orange)
-  | 'extreme'    // Take action now to protect life and property (Red)
-  | 'catastrophic'; // For your survival, leave bushfire risk areas (Black)
+  | 'noRating'   // Below moderate threshold (White)
+  | 'moderate'   // Plan and prepare (Green)
+  | 'high'       // Be ready to act (Yellow)
+  | 'extreme'    // Take action now to protect life and property (Orange)
+  | 'catastrophic'; // For your survival, leave bushfire risk areas (Red)
 
 /**
  * Scenario inputs provided by the trainer.

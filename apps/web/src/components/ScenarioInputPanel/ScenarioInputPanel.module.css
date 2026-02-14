@@ -394,17 +394,17 @@
 }
 
 .ratingHigh {
-  background: #fb923c;
-  color: white;
+  background: #eab308;
+  color: #1f2937;
 }
 
 .ratingExtreme {
-  background: #ef4444;
+  background: #f97316;
   color: white;
 }
 
 .ratingCatastrophic {
-  background: #1f2937;
+  background: #dc2626;
   color: white;
 }
 
