@@ -117,9 +117,32 @@ const toCardinalAspect = (angle: number): GeoContext['aspect'] => {
 
 const aspectFromPolygon = (coordinates: PolygonCoordinates): GeoContext['aspect'] => {
   const ring = coordinates[0];
-  const [firstLng, firstLat] = ring[0];
-  const [lastLng, lastLat] = ring[ring.length - 1];
-  const angle = (Math.atan2(lastLat - firstLat, lastLng - firstLng) * 180) / Math.PI;
+
+  // Fallback for degenerate polygons
+  if (!ring || ring.length < 2) {
+    return 'N';
+  }
+
+  // Use the bearing from the polygon centroid to the farthest vertex
+  const centroid = centroidFromPolygon(coordinates);
+
+  let maxDistSq = -1;
+  let targetLat = ring[0][1];
+  let targetLng = ring[0][0];
+
+  for (const [lng, lat] of ring) {
+    const dLat = lat - centroid.lat;
+    const dLng = lng - centroid.lng;
+    const distSq = dLat * dLat + dLng * dLng;
+
+    if (distSq > maxDistSq) {
+      maxDistSq = distSq;
+      targetLat = lat;
+      targetLng = lng;
+    }
+  }
+
+  const angle = (Math.atan2(targetLat - centroid.lat, targetLng - centroid.lng) * 180) / Math.PI;
   return toCardinalAspect(angle);
 };
 
