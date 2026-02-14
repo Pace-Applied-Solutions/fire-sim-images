@@ -295,6 +295,6 @@ To test consistency features:
 
 ## References
 
-- [Issue #10: Multi-Perspective Rendering & Consistency](https://github.com/richardthorek/fire-sim-images/issues/10)
+- [Issue #9: Multi-Perspective Rendering & Consistency](https://github.com/richardthorek/fire-sim-images/issues/9)
 - [View Perspectives Documentation](./view_perspectives.md)
 - [Master Plan Section 9: Prompt and Image Output](../master_plan.md#9-delivery-phases-and-milestones)

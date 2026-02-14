@@ -28,6 +28,9 @@ export interface GenerationProgress {
 // In-memory store for generation progress (would use Durable Functions state in production)
 const progressStore = new Map<string, GenerationProgress>();
 
+// Maximum seed value for random seed generation
+const MAX_SEED_VALUE = 1000000;
+
 export class GenerationOrchestrator {
   private imageGenerator: ImageGeneratorService;
   private blobStorage: BlobStorageService;
@@ -47,7 +50,7 @@ export class GenerationOrchestrator {
     const timestamp = new Date().toISOString();
 
     // Generate seed if not provided (for consistency across viewpoints)
-    const seed = request.seed ?? Math.floor(Math.random() * 1000000);
+    const seed = request.seed ?? Math.floor(Math.random() * MAX_SEED_VALUE);
 
     // Initialize progress tracking
     const progress: GenerationProgress = {

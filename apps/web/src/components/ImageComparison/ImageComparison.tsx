@@ -35,17 +35,18 @@ export const ImageComparison: React.FC<ImageComparisonProps> = ({
   }
 
   const handleImageSelect = (index: number) => {
-    if (viewMode === 'sideBySide') {
-      // Toggle selection for side-by-side mode
-      if (selectedImages[0] === index) {
-        return; // Can't deselect first image
-      }
-      if (selectedImages[1] === index) {
-        return; // Can't deselect second image
-      }
-      // Replace second selected image
-      setSelectedImages([selectedImages[0], index]);
+    // Only handle selection in side-by-side mode
+    if (viewMode !== 'sideBySide') {
+      return;
     }
+
+    // Prevent deselecting currently selected images
+    if (selectedImages[0] === index || selectedImages[1] === index) {
+      return;
+    }
+
+    // Replace second selected image
+    setSelectedImages([selectedImages[0], index]);
   };
 
   const nextCarouselImage = () => {
