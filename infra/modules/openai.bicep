@@ -37,6 +37,9 @@ resource openAI 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     networkAcls: {
       defaultAction: 'Allow'
     }
+    // Local auth (API keys) is enabled to allow Azure Functions to access OpenAI
+    // API keys are stored securely in Key Vault
+    // Managed identity support for Azure OpenAI from embedded Functions is limited
     disableLocalAuth: false
   }
 }

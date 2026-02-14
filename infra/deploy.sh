@@ -16,6 +16,7 @@ ENVIRONMENT="dev"
 RESOURCE_GROUP=""
 LOCATION="australiaeast"
 VALIDATE_ONLY=false
+AUTO_APPROVE=false
 
 # Function to print usage
 print_usage() {
@@ -26,11 +27,13 @@ print_usage() {
     echo "  -g, --group         Resource group name (required)"
     echo "  -l, --location      Azure region. Default: australiaeast"
     echo "  -v, --validate      Validate only, do not deploy"
+    echo "  -y, --yes           Auto-approve deployment (skip confirmation)"
     echo "  -h, --help          Show this help message"
     echo ""
     echo "Examples:"
     echo "  ./deploy.sh -g firesim-rg-dev -e dev"
     echo "  ./deploy.sh -g firesim-rg-prod -e prod -v"
+    echo "  ./deploy.sh -g firesim-rg-dev -e dev -y"
 }
 
 # Parse command line arguments
@@ -50,6 +53,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -v|--validate)
             VALIDATE_ONLY=true
+            shift
+            ;;
+        -y|--yes)
+            AUTO_APPROVE=true
             shift
             ;;
         -h|--help)
@@ -107,11 +114,16 @@ fi
 # Get current subscription
 SUBSCRIPTION=$(az account show --query name -o tsv)
 echo -e "${YELLOW}Current subscription: $SUBSCRIPTION${NC}"
-read -p "Continue with this subscription? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Deployment cancelled"
-    exit 0
+
+if [ "$AUTO_APPROVE" = false ]; then
+    read -p "Continue with this subscription? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Deployment cancelled"
+        exit 0
+    fi
+else
+    echo "Auto-approve enabled, continuing with deployment..."
 fi
 
 # Create resource group if it doesn't exist

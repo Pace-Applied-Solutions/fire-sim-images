@@ -22,6 +22,9 @@ param tags object = {}
 @description('Allowed origins for CORS')
 param allowedOrigins array = []
 
+@description('Allow shared key access. Set to false to enforce managed identity only.')
+param allowSharedKeyAccess bool = true
+
 // Storage Account resource
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: name
@@ -34,7 +37,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   properties: {
     accessTier: 'Hot'
     allowBlobPublicAccess: false
-    allowSharedKeyAccess: true
+    // Shared key access is enabled by default for initial setup and development
+    // Set to false in production to enforce managed identity authentication
+    allowSharedKeyAccess: allowSharedKeyAccess
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     networkAcls: {
