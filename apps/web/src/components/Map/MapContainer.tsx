@@ -16,6 +16,7 @@ import {
 	MAX_PITCH,
 	TERRAIN_EXAGGERATION,
 } from '../../config/mapbox';
+import { AddressSearch } from './AddressSearch';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import styles from './MapContainer.module.css';
@@ -117,12 +118,41 @@ export const MapContainer = () => {
 
 		mapboxgl.accessToken = MAPBOX_TOKEN;
 
+		// Try to get user's location for initial map center
+		const initialCenter: [number, number] = DEFAULT_CENTER;
+		const initialZoom = DEFAULT_ZOOM;
+
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					const { latitude, longitude } = position.coords;
+					if (mapRef.current && !mapRef.current.isMoving()) {
+						// Only move if map hasn't been interacted with yet
+						mapRef.current.flyTo({
+							center: [longitude, latitude],
+							zoom: 12,
+							duration: 2000,
+						});
+						addToast({
+							type: 'success',
+							message: 'Map centered on your location',
+						});
+					}
+				},
+				(error) => {
+					console.warn('Geolocation error:', error);
+					// Silently fall back to default location
+				},
+				{ timeout: 5000 }
+			);
+		}
+
 		// Initialize map
 		const map = new mapboxgl.Map({
 			container: mapContainerRef.current,
 			style: MAPBOX_STYLE,
-			center: DEFAULT_CENTER,
-			zoom: DEFAULT_ZOOM,
+			center: initialCenter,
+			zoom: initialZoom,
 			pitch: 40, // Start with mild 3D tilt
 			bearing: 0,
 			maxPitch: MAX_PITCH,
@@ -548,6 +578,81 @@ export const MapContainer = () => {
 		[flyToViewpoint, viewMode]
 	);
 
+	/**
+	 * Handle location selection from address search
+	 */
+	const handleLocationSelect = useCallback(
+		(longitude: number, latitude: number, placeName: string) => {
+			const map = mapRef.current;
+			if (!map) return;
+
+			map.flyTo({
+				center: [longitude, latitude],
+				zoom: 14,
+				duration: 2000,
+				essential: true,
+			});
+
+			addToast({
+				type: 'success',
+				message: `Navigated to: ${placeName}`,
+			});
+		},
+		[addToast]
+	);
+
+	/**
+	 * Handle geolocation request from search component
+	 */
+	const handleGeolocationRequest = useCallback(() => {
+		if (!navigator.geolocation) {
+			addToast({
+				type: 'error',
+				message: 'Geolocation not supported by your browser',
+			});
+			return;
+		}
+
+		const map = mapRef.current;
+		if (!map) return;
+
+		addToast({
+			type: 'info',
+			message: 'Requesting location...',
+		});
+
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const { latitude, longitude } = position.coords;
+				map.flyTo({
+					center: [longitude, latitude],
+					zoom: 14,
+					duration: 2000,
+				});
+				addToast({
+					type: 'success',
+					message: 'Map centered on your location',
+				});
+			},
+			(error) => {
+				console.error('Geolocation error:', error);
+				let message = 'Failed to get your location';
+				if (error.code === error.PERMISSION_DENIED) {
+					message = 'Location permission denied';
+				} else if (error.code === error.POSITION_UNAVAILABLE) {
+					message = 'Location information unavailable';
+				} else if (error.code === error.TIMEOUT) {
+					message = 'Location request timed out';
+				}
+				addToast({
+					type: 'error',
+					message,
+				});
+			},
+			{ timeout: 10000, enableHighAccuracy: true }
+		);
+	}, [addToast]);
+
 	return (
 		<div className={styles.container}>
 			<div ref={mapContainerRef} className={styles.map} />
@@ -572,6 +677,16 @@ export const MapContainer = () => {
 					🗑️
 				</button>
 			</div>
+
+			{/* Address Search */}
+			{isMapLoaded && (
+				<div className={styles.searchContainer}>
+					<AddressSearch
+						onLocationSelect={handleLocationSelect}
+						onGeolocationRequest={handleGeolocationRequest}
+					/>
+				</div>
+			)}
 
 			{mapError && (
 				<div className={styles.mapError}>

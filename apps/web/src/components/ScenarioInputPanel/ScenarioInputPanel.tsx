@@ -5,7 +5,6 @@ import {
   getWeatherProfileForRating,
   validateWeatherParameters,
   formatRating,
-  getRatingDescription,
 } from '@fire-sim/shared';
 import styles from './ScenarioInputPanel.module.css';
 
