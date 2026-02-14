@@ -208,7 +208,7 @@ These align with [docs/suggested_issues.md](docs/suggested_issues.md) and serve 
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 0 - Project setup (Issue 1)
+- **Current focus:** Phase 1 - Map interface and scenario inputs (Issue 3)
 - **Completed milestones:**
   - Added one-page project description and technical guidance to the master plan
   - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
@@ -218,9 +218,18 @@ Update this section after each issue or change.
     - Azure Functions API (apps/api) with v4 programming model
     - Development tooling (ESLint, Prettier, TypeScript strict mode)
     - Updated README with comprehensive setup instructions
+  - **Issue 3 complete:** Front-End Shell, Design System & Navigation
+    - Comprehensive design token system with dark theme optimized for training rooms
+    - Responsive layout with Header, Sidebar, MainArea, and ResultsPanel components
+    - React Router setup with routes for Scenario (/), Gallery, and Settings pages
+    - Zustand-based state management for UI and scenario states
+    - Toast notification system with auto-dismiss and multiple severity types
+    - Reusable UI components (Spinner, ErrorMessage, Toast)
+    - Demo controls for testing state changes and notifications
+    - Application runs on localhost:5173 with full responsiveness
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
-- **Next milestone:** Phase 1 - Map interface and scenario inputs
+- **Next milestone:** Phase 1 continues - Map component integration (Issue 4) and scenario input controls (Issue 5)
 
 ## 14. Change Control Process
 
