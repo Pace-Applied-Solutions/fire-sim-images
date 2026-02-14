@@ -21,7 +21,7 @@
 	border-radius: var(--radius-lg);
 	padding: var(--spacing-xs);
 	box-shadow: var(--shadow-lg);
-	z-index: 2;
+	z-index: 10;
 }
 
 .drawButton {
@@ -52,9 +52,21 @@
 	position: absolute;
 	top: 16px;
 	left: 16px;
-	z-index: 2;
+	z-index: 20;
 	max-width: 400px;
-	width: calc(100% - 160px);
+	width: calc(100% - 440px); /* Account for: left margin (16px) + draw controls (~56px) + right margin (16px) + viewpoint controls (~352px) */
+}
+
+@media (max-width: 1200px) {
+	.searchContainer {
+		width: calc(100% - 240px); /* Adjust for smaller viewpoint controls */
+	}
+}
+
+@media (max-width: 900px) {
+	.searchContainer {
+		width: calc(100% - 92px); /* Account for draw controls only */
+	}
 }
 
 @media (max-width: 768px) {
@@ -76,10 +88,31 @@
 	border-radius: var(--radius-lg);
 	padding: 6px 8px;
 	box-shadow: var(--shadow-lg);
-	z-index: 1;
+	z-index: 5;
 	display: flex;
 	align-items: center;
-	max-width: calc(100% - 160px);
+	max-width: calc(100% - 480px); /* Account for left controls (420px) + right controls (60px) */
+}
+
+@media (max-width: 1200px) {
+	.viewpointControls {
+		max-width: calc(100% - 280px); /* Tighter fit */
+	}
+}
+
+@media (max-width: 900px) {
+	.viewpointControls {
+		left: 16px;
+		right: 16px;
+		transform: none;
+		justify-content: center;
+		max-width: calc(100% - 32px);
+	}
+
+	.viewpointButtons {
+		flex-wrap: wrap;
+		justify-content: center;
+	}
 }
 
 .viewpointButtons {
@@ -199,21 +232,6 @@
 	transform: translateY(0);
 }
 
-@media (max-width: 900px) {
-	.viewpointControls {
-		left: 72px;
-		right: 72px;
-		transform: none;
-		justify-content: center;
-		max-width: calc(100% - 144px);
-	}
-
-	.viewpointButtons {
-		flex-wrap: wrap;
-		justify-content: center;
-	}
-}
-
 /* Metadata Panel */
 .metadataPanel {
 	position: absolute;
@@ -224,7 +242,7 @@
 	padding: var(--spacing-md);
 	box-shadow: var(--shadow-lg);
 	min-width: 280px;
-	z-index: 1;
+	z-index: 5;
 }
 
 .metadataTitle {
@@ -277,7 +295,7 @@
 	text-align: left;
 	width: 260px;
 	max-width: 320px;
-	z-index: 1;
+	z-index: 5;
 	pointer-events: none;
 	display: flex;
 	align-items: center;
@@ -324,7 +342,7 @@
 	box-shadow: var(--shadow-xl);
 	text-align: center;
 	max-width: 360px;
-	z-index: 2;
+	z-index: 100;
 }
 
 .mapErrorTitle {
@@ -436,9 +454,12 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
 	.viewpointControls {
+		left: 16px;
 		right: 16px;
 		top: auto;
 		bottom: 16px;
+		transform: none;
+		max-width: calc(100% - 32px);
 	}
 
 	.metadataPanel {
@@ -449,7 +470,66 @@
 	}
 
 	.instructions {
-		max-width: 90%;
-		padding: var(--spacing-md);
+		top: auto;
+		bottom: 120px;
+		right: 16px;
+		left: 16px;
+		max-width: calc(100% - 32px);
+		width: auto;
+	}
+
+	.drawControls {
+		top: auto;
+		bottom: 200px; /* Position above viewpoint controls and instructions */
+	}
+}
+
+@media (max-width: 640px) {
+	.searchContainer {
+		top: 8px;
+		left: 8px;
+		right: 8px;
+		width: calc(100% - 16px);
+	}
+
+	.drawControls {
+		top: 8px;
+		right: 8px;
+		bottom: auto;
+	}
+
+	.viewpointControls {
+		bottom: 8px;
+		left: 8px;
+		right: 8px;
+	}
+
+	.metadataPanel {
+		bottom: 80px;
+		left: 8px;
+		right: 8px;
+	}
+
+	.instructions {
+		display: none; /* Hide instructions on very small screens */
+	}
+}
+
+@media (max-width: 480px) {
+	.viewpointButtons {
+		gap: 2px; /* Tighter spacing on very small screens */
+	}
+
+	.viewpointBtn,
+	.viewpointToggle,
+	.viewpointCapture {
+		width: 28px;
+		height: 28px;
+		font-size: 0.75rem;
+	}
+
+	.drawButton {
+		width: 32px;
+		height: 32px;
 	}
 }
