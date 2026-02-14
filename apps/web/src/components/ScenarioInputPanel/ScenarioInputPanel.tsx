@@ -21,7 +21,7 @@ const PRESETS: Record<string, ScenarioInputs> = {
     fireStage: 'established',
   },
   forestfireSevere: {
-    fireDangerRating: 'severe',
+    fireDangerRating: 'extreme',
     windSpeed: 50,
     windDirection: 'NW',
     temperature: 40,
@@ -53,7 +53,7 @@ const PRESETS: Record<string, ScenarioInputs> = {
 };
 
 const DEFAULT_INPUTS: ScenarioInputs = {
-  fireDangerRating: 'veryHigh',
+  fireDangerRating: 'high',
   windSpeed: 25,
   windDirection: 'NW',
   temperature: 35,
@@ -203,10 +203,9 @@ export const ScenarioInputPanel: React.FC = () => {
 
   const getRatingClassName = (rating: FireDangerRating): string => {
     const classMap: Record<FireDangerRating, string> = {
+      noRating: styles.ratingNoRating,
       moderate: styles.ratingModerate,
       high: styles.ratingHigh,
-      veryHigh: styles.ratingVeryHigh,
-      severe: styles.ratingSevere,
       extreme: styles.ratingExtreme,
       catastrophic: styles.ratingCatastrophic,
     };
@@ -251,7 +250,7 @@ export const ScenarioInputPanel: React.FC = () => {
             <div className={styles.field}>
               <label className={styles.label}>Select fire danger rating</label>
               <div className={styles.ratingSegmentedControl}>
-                {(['moderate', 'high', 'veryHigh', 'severe', 'extreme', 'catastrophic'] as const).map(
+                {(['noRating', 'moderate', 'high', 'extreme', 'catastrophic'] as const).map(
                   (rating) => (
                     <button
                       key={rating}

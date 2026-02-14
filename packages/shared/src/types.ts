@@ -22,14 +22,18 @@ export interface FirePerimeter {
 /**
  * Fire Danger Rating categories based on Australian Fire Danger Rating System (AFDRS).
  * Represents the named risk levels communicated to the public and emergency services.
+ *
+ * The AFDRS uses 4 main rating levels plus a "No Rating" for days below the moderate threshold.
+ * Introduced nationally on 1 September 2022.
+ *
+ * Reference: https://afdrs.com.au/
  */
 export type FireDangerRating =
-  | 'moderate'
-  | 'high'
-  | 'veryHigh'
-  | 'severe'
-  | 'extreme'
-  | 'catastrophic';
+  | 'noRating'   // Below moderate threshold (no action required)
+  | 'moderate'   // Plan and prepare (Green/Yellow)
+  | 'high'       // Be ready to act (Yellow/Orange)
+  | 'extreme'    // Take action now to protect life and property (Red)
+  | 'catastrophic'; // For your survival, leave bushfire risk areas (Black)
 
 /**
  * Scenario inputs provided by the trainer.

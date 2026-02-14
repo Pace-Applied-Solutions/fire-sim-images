@@ -382,33 +382,29 @@
   letter-spacing: 0.05em;
 }
 
+.ratingNoRating {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
 .ratingModerate {
-  background: #0066cc;
+  background: #22c55e;
   color: white;
 }
 
 .ratingHigh {
-  background: #ffaa00;
-  color: #0f1419;
-}
-
-.ratingVeryHigh {
-  background: #ff6600;
-  color: white;
-}
-
-.ratingSevere {
-  background: #cc0000;
+  background: #fb923c;
   color: white;
 }
 
 .ratingExtreme {
-  background: #990000;
+  background: #ef4444;
   color: white;
 }
 
 .ratingCatastrophic {
-  background: #660000;
+  background: #1f2937;
   color: white;
 }
 
@@ -423,7 +419,7 @@
 
 .ratingSegmentedControl {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.25rem;
   padding: 0.25rem;
   background: var(--color-bg-primary);
