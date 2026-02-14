@@ -19,6 +19,12 @@ param foundryProjectPath = 'open-ai-firesim-test/open-ai-firesim-test-project'
 param foundryProjectRegion = 'eastus'
 param foundryImageModel = 'stable-image-core'
 
+// Content Safety
+param contentSafetySku = 'S0'
+
+// Application Insights
+param appInsightsRetentionDays = 365
+
 // Tags
 param tags = {
   Project: 'NSW RFS Fire Simulation'

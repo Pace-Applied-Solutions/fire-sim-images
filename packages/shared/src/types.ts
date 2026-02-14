@@ -149,3 +149,122 @@ export interface ImageMetadata {
   isAnchor?: boolean; // True if this is the anchor/reference image
   usedReferenceImage?: boolean; // True if this image was generated using a reference
 }
+
+/**
+ * User roles for RBAC.
+ */
+export type UserRole = 'trainer' | 'admin';
+
+/**
+ * User identity from CIAM authentication.
+ */
+export interface User {
+  id: string; // User ID from Entra External ID
+  email: string;
+  name?: string;
+  roles: UserRole[];
+  authMethod: 'email' | 'sso'; // Authentication method used
+}
+
+/**
+ * Authentication state and token information.
+ */
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  token: string | null;
+  expiresAt: number | null; // Unix timestamp
+}
+
+/**
+ * Usage quota configuration per role.
+ */
+export interface QuotaConfig {
+  scenariosPerDay: number;
+  imagesPerDay: number;
+  videosPerDay: number;
+}
+
+/**
+ * Current usage tracking for a user.
+ */
+export interface UsageTracking {
+  userId: string;
+  date: string; // YYYY-MM-DD in AEST
+  scenariosGenerated: number;
+  imagesGenerated: number;
+  videosGenerated: number;
+  estimatedCost: number; // USD
+  lastUpdated: string; // ISO 8601 timestamp
+}
+
+/**
+ * Quota status for a user.
+ */
+export interface QuotaStatus {
+  limits: QuotaConfig;
+  usage: UsageTracking;
+  remaining: {
+    scenarios: number;
+    images: number;
+    videos: number;
+  };
+  resetsAt: string; // ISO 8601 timestamp (midnight AEST)
+}
+
+/**
+ * Content safety check result.
+ */
+export interface ContentSafetyResult {
+  safe: boolean;
+  categories: {
+    violence: { detected: boolean; severity: number }; // 0-1
+    hate: { detected: boolean; severity: number };
+    selfHarm: { detected: boolean; severity: number };
+    sexual: { detected: boolean; severity: number };
+  };
+  prompt?: string; // The prompt that was checked
+  imageHash?: string; // Hash of the image that was checked
+}
+
+/**
+ * Content safety configuration.
+ */
+export interface ContentSafetyConfig {
+  enabled: boolean;
+  strictnessLevel: 'low' | 'medium' | 'high';
+  violenceThreshold: number; // 0-1 (tuned for fire scenarios)
+  hateThreshold: number; // 0-1
+  selfHarmThreshold: number; // 0-1
+  sexualThreshold: number; // 0-1
+}
+
+/**
+ * Audit log action types.
+ */
+export type AuditAction =
+  | 'scenario.created'
+  | 'scenario.deleted'
+  | 'image.generated'
+  | 'video.generated'
+  | 'content_safety.triggered'
+  | 'quota.exceeded'
+  | 'settings.updated'
+  | 'user.login'
+  | 'user.logout';
+
+/**
+ * Audit log entry.
+ */
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string; // ISO 8601
+  userId: string;
+  userEmail: string;
+  authMethod: string;
+  action: AuditAction;
+  resourceId?: string; // e.g., scenarioId
+  details?: Record<string, unknown>;
+  result: 'success' | 'failure';
+  errorMessage?: string;
+}

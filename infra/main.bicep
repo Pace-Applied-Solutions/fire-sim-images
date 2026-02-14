@@ -49,11 +49,25 @@ param foundryProjectRegion string = 'eastus'
 @description('Image model to use in Foundry')
 param foundryImageModel string = 'stable-image-core'
 
+@description('Content Safety SKU')
+@allowed([
+  'F0'
+  'S0'
+])
+param contentSafetySku string = 'S0'
+
+@description('Application Insights retention in days')
+@minValue(30)
+@maxValue(730)
+param appInsightsRetentionDays int = 90
+
 // Variables
 var resourceNamePrefix = 'firesim-${environmentName}'
 var staticWebAppName = '${resourceNamePrefix}-web'
 var storageAccountName = replace('${resourceNamePrefix}stor', '-', '')
 var keyVaultName = '${resourceNamePrefix}-kv'
+var appInsightsName = '${resourceNamePrefix}-ai'
+var contentSafetyName = '${resourceNamePrefix}-contentsafety'
 
 // Deploy Static Web App
 module staticWebApp './modules/staticWebApp.bicep' = {
@@ -68,7 +82,30 @@ module staticWebApp './modules/staticWebApp.bicep' = {
       FOUNDRY_PROJECT_REGION: foundryProjectRegion
       FOUNDRY_IMAGE_MODEL: foundryImageModel
       KEY_VAULT_URI: 'https://${keyVaultName}.vault.azure.net/'
+      APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.outputs.connectionString
     }
+  }
+}
+
+// Deploy Application Insights
+module appInsights './modules/applicationInsights.bicep' = {
+  name: 'appInsights-deployment'
+  params: {
+    name: appInsightsName
+    location: location
+    tags: tags
+    retentionInDays: appInsightsRetentionDays
+  }
+}
+
+// Deploy Content Safety
+module contentSafety './modules/contentSafety.bicep' = {
+  name: 'contentSafety-deployment'
+  params: {
+    name: contentSafetyName
+    location: location
+    tags: tags
+    sku: contentSafetySku
   }
 }
 
@@ -129,6 +166,27 @@ resource foundryImageModelSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' 
   }
 }
 
+// Store Content Safety credentials in Key Vault
+resource contentSafetyEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/ContentSafety--Endpoint'
+  dependsOn: [
+    keyVault
+  ]
+  properties: {
+    value: contentSafety.outputs.endpoint
+  }
+}
+
+resource contentSafetyKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/ContentSafety--Key'
+  dependsOn: [
+    keyVault
+  ]
+  properties: {
+    value: contentSafety.outputs.key
+  }
+}
+
 // Outputs
 output staticWebAppName string = staticWebApp.outputs.name
 output staticWebAppUrl string = staticWebApp.outputs.url
@@ -142,6 +200,13 @@ output storageContainers array = storage.outputs.containers
 output keyVaultName string = keyVault.outputs.name
 output keyVaultId string = keyVault.outputs.id
 output keyVaultUri string = keyVault.outputs.uri
+
+output appInsightsName string = appInsights.outputs.name
+output appInsightsConnectionString string = appInsights.outputs.connectionString
+output appInsightsInstrumentationKey string = appInsights.outputs.instrumentationKey
+
+output contentSafetyName string = contentSafety.outputs.name
+output contentSafetyEndpoint string = contentSafety.outputs.endpoint
 
 output foundryProjectPath string = foundryProjectPath
 output foundryProjectRegion string = foundryProjectRegion
