@@ -119,8 +119,8 @@ export const MapContainer = () => {
 		mapboxgl.accessToken = MAPBOX_TOKEN;
 
 		// Try to get user's location for initial map center
-		let initialCenter: [number, number] = DEFAULT_CENTER;
-		let initialZoom = DEFAULT_ZOOM;
+		const initialCenter: [number, number] = DEFAULT_CENTER;
+		const initialZoom = DEFAULT_ZOOM;
 
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
