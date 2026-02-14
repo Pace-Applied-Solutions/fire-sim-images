@@ -140,7 +140,18 @@ export class GenerationOrchestrator {
 
       for (const result of results) {
         if (result.status === 'fulfilled') {
-          const { viewpoint, imageData, metadata } = result.value;
+          const { viewpoint, imageData, metadata } = result.value as {
+            viewpoint: ViewPoint;
+            imageData: Buffer | string;
+            metadata: {
+              model: string;
+              promptHash: string;
+              generationTime: number;
+              width: number;
+              height: number;
+              seed?: number;
+            };
+          };
 
           try {
             // Upload to blob storage
@@ -256,7 +267,14 @@ export class GenerationOrchestrator {
   ): Promise<Array<PromiseSettledResult<{
     viewpoint: ViewPoint;
     imageData: Buffer | string;
-    metadata: any;
+    metadata: {
+      model: string;
+      promptHash: string;
+      generationTime: number;
+      width: number;
+      height: number;
+      seed?: number;
+    };
   }>>> {
     const tasks = viewpoints.map(async (viewpoint) => {
       const prompt = prompts.find((p) => p.viewpoint === viewpoint);

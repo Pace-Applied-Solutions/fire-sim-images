@@ -165,7 +165,12 @@ export class BlobStorageService {
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     const downloadResponse = await blockBlobClient.download(0);
-    const downloaded = await this.streamToBuffer(downloadResponse.readableStreamBody!);
+    
+    if (!downloadResponse.readableStreamBody) {
+      throw new Error('No readable stream available for download');
+    }
+    
+    const downloaded = await this.streamToBuffer(downloadResponse.readableStreamBody);
     return JSON.parse(downloaded.toString('utf-8'));
   }
 
