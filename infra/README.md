@@ -1,6 +1,6 @@
 # Infrastructure as Code
 
-This directory contains Bicep templates for deploying the NSW RFS Fire Simulation Inject Tool infrastructure to Azure.
+This directory contains Bicep templates for deploying the Fire Simulation Inject Tool infrastructure to Azure.
 
 ## Architecture
 

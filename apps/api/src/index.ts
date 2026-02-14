@@ -3,5 +3,5 @@
  * All function registrations should happen in their respective files.
  */
 
-import './functions/healthCheck.js';
-import './functions/generateScenario.js';
+import './functions/healthCheck.ts';
+import './functions/generateScenario.ts';

@@ -75,7 +75,7 @@ Generating a full minute of continuous, photoreal wildfire video is still fronti
 
 ## Comprehensive Project Description
 
-We envision a web-based Bushfire Simulation Inject tool that lets NSW RFS trainers create realistic visuals for any location on demand. Trainers draw a perimeter on a 3D map, set environmental conditions, and the system produces:
+We envision a web-based Bushfire Simulation Inject tool that lets fire service trainers create realistic visuals for any location on demand. Trainers draw a perimeter on a 3D map, set environmental conditions, and the system produces:
 
 - Photorealistic images of the fire in context (multiple viewpoints).
 - A short animated clip showing fire behavior (looped or stitched for longer playback).

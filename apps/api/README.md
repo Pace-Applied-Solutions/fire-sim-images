@@ -1,6 +1,6 @@
 # Azure Functions API
 
-This is the back-end API for the NSW RFS Fire Simulation Inject Tool, built with Azure Functions v4 programming model.
+This is the back-end API for the Fire Simulation Inject Tool, built with Azure Functions v4 programming model.
 
 ## Prerequisites
 
