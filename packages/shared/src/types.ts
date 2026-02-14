@@ -24,11 +24,12 @@ export interface FirePerimeter {
  */
 export interface ScenarioInputs {
   windSpeed: number; // km/h
-  windDirection: number; // degrees (0 = North, 90 = East, etc.)
+  windDirection: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW'; // Cardinal direction
   temperature: number; // degrees Celsius
   humidity: number; // percentage (0-100)
   timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
-  intensity: 'low' | 'moderate' | 'high' | 'extreme';
+  intensity: 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
+  fireStage: 'spotFire' | 'developing' | 'established' | 'major';
 }
 
 /**

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { FirePerimeter } from '@fire-sim/shared';
+import type { FirePerimeter, ScenarioInputs } from '@fire-sim/shared';
 
 export type ScenarioState = 'idle' | 'drawing' | 'configuring' | 'generating' | 'complete' | 'error';
 
@@ -12,6 +12,10 @@ interface AppState {
   // Fire perimeter
   perimeter: FirePerimeter | null;
   setPerimeter: (perimeter: FirePerimeter | null) => void;
+
+  // Scenario inputs
+  scenarioInputs: ScenarioInputs | null;
+  setScenarioInputs: (inputs: ScenarioInputs) => void;
 
   // Error handling
   error: string | null;
@@ -35,6 +39,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Initial perimeter state
   perimeter: null,
   setPerimeter: (perimeter) => set({ perimeter }),
+
+  // Initial scenario inputs state
+  scenarioInputs: null,
+  setScenarioInputs: (inputs) => set({ scenarioInputs: inputs }),
 
   // Initial error state
   error: null,
