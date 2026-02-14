@@ -47,6 +47,25 @@
 	box-shadow: var(--shadow-md);
 }
 
+/* Address Search Container */
+.searchContainer {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	z-index: 2;
+	max-width: 400px;
+	width: calc(100% - 160px);
+}
+
+@media (max-width: 768px) {
+	.searchContainer {
+		width: calc(100% - 32px);
+		max-width: none;
+		left: 16px;
+		right: 16px;
+	}
+}
+
 /* Viewpoint Controls */
 .viewpointControls {
 	position: absolute;

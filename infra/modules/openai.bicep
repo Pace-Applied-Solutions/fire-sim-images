@@ -1,5 +1,5 @@
-// Azure OpenAI Service with DALL-E 3 model deployment
-// Used for generating photorealistic bushfire imagery
+// Azure OpenAI Service with GPT-4o mini model deployment
+// Used for prompt generation until image model quota is available
 
 @description('The name of the Azure OpenAI resource')
 param name string
@@ -14,10 +14,10 @@ param sku string = 'S0'
 param tags object = {}
 
 @description('Model name to deploy')
-param modelName string = 'dall-e-3'
+param modelName string = 'gpt-4o-mini'
 
 @description('Model version')
-param modelVersion string = '3.0'
+param modelVersion string = '2024-07-18'
 
 @description('Model capacity (throughput units)')
 param modelCapacity int = 1

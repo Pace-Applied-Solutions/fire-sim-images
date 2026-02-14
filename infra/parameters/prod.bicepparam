@@ -14,11 +14,10 @@ param storageSku = 'Standard_RAGRS'
 // Key Vault
 param keyVaultSku = 'premium'
 
-// Azure OpenAI
-param openAISku = 'S0'
-param openAIModelName = 'dall-e-3'
-param openAIModelVersion = '3.0'
-param openAIModelCapacity = 2
+// Azure AI Foundry
+param foundryProjectPath = 'open-ai-firesim-test/open-ai-firesim-test-project'
+param foundryProjectRegion = 'eastus'
+param foundryImageModel = 'stable-image-core'
 
 // Tags
 param tags = {
