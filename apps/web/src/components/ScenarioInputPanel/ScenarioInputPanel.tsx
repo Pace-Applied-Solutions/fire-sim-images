@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
-import type { ScenarioInputs, FireDangerRating } from '@fire-sim/shared';
+import type { ScenarioInputs, FireDangerRating, ViewPoint } from '@fire-sim/shared';
 import {
   getWeatherProfileForRating,
   validateWeatherParameters,
   formatRating,
 } from '@fire-sim/shared';
+import { generationApi } from '../../services/generationApi';
+import { useToastStore } from '../../store/toastStore';
 import styles from './ScenarioInputPanel.module.css';
 
 const PRESETS: Record<string, ScenarioInputs> = {
@@ -85,7 +87,17 @@ interface ValidationErrors {
 }
 
 export const ScenarioInputPanel: React.FC = () => {
-  const { perimeter, setScenarioState, setScenarioInputs } = useAppStore();
+  const {
+    perimeter,
+    geoContext,
+    setGeoContext,
+    setScenarioState,
+    setScenarioInputs,
+    setGenerationProgress,
+    setGenerationResult,
+    setError,
+  } = useAppStore();
+  const { addToast } = useToastStore();
   const [inputs, setInputs] = useState<ScenarioInputs>(DEFAULT_INPUTS);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -168,13 +180,83 @@ export const ScenarioInputPanel: React.FC = () => {
     setScenarioInputs(DEFAULT_INPUTS);
   }, [setScenarioInputs]);
 
-  const handleGenerate = () => {
-    console.log('Generate scenario:', {
-      perimeter,
-      inputs,
-    });
-    setScenarioState('generating');
-    // API call will be wired in Issue 8
+  // Fetch geo context when perimeter changes
+  useEffect(() => {
+    const fetchGeoContext = async () => {
+      if (perimeter && perimeter.geometry) {
+        try {
+          const context = await generationApi.getGeoContext(perimeter.geometry);
+          setGeoContext(context);
+        } catch (error) {
+          console.error('Failed to fetch geo context:', error);
+          addToast({ type: 'error', message: 'Failed to load geographic context' });
+        }
+      }
+    };
+
+    fetchGeoContext();
+  }, [perimeter, setGeoContext, addToast]);
+
+  const handleGenerate = async () => {
+    if (!perimeter || !geoContext) {
+      addToast({ type: 'error', message: 'Draw a fire perimeter on the map first' });
+      return;
+    }
+
+    try {
+      setScenarioState('generating');
+      setGenerationProgress('Starting generation...');
+      setError(null);
+
+      // Default viewpoints for now - could be made configurable later
+      const requestedViews: ViewPoint[] = [
+        'aerial',
+        'helicopter_north',
+        'ground_north',
+        'ground_east',
+        'ridge',
+      ];
+
+      // Start generation
+      const startResponse = await generationApi.startGeneration({
+        perimeter,
+        inputs,
+        geoContext,
+        requestedViews,
+      });
+
+      addToast({ type: 'success', message: 'Generation started' });
+      console.log('Generation started:', startResponse);
+
+      // Poll for completion
+      const result = await generationApi.pollForCompletion(
+        startResponse.scenarioId,
+        (status) => {
+          setGenerationProgress(status.progress);
+          console.log('Generation progress:', status.progress);
+        }
+      );
+
+      // Handle completion
+      setGenerationResult(result);
+      setScenarioState('complete');
+      setGenerationProgress(null);
+
+      if (result.status === 'completed') {
+        addToast({ type: 'success', message: `Generated ${result.images.length} images successfully` });
+      } else if (result.status === 'failed') {
+        addToast({ type: 'error', message: result.error || 'Generation failed' });
+        setError(result.error || 'Generation failed');
+        setScenarioState('error');
+      }
+    } catch (error) {
+      console.error('Generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(errorMessage);
+      setScenarioState('error');
+      setGenerationProgress(null);
+      addToast({ type: 'error', message: `Generation failed: ${errorMessage}` });
+    }
   };
 
   const isValid = Object.keys(errors).length === 0;
