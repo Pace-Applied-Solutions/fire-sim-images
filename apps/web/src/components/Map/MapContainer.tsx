@@ -20,7 +20,18 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import styles from './MapContainer.module.css';
 
-type ViewpointPreset = 'north' | 'south' | 'east' | 'west' | 'aerial';
+type ViewpointPreset = 
+	| 'helicopter_north' 
+	| 'helicopter_south' 
+	| 'helicopter_east' 
+	| 'helicopter_west' 
+	| 'helicopter_above'
+	| 'ground_north' 
+	| 'ground_south' 
+	| 'ground_east' 
+	| 'ground_west' 
+	| 'ground_above'
+	| 'aerial';
 
 interface PerimeterMetadata {
 	areaHectares: number;
@@ -369,39 +380,86 @@ export const MapContainer = () => {
 
 			let bearing = 0;
 			let pitch = 0;
+			let zoom = baseZoom - 1;
 			let center: [number, number] = [centerLng, centerLat];
 
 			switch (preset) {
-				case 'north':
+				// Helicopter views: Elevated wide-area perspective (existing behavior)
+				case 'helicopter_north':
 					bearing = 180; // Look from north (camera south, looking north)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng, centerLat - maxDiff * 0.8];
 					break;
-				case 'south':
+				case 'helicopter_south':
 					bearing = 0; // Look from south (camera north, looking south)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng, centerLat + maxDiff * 0.8];
 					break;
-				case 'east':
+				case 'helicopter_east':
 					bearing = 270; // Look from east (camera west, looking east)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng + maxDiff * 0.8, centerLat];
 					break;
-				case 'west':
+				case 'helicopter_west':
 					bearing = 90; // Look from west (camera east, looking west)
 					pitch = 60;
+					zoom = baseZoom - 1;
 					center = [centerLng - maxDiff * 0.8, centerLat];
 					break;
+				case 'helicopter_above':
+					bearing = 0;
+					pitch = 30; // Slightly angled down
+					zoom = baseZoom - 1;
+					center = [centerLng, centerLat];
+					break;
+
+				// Ground-level views: Flat horizontal perspective (truck/vehicle view)
+				case 'ground_north':
+					bearing = 180; // Look from north (camera south, looking north)
+					pitch = 85; // Nearly horizontal, ground-level perspective
+					zoom = baseZoom + 1.5; // Much closer zoom (simulates <2km distance)
+					center = [centerLng, centerLat - maxDiff * 0.35]; // Closer to fire
+					break;
+				case 'ground_south':
+					bearing = 0; // Look from south (camera north, looking south)
+					pitch = 85;
+					zoom = baseZoom + 1.5;
+					center = [centerLng, centerLat + maxDiff * 0.35];
+					break;
+				case 'ground_east':
+					bearing = 270; // Look from east (camera west, looking east)
+					pitch = 85;
+					zoom = baseZoom + 1.5;
+					center = [centerLng + maxDiff * 0.35, centerLat];
+					break;
+				case 'ground_west':
+					bearing = 90; // Look from west (camera east, looking west)
+					pitch = 85;
+					zoom = baseZoom + 1.5;
+					center = [centerLng - maxDiff * 0.35, centerLat];
+					break;
+				case 'ground_above':
+					bearing = 0;
+					pitch = 0; // Top-down, but closer
+					zoom = baseZoom + 1; // Zoomed in compared to helicopter_above
+					center = [centerLng, centerLat];
+					break;
+
+				// Legacy aerial view
 				case 'aerial':
 					bearing = 0;
 					pitch = 0; // Top-down view
+					zoom = baseZoom - 1;
 					center = [centerLng, centerLat];
 					break;
 			}
 
 			map.flyTo({
 				center,
-				zoom: baseZoom - 1,
+				zoom,
 				bearing,
 				pitch,
 				duration: 2000,
@@ -430,40 +488,81 @@ export const MapContainer = () => {
 			{/* Viewpoint Controls */}
 			{metadata && (
 				<div className={styles.viewpointControls}>
-					<div className={styles.viewpointTitle}>Viewpoints</div>
+					<div className={styles.viewpointTitle}>Helicopter Views (Wide Area)</div>
 					<div className={styles.viewpointButtons}>
 						<button
-							onClick={() => flyToViewpoint('north')}
+							onClick={() => flyToViewpoint('helicopter_north')}
 							className={styles.viewpointBtn}
-							title="View from North"
+							title="Helicopter View from North"
 						>
 							N
 						</button>
 						<button
-							onClick={() => flyToViewpoint('south')}
+							onClick={() => flyToViewpoint('helicopter_south')}
 							className={styles.viewpointBtn}
-							title="View from South"
+							title="Helicopter View from South"
 						>
 							S
 						</button>
 						<button
-							onClick={() => flyToViewpoint('east')}
+							onClick={() => flyToViewpoint('helicopter_east')}
 							className={styles.viewpointBtn}
-							title="View from East"
+							title="Helicopter View from East"
 						>
 							E
 						</button>
 						<button
-							onClick={() => flyToViewpoint('west')}
+							onClick={() => flyToViewpoint('helicopter_west')}
 							className={styles.viewpointBtn}
-							title="View from West"
+							title="Helicopter View from West"
 						>
 							W
 						</button>
 						<button
-							onClick={() => flyToViewpoint('aerial')}
+							onClick={() => flyToViewpoint('helicopter_above')}
 							className={styles.viewpointBtn}
-							title="Aerial View (Top-Down)"
+							title="Helicopter View Above"
+						>
+							⬆
+						</button>
+					</div>
+
+					<div className={styles.viewpointTitle} style={{ marginTop: '12px' }}>
+						Ground Views (Truck Perspective)
+					</div>
+					<div className={styles.viewpointButtons}>
+						<button
+							onClick={() => flyToViewpoint('ground_north')}
+							className={styles.viewpointBtn}
+							title="Ground-Level View from North"
+						>
+							N
+						</button>
+						<button
+							onClick={() => flyToViewpoint('ground_south')}
+							className={styles.viewpointBtn}
+							title="Ground-Level View from South"
+						>
+							S
+						</button>
+						<button
+							onClick={() => flyToViewpoint('ground_east')}
+							className={styles.viewpointBtn}
+							title="Ground-Level View from East"
+						>
+							E
+						</button>
+						<button
+							onClick={() => flyToViewpoint('ground_west')}
+							className={styles.viewpointBtn}
+							title="Ground-Level View from West"
+						>
+							W
+						</button>
+						<button
+							onClick={() => flyToViewpoint('ground_above')}
+							className={styles.viewpointBtn}
+							title="Ground-Level View Above (Low Altitude)"
 						>
 							⬆
 						</button>
