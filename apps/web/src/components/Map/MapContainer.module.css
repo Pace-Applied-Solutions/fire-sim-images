@@ -10,6 +10,43 @@
 	height: 100%;
 }
 
+.drawControls {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	background: var(--color-bg-elevated);
+	border-radius: var(--radius-lg);
+	padding: var(--spacing-xs);
+	box-shadow: var(--shadow-lg);
+	z-index: 2;
+}
+
+.drawButton {
+	width: 36px;
+	height: 36px;
+	border: none;
+	border-radius: var(--radius-md);
+	background: var(--color-bg-primary);
+	color: var(--color-text-primary);
+	font-size: 1.1rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: all var(--transition-fast);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.drawButton:hover {
+	background: var(--color-accent-primary);
+	color: var(--color-bg-primary);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-md);
+}
+
 /* Viewpoint Controls */
 .viewpointControls {
 	position: absolute;
@@ -143,35 +180,51 @@
 /* Instructions */
 .instructions {
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+	top: 16px;
+	right: 72px;
+	left: auto;
+	transform: none;
 	background: var(--color-bg-elevated);
 	border-radius: var(--radius-lg);
-	padding: var(--spacing-lg);
+	padding: var(--spacing-sm) var(--spacing-md);
 	box-shadow: var(--shadow-xl);
-	text-align: center;
+	text-align: left;
+	width: 260px;
 	max-width: 320px;
 	z-index: 1;
 	pointer-events: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-lg);
 }
 
 .instructionsTitle {
-	font-size: var(--font-size-lg);
+	font-size: 0.95rem;
 	font-weight: var(--font-weight-semibold);
 	color: var(--color-accent);
-	margin-bottom: var(--spacing-md);
+	margin-bottom: var(--spacing-xs);
 }
 
 .instructions p {
-	font-size: var(--font-size-sm);
+	font-size: 0.75rem;
 	color: var(--color-text-secondary);
-	margin-bottom: var(--spacing-xs);
+	margin-bottom: 0;
 	line-height: var(--line-height-relaxed);
 }
 
 .instructions p:last-child {
 	margin-bottom: 0;
+}
+
+.instructionsText {
+	flex: 1;
+}
+
+.instructionsArrow {
+	font-size: 1.25rem;
+	color: var(--color-accent-primary);
+	flex-shrink: 0;
 }
 
 .mapError {
@@ -214,11 +267,11 @@
 }
 
 :global(.mapboxgl-ctrl-group button:hover) {
-	background: var(--color-bg-hover) !important;
+	background: var(--color-border-hover) !important;
 }
 
 :global(.mapboxgl-ctrl-group button + button) {
-	border-top: 1px solid var(--color-border) !important;
+	border-top: 1px solid var(--color-border-default) !important;
 }
 
 /* Draw controls styling */
@@ -228,12 +281,12 @@
 }
 
 :global(.mapbox-gl-draw_ctrl-draw-btn:hover) {
-	background: var(--color-accent) !important;
+	background: var(--color-accent-primary) !important;
 	color: var(--color-bg-primary) !important;
 }
 
 :global(.mapbox-gl-draw_ctrl-draw-btn.active) {
-	background: var(--color-accent) !important;
+	background: var(--color-accent-primary) !important;
 	color: var(--color-bg-primary) !important;
 }
 
@@ -241,7 +294,7 @@
 :global(.mapboxgl-ctrl-scale) {
 	background: var(--color-bg-elevated) !important;
 	color: var(--color-text-primary) !important;
-	border: 2px solid var(--color-border) !important;
+	border: 2px solid var(--color-border-default) !important;
 	border-top: none !important;
 	padding: 0 4px !important;
 	border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;

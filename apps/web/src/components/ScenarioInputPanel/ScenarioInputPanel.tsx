@@ -63,6 +63,22 @@ const DEFAULT_INPUTS: ScenarioInputs = {
   fireStage: 'established',
 };
 
+const RATING_CLASS_MAP: Record<FireDangerRating, string> = {
+  noRating: styles.ratingNoRating,
+  moderate: styles.ratingModerate,
+  high: styles.ratingHigh,
+  extreme: styles.ratingExtreme,
+  catastrophic: styles.ratingCatastrophic,
+};
+
+const RATING_INTENSITY_MAP: Record<FireDangerRating, ScenarioInputs['intensity']> = {
+  noRating: 'low',
+  moderate: 'moderate',
+  high: 'high',
+  extreme: 'extreme',
+  catastrophic: 'catastrophic',
+};
+
 interface ValidationErrors {
   windSpeed?: string;
   temperature?: string;
@@ -75,12 +91,6 @@ export const ScenarioInputPanel: React.FC = () => {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [sectionsOpen, setSectionsOpen] = useState({
-    fireDanger: true,
-    weather: true,
-    fire: true,
-    timing: true,
-  });
 
   const validateInputs = (newInputs: ScenarioInputs): ValidationErrors => {
     const newErrors: ValidationErrors = {};
@@ -130,6 +140,7 @@ export const ScenarioInputPanel: React.FC = () => {
     const newInputs: ScenarioInputs = {
       ...inputs,
       fireDangerRating: rating,
+      intensity: RATING_INTENSITY_MAP[rating],
       temperature: profile.temperature,
       humidity: profile.humidity,
       windSpeed: profile.windSpeed,
@@ -144,11 +155,12 @@ export const ScenarioInputPanel: React.FC = () => {
   const applyPreset = (presetKey: string) => {
     if (presetKey && PRESETS[presetKey]) {
       const presetInputs = PRESETS[presetKey];
-      setInputs(presetInputs);
+      const intensityFromRating = RATING_INTENSITY_MAP[presetInputs.fireDangerRating];
+      setInputs({ ...presetInputs, intensity: intensityFromRating });
       setSelectedPreset(presetKey);
       setErrors({});
       setWarnings([]);
-      setScenarioInputs(presetInputs);
+      setScenarioInputs({ ...presetInputs, intensity: intensityFromRating });
     }
   };
 
@@ -169,15 +181,12 @@ export const ScenarioInputPanel: React.FC = () => {
   const isValid = Object.keys(errors).length === 0;
   const canGenerate = isValid && perimeter !== null;
 
-  const toggleSection = (section: keyof typeof sectionsOpen) => {
-    setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
-
   const getSummaryText = (): string => {
     const intensityMap = {
       low: 'Low',
       moderate: 'Moderate',
       high: 'High',
+      catastrophic: 'Catastrophic',
       veryHigh: 'Very High',
       extreme: 'Extreme',
     };
@@ -199,17 +208,6 @@ export const ScenarioInputPanel: React.FC = () => {
     };
 
     return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)}. Intensity: ${intensityMap[inputs.intensity]}.`;
-  };
-
-  const getRatingClassName = (rating: FireDangerRating): string => {
-    const classMap: Record<FireDangerRating, string> = {
-      noRating: styles.ratingNoRating,
-      moderate: styles.ratingModerate,
-      high: styles.ratingHigh,
-      extreme: styles.ratingExtreme,
-      catastrophic: styles.ratingCatastrophic,
-    };
-    return `${styles.fdiRating} ${classMap[rating]}`;
   };
 
   return (
@@ -235,73 +233,40 @@ export const ScenarioInputPanel: React.FC = () => {
 
       {/* Fire Danger Section */}
       <section className={styles.section}>
-        <button
-          className={styles.sectionHeader}
-          onClick={() => toggleSection('fireDanger')}
-          aria-expanded={sectionsOpen.fireDanger}
-        >
-          <h3 className={styles.sectionTitle}>Fire Danger Rating (AFDRS)</h3>
-          <span className={styles.chevron}>{sectionsOpen.fireDanger ? '▼' : '▶'}</span>
-        </button>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>Fire Danger (AFDRS)</h3>
+        </div>
 
-        {sectionsOpen.fireDanger && (
-          <div className={styles.sectionContent}>
+        <div className={styles.sectionContent}>
             {/* Fire Danger Rating Selector */}
             <div className={styles.field}>
               <label className={styles.label}>Select fire danger rating</label>
-              <div className={styles.ratingSegmentedControl}>
-                {(['noRating', 'moderate', 'high', 'extreme', 'catastrophic'] as const).map(
-                  (rating) => (
-                    <button
-                      key={rating}
-                      onClick={() => handleRatingChange(rating)}
-                      className={`${styles.ratingSegment} ${
-                        inputs.fireDangerRating === rating ? styles.ratingSegmentActive : ''
-                      }`}
-                      style={{
-                        backgroundColor: inputs.fireDangerRating === rating ? getRatingClassName(rating).split(' ')[1] : undefined,
-                        color: inputs.fireDangerRating === rating ? 'white' : undefined,
-                      }}
-                      aria-pressed={inputs.fireDangerRating === rating}
-                    >
-                      {formatRating(rating)}
-                    </button>
-                  )
-                )}
-              </div>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-tertiary)', marginTop: '0.5rem', lineHeight: 1.4 }}>
-                {getRatingDescription(inputs.fireDangerRating)}
-              </p>
+              <select
+                className={`${styles.ratingSelect} ${RATING_CLASS_MAP[inputs.fireDangerRating]}`}
+                value={inputs.fireDangerRating}
+                onChange={(e) => handleRatingChange(e.target.value as FireDangerRating)}
+              >
+                <option value="noRating">No Rating</option>
+                <option value="moderate">Moderate</option>
+                <option value="high">High</option>
+                <option value="extreme">Extreme</option>
+                <option value="catastrophic">Catastrophic</option>
+              </select>
             </div>
 
-            {/* Current Rating Display */}
-            <div className={styles.fdiDisplay}>
-              <span className={styles.fdiLabel}>Current rating:</span>
-              <span className={getRatingClassName(inputs.fireDangerRating)}>
-                {formatRating(inputs.fireDangerRating)}
-              </span>
-            </div>
-
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginTop: '0.75rem', fontStyle: 'italic' }}>
+            <p className={styles.ratingHint}>
               Selecting a rating sets typical weather conditions. You can adjust individual weather parameters below.
             </p>
           </div>
-        )}
       </section>
 
       {/* Weather Section */}
       <section className={styles.section}>
-        <button
-          className={styles.sectionHeader}
-          onClick={() => toggleSection('weather')}
-          aria-expanded={sectionsOpen.weather}
-        >
+        <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>Weather</h3>
-          <span className={styles.chevron}>{sectionsOpen.weather ? '▼' : '▶'}</span>
-        </button>
+        </div>
 
-        {sectionsOpen.weather && (
-          <div className={styles.sectionContent}>
+        <div className={styles.sectionContent}>
             {/* Wind Speed */}
             <div className={styles.field}>
               <label htmlFor="wind-speed" className={styles.label}>
@@ -422,43 +387,15 @@ export const ScenarioInputPanel: React.FC = () => {
               </div>
             )}
           </div>
-        )}
       </section>
 
       {/* Fire Section */}
       <section className={styles.section}>
-        <button
-          className={styles.sectionHeader}
-          onClick={() => toggleSection('fire')}
-          aria-expanded={sectionsOpen.fire}
-        >
+        <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>Fire</h3>
-          <span className={styles.chevron}>{sectionsOpen.fire ? '▼' : '▶'}</span>
-        </button>
+        </div>
 
-        {sectionsOpen.fire && (
-          <div className={styles.sectionContent}>
-            {/* Fire Intensity */}
-            <div className={styles.field}>
-              <label className={styles.label}>Fire intensity</label>
-              <div className={styles.segmentedControl}>
-                {(['low', 'moderate', 'high', 'veryHigh', 'extreme'] as const).map(
-                  (intensity) => (
-                    <button
-                      key={intensity}
-                      onClick={() => updateInput('intensity', intensity)}
-                      className={`${styles.segment} ${
-                        inputs.intensity === intensity ? styles.segmentActive : ''
-                      }`}
-                      aria-pressed={inputs.intensity === intensity}
-                    >
-                      {intensity === 'veryHigh' ? 'Very High' : intensity.charAt(0).toUpperCase() + intensity.slice(1)}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-
+        <div className={styles.sectionContent}>
             {/* Fire Stage */}
             <div className={styles.field}>
               <label htmlFor="fire-stage" className={styles.label}>
@@ -479,22 +416,15 @@ export const ScenarioInputPanel: React.FC = () => {
               </select>
             </div>
           </div>
-        )}
       </section>
 
       {/* Timing Section */}
       <section className={styles.section}>
-        <button
-          className={styles.sectionHeader}
-          onClick={() => toggleSection('timing')}
-          aria-expanded={sectionsOpen.timing}
-        >
+        <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>Timing</h3>
-          <span className={styles.chevron}>{sectionsOpen.timing ? '▼' : '▶'}</span>
-        </button>
+        </div>
 
-        {sectionsOpen.timing && (
-          <div className={styles.sectionContent}>
+        <div className={styles.sectionContent}>
             {/* Time of Day */}
             <div className={styles.field}>
               <label htmlFor="time-of-day" className={styles.label}>
@@ -517,7 +447,6 @@ export const ScenarioInputPanel: React.FC = () => {
               </select>
             </div>
           </div>
-        )}
       </section>
 
       {/* Summary Card */}

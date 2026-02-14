@@ -52,6 +52,32 @@ export const MapContainer = () => {
 	const { setPerimeter: setAppPerimeter, setState } = useAppStore();
 	const { addToast } = useToastStore();
 
+	const setMapCursor = useCallback((cursor: string | null) => {
+		const map = mapRef.current;
+		if (!map) return;
+		map.getCanvas().style.cursor = cursor ?? '';
+	}, []);
+
+	const startPolygonDraw = useCallback(() => {
+		if (!drawRef.current) return;
+		drawRef.current.changeMode('draw_polygon');
+		setMapCursor('crosshair');
+		addToast({
+			type: 'info',
+			message: 'Polygon draw mode enabled',
+		});
+	}, [addToast, setMapCursor]);
+
+	const clearPerimeter = useCallback(() => {
+		if (!drawRef.current) return;
+		drawRef.current.deleteAll();
+		setMapCursor(null);
+		addToast({
+			type: 'info',
+			message: 'Perimeter cleared',
+		});
+	}, [addToast, setMapCursor]);
+
 	// Initialize Mapbox map
 	useEffect(() => {
 		if (!mapContainerRef.current || mapRef.current) return;
@@ -164,8 +190,8 @@ export const MapContainer = () => {
 		const draw = new MapboxDraw({
 			displayControlsDefault: false,
 			controls: {
-				polygon: true,
-				trash: true,
+				polygon: false,
+				trash: false,
 			},
 			defaultMode: 'simple_select',
 			styles: [
@@ -254,19 +280,29 @@ export const MapContainer = () => {
 		map.addControl(draw, 'top-right');
 		drawRef.current = draw;
 
+		const handleModeChange = (event: { mode?: string }) => {
+			if (event.mode === 'draw_polygon') {
+				setMapCursor('crosshair');
+				return;
+			}
+			setMapCursor(null);
+		};
+
 		// Handle draw events
 		map.on('draw.create', handleDrawUpdate);
 		map.on('draw.update', handleDrawUpdate);
 		map.on('draw.delete', handleDrawDelete);
+		map.on('draw.modechange', handleModeChange);
 
 		return () => {
 			if (map && draw) {
 				map.off('draw.create', handleDrawUpdate);
 				map.off('draw.update', handleDrawUpdate);
 				map.off('draw.delete', handleDrawDelete);
+				map.off('draw.modechange', handleModeChange);
 			}
 		};
-	}, [isMapLoaded, addToast]);
+	}, [isMapLoaded, addToast, setMapCursor]);
 
 	// Handle polygon draw/update
 	const handleDrawUpdate = useCallback(
@@ -478,6 +514,27 @@ export const MapContainer = () => {
 		<div className={styles.container}>
 			<div ref={mapContainerRef} className={styles.map} />
 
+			<div className={styles.drawControls}>
+				<button
+					className={styles.drawButton}
+					onClick={startPolygonDraw}
+					title="Draw perimeter"
+					aria-label="Draw fire perimeter"
+					type="button"
+				>
+					⬠
+				</button>
+				<button
+					className={styles.drawButton}
+					onClick={clearPerimeter}
+					title="Clear perimeter"
+					aria-label="Clear fire perimeter"
+					type="button"
+				>
+					🗑️
+				</button>
+			</div>
+
 			{mapError && (
 				<div className={styles.mapError}>
 					<div className={styles.mapErrorTitle}>Map unavailable</div>
@@ -603,10 +660,13 @@ export const MapContainer = () => {
 			{/* Instructions */}
 			{!perimeter && isMapLoaded && (
 				<div className={styles.instructions}>
-					<div className={styles.instructionsTitle}>Draw Fire Perimeter</div>
-					<p>Click the polygon tool (□) in the top-right corner</p>
-					<p>Click on the map to draw the fire perimeter</p>
-					<p>Double-click or press Enter to complete</p>
+					<div className={styles.instructionsText}>
+						<div className={styles.instructionsTitle}>Start drawing with ⬠</div>
+						<p>Click on the map to place the perimeter</p>
+					</div>
+					<div className={styles.instructionsArrow} aria-hidden="true">
+						→
+					</div>
 				</div>
 			)}
 		</div>
