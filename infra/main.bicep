@@ -54,7 +54,6 @@ var resourceNamePrefix = 'firesim-${environmentName}'
 var staticWebAppName = '${resourceNamePrefix}-web'
 var storageAccountName = replace('${resourceNamePrefix}stor', '-', '')
 var keyVaultName = '${resourceNamePrefix}-kv'
-var openAIName = '${resourceNamePrefix}-openai'
 
 // Deploy Static Web App
 module staticWebApp './modules/staticWebApp.bicep' = {
@@ -95,21 +94,21 @@ module keyVault './modules/keyVault.bicep' = {
 
 // Store Foundry project settings in Key Vault
 resource foundryProjectPathSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVault.outputs.name}/Foundry--ProjectPath'
+  name: '${keyVaultName}/Foundry--ProjectPath'
   properties: {
     value: foundryProjectPath
   }
 }
 
 resource foundryProjectRegionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVault.outputs.name}/Foundry--ProjectRegion'
+  name: '${keyVaultName}/Foundry--ProjectRegion'
   properties: {
     value: foundryProjectRegion
   }
 }
 
 resource foundryImageModelSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVault.outputs.name}/Foundry--ImageModel'
+  name: '${keyVaultName}/Foundry--ImageModel'
   properties: {
     value: foundryImageModel
   }

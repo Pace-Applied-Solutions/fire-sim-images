@@ -148,7 +148,7 @@ fi
 
 echo -e "${YELLOW}Validating deployment in ${LOCATION}...${NC}"
 set +e
-VALIDATION_RESULT=$(az deployment group validate \
+VALIDATION_RESULT=$(AZURE_CORE_ONLY_SHOW_ERRORS=1 az deployment group validate \
     --resource-group "$RESOURCE_GROUP" \
     --template-file main.bicep \
     --parameters "$PARAM_FILE" \
