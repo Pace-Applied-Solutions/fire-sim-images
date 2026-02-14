@@ -20,18 +20,38 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import styles from './MapContainer.module.css';
 
-type ViewpointPreset = 
-	| 'helicopter_north' 
-	| 'helicopter_south' 
-	| 'helicopter_east' 
-	| 'helicopter_west' 
+type ViewpointPreset =
+	| 'helicopter_north'
+	| 'helicopter_south'
+	| 'helicopter_east'
+	| 'helicopter_west'
 	| 'helicopter_above'
-	| 'ground_north' 
-	| 'ground_south' 
-	| 'ground_east' 
-	| 'ground_west' 
+	| 'ground_north'
+	| 'ground_south'
+	| 'ground_east'
+	| 'ground_west'
 	| 'ground_above'
 	| 'aerial';
+
+const VIEW_PRESET_MAP = {
+	helicopter: {
+		north: 'helicopter_north',
+		south: 'helicopter_south',
+		east: 'helicopter_east',
+		west: 'helicopter_west',
+		above: 'helicopter_above',
+	},
+	ground: {
+		north: 'ground_north',
+		south: 'ground_south',
+		east: 'ground_east',
+		west: 'ground_west',
+		above: 'ground_above',
+	},
+} as const;
+
+type ViewMode = keyof typeof VIEW_PRESET_MAP;
+type ViewDirection = keyof (typeof VIEW_PRESET_MAP)['helicopter'];
 
 interface PerimeterMetadata {
 	areaHectares: number;
@@ -48,6 +68,8 @@ export const MapContainer = () => {
 	const [perimeter, setPerimeter] = useState<FirePerimeter | null>(null);
 	const [metadata, setMetadata] = useState<PerimeterMetadata | null>(null);
 	const [mapError, setMapError] = useState<string | null>(null);
+	const [viewMode, setViewMode] = useState<ViewMode>('helicopter');
+	const [currentDirection, setCurrentDirection] = useState<ViewDirection>('north');
 
 	const { setPerimeter: setAppPerimeter, setState } = useAppStore();
 	const { addToast } = useToastStore();
@@ -510,6 +532,22 @@ export const MapContainer = () => {
 		[metadata, addToast]
 	);
 
+	const toggleViewMode = useCallback(() => {
+		setViewMode((prevMode) => {
+			const nextMode = prevMode === 'ground' ? 'helicopter' : 'ground';
+			flyToViewpoint(VIEW_PRESET_MAP[nextMode][currentDirection]);
+			return nextMode;
+		});
+	}, [currentDirection, flyToViewpoint]);
+
+	const handleDirectionSelect = useCallback(
+		(direction: ViewDirection) => {
+			setCurrentDirection(direction);
+			flyToViewpoint(VIEW_PRESET_MAP[viewMode][direction]);
+		},
+		[flyToViewpoint, viewMode]
+	);
+
 	return (
 		<div className={styles.container}>
 			<div ref={mapContainerRef} className={styles.map} />
@@ -545,88 +583,61 @@ export const MapContainer = () => {
 			{/* Viewpoint Controls */}
 			{metadata && (
 				<div className={styles.viewpointControls}>
-					<div className={styles.viewpointTitle}>Helicopter Views (Wide Area)</div>
 					<div className={styles.viewpointButtons}>
 						<button
-							onClick={() => flyToViewpoint('helicopter_north')}
-							className={styles.viewpointBtn}
-							title="Helicopter View from North"
+							onClick={toggleViewMode}
+							className={styles.viewpointToggle}
+							aria-pressed={viewMode === 'ground'}
+							aria-label={
+								viewMode === 'helicopter'
+									? 'Switch to fire truck perspective'
+									: 'Switch to helicopter perspective'
+							}
+							title={
+								viewMode === 'helicopter'
+									? 'Switch to fire truck perspective'
+									: 'Switch to helicopter perspective'
+							}
+							type="button"
 						>
-							N
+							{viewMode === 'helicopter' ? '🚁' : '🚒'}
 						</button>
+						{(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
+							(direction) => (
+								<button
+									key={direction}
+									onClick={() => handleDirectionSelect(direction)}
+									className={`${styles.viewpointBtn} ${
+										currentDirection === direction ? styles.viewpointBtnActive : ''
+									}`}
+									title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
+										direction === 'above' ? 'above' : `from ${direction}`
+									}`}
+									aria-pressed={currentDirection === direction}
+									type="button"
+								>
+									{direction === 'north'
+										? 'N'
+										: direction === 'south'
+											? 'S'
+											: direction === 'east'
+												? 'E'
+												: direction === 'west'
+													? 'W'
+													: '⬆'}
+								</button>
+							)
+						)}
 						<button
-							onClick={() => flyToViewpoint('helicopter_south')}
-							className={styles.viewpointBtn}
-							title="Helicopter View from South"
+							onClick={captureMapView}
+							className={styles.viewpointCapture}
+							title="Capture current view"
+							aria-label="Capture current view"
+							type="button"
 						>
-							S
-						</button>
-						<button
-							onClick={() => flyToViewpoint('helicopter_east')}
-							className={styles.viewpointBtn}
-							title="Helicopter View from East"
-						>
-							E
-						</button>
-						<button
-							onClick={() => flyToViewpoint('helicopter_west')}
-							className={styles.viewpointBtn}
-							title="Helicopter View from West"
-						>
-							W
-						</button>
-						<button
-							onClick={() => flyToViewpoint('helicopter_above')}
-							className={styles.viewpointBtn}
-							title="Helicopter View Above"
-						>
-							⬆
+							📷
 						</button>
 					</div>
-
-					<div className={styles.viewpointTitle} style={{ marginTop: '12px' }}>
-						Ground Views (Truck Perspective)
-					</div>
-					<div className={styles.viewpointButtons}>
-						<button
-							onClick={() => flyToViewpoint('ground_north')}
-							className={styles.viewpointBtn}
-							title="Ground-Level View from North"
-						>
-							N
-						</button>
-						<button
-							onClick={() => flyToViewpoint('ground_south')}
-							className={styles.viewpointBtn}
-							title="Ground-Level View from South"
-						>
-							S
-						</button>
-						<button
-							onClick={() => flyToViewpoint('ground_east')}
-							className={styles.viewpointBtn}
-							title="Ground-Level View from East"
-						>
-							E
-						</button>
-						<button
-							onClick={() => flyToViewpoint('ground_west')}
-							className={styles.viewpointBtn}
-							title="Ground-Level View from West"
-						>
-							W
-						</button>
-						<button
-							onClick={() => flyToViewpoint('ground_above')}
-							className={styles.viewpointBtn}
-							title="Ground-Level View Above (Low Altitude)"
-						>
-							⬆
-						</button>
-					</div>
-					<button onClick={captureMapView} className={styles.captureBtn}>
-						📷 Capture View
-					</button>
 				</div>
 			)}
 

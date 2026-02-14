@@ -309,7 +309,8 @@ Update this section after each issue or change.
     - Added 10 new view types: `helicopter_north/south/east/west/above` and `ground_north/south/east/west/above`
     - Helicopter views: Elevated perspective (60° pitch, 0.8x distance) for wide-area situational awareness
     - Ground views: Ground-level perspective (85° pitch, 0.35x distance) simulating realistic truck/vehicle view <2km from terrain
-    - Updated MapContainer UI with two separate control sections clearly distinguishing perspective types
+    - Updated MapContainer UI with an active-direction highlight and responsive row sizing to avoid control overlap
+  - **Results Panel Behavior:** Results panel now starts collapsed and expands when scenario results are ready
     - Created comprehensive documentation: `docs/current_state/view_perspectives.md` with use cases, technical details, and training guidance
     - Created UI layout documentation: `docs/current_state/images/viewpoint_controls_layout.md` with visual diagrams
     - Retained existing `aerial` and `ridge` view types for backward compatibility

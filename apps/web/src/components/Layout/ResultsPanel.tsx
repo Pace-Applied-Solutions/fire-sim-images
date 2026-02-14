@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
 import styles from './ResultsPanel.module.css';
 
@@ -7,7 +7,16 @@ interface ResultsPanelProps {
 }
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
-  const { isResultsPanelOpen, toggleResultsPanel } = useAppStore();
+  const {
+    isResultsPanelOpen,
+    toggleResultsPanel,
+    scenarioState,
+    setResultsPanelOpen,
+  } = useAppStore();
+
+  useEffect(() => {
+    setResultsPanelOpen(scenarioState === 'complete');
+  }, [scenarioState, setResultsPanelOpen]);
 
   return (
     <aside className={`${styles.panel} ${isResultsPanelOpen ? styles.open : styles.closed}`}>
