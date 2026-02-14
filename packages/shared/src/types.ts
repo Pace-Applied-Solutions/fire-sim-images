@@ -1,14 +1,22 @@
 /**
- * Core domain types for the NSW RFS bushfire simulation inject tool.
+ * Core domain types for the bushfire simulation inject tool.
  * These types define the structure of fire scenarios, generation requests, and results.
  */
 
 /**
- * GeoJSON-style polygon representing a fire perimeter.
+ * GeoJSON Feature representing a fire perimeter polygon.
+ * Follows GeoJSON specification with additional properties for tracking.
  */
 export interface FirePerimeter {
-  type: 'Polygon';
-  coordinates: number[][][]; // [[[lng, lat], [lng, lat], ...]]
+  type: 'Feature';
+  geometry: {
+    type: 'Polygon';
+    coordinates: number[][][]; // [[[lng, lat], [lng, lat], ...]]
+  };
+  properties: {
+    drawn: boolean;
+    timestamp: string;
+  };
 }
 
 /**
@@ -16,11 +24,12 @@ export interface FirePerimeter {
  */
 export interface ScenarioInputs {
   windSpeed: number; // km/h
-  windDirection: number; // degrees (0 = North, 90 = East, etc.)
+  windDirection: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW'; // Cardinal direction
   temperature: number; // degrees Celsius
   humidity: number; // percentage (0-100)
   timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
-  intensity: 'low' | 'moderate' | 'high' | 'extreme';
+  intensity: 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
+  fireStage: 'spotFire' | 'developing' | 'established' | 'major';
 }
 
 /**

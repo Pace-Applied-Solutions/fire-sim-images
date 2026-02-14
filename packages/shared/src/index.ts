@@ -1,5 +1,5 @@
 /**
- * Shared types and constants for the NSW RFS bushfire simulation inject tool.
+ * Shared types and constants for the bushfire simulation inject tool.
  */
 
 export * from './types.js';

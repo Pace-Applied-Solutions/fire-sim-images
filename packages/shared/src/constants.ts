@@ -1,6 +1,6 @@
 /**
- * Constants and default values for the NSW RFS bushfire simulation inject tool.
- * Includes RFS terminology and standard configuration values.
+ * Constants and default values for the bushfire simulation inject tool.
+ * Includes fire service terminology and standard configuration values.
  */
 
 /**
@@ -16,7 +16,7 @@ export const DEFAULT_SCENARIO_INPUTS = {
 };
 
 /**
- * RFS fire intensity classifications.
+ * Fire intensity classifications.
  */
 export const FIRE_INTENSITY = {
   LOW: 'low',
@@ -50,9 +50,9 @@ export const VIEWPOINTS = {
 } as const;
 
 /**
- * Common NSW vegetation types from SVTM (Statewide Vegetation Type Map).
+ * Common vegetation types (example list).
  */
-export const NSW_VEGETATION_TYPES = [
+export const VEGETATION_TYPES = [
   'Dry Sclerophyll Forest',
   'Wet Sclerophyll Forest',
   'Grassy Woodland',

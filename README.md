@@ -1,17 +1,17 @@
-# NSW RFS Fire Simulation Inject Tool
+# Fire Simulation Inject Tool
 
-AI-powered bushfire simulation inject tool for NSW RFS training. Generate realistic, location-specific fire imagery and video clips for training scenarios.
+AI-powered bushfire simulation inject tool for rural fire service training. Generate realistic, location-specific fire imagery and video clips for training scenarios.
 
 ## Overview
 
-This tool enables NSW RFS trainers to quickly create credible bushfire visuals for training exercises by:
+This tool enables fire service trainers to quickly create credible bushfire visuals for training exercises by:
 
-- Drawing fire perimeters on real NSW landscapes
+- Drawing fire perimeters on real landscapes
 - Setting scenario conditions (wind, temperature, humidity, time of day, intensity)
 - Generating multi-perspective imagery (aerial, ground, ridge views)
 - Producing short video clips for enhanced realism
 
-The system combines real geospatial data (vegetation, terrain, elevation) with AI-powered image generation to ensure outputs are both realistic and aligned with RFS terminology and doctrine.
+The system combines real geospatial data (vegetation, terrain, elevation) with AI-powered image generation to ensure outputs are both realistic and aligned with fire service terminology and doctrine.
 
 ## Project Context
 
@@ -52,13 +52,23 @@ The front-end provides a 3D map interface for drawing fire perimeters and settin
    npm install
    ```
 
-3. **Start development servers:**
+3. **Configure environment variables:**
+
+   Create a `.env` file in the root directory:
+
+   ```bash
+   VITE_MAPBOX_TOKEN=your_mapbox_token_here
+   ```
+
+   Get a free Mapbox token from https://account.mapbox.com/ (free tier: 50,000 map loads/month).
+
+4. **Start development servers:**
 
    ```bash
    npm run dev
    ```
 
-   This starts both the web app (port 3000) and API (port 7071) concurrently.
+   This starts both the web app (port 5173) and API (port 7071) concurrently.
 
 ## Development
 
@@ -100,7 +110,7 @@ The front-end provides a 3D map interface for drawing fire perimeters and settin
 │   └── shared/               # Shared types and constants
 │       └── src/
 │           ├── types.ts      # Domain types
-│           ├── constants.ts  # RFS terminology and defaults
+│           ├── constants.ts  # Fire service terminology and defaults
 │           └── index.ts      # Package exports
 └── docs/                     # Project documentation
 ```
@@ -144,4 +154,4 @@ All work must reference and update the master plan. Before making changes:
 
 ## License
 
-This project is for NSW RFS training purposes.
+This project is for fire service training purposes.
