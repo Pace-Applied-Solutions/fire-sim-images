@@ -8,9 +8,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev": "npm run dev:web",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
+    "dev:full": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
     "build": "npm run build --workspaces",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
