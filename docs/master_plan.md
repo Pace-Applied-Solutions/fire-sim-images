@@ -358,6 +358,7 @@ Update this section after each issue or change.
     - Extended ImageGenOptions with referenceImage, referenceStrength, mapScreenshot fields
     - Created map screenshot capture utility supporting all 12 viewpoints
     - Implemented consistent seed management (auto-generated 0-1,000,000 range)
+  - Resolved merge conflicts in shared types and lockfile to align authentication, safety, and gallery metadata models
     - Created ConsistencyValidator with 4-dimension validation (smoke, fire size, lighting, color)
     - Weighted scoring system (0-100) with 70% passing threshold
     - Built ImageComparison component with grid, side-by-side, and carousel views
