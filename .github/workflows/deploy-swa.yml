@@ -40,13 +40,11 @@ jobs:
       - name: Build shared package
         run: npm run build --workspace=packages/shared
 
-      - name: Pack shared library for local installs
+      - name: Bundle shared package into apps
         run: |
-          mkdir -p /tmp/firesim-pack
-          npm pack ./packages/shared --pack-destination /tmp/firesim-pack
-          SHARED_TGZ=$(ls /tmp/firesim-pack | head -n1)
-          cp /tmp/firesim-pack/$SHARED_TGZ apps/api/fire-sim-shared.tgz
-          cp /tmp/firesim-pack/$SHARED_TGZ apps/web/fire-sim-shared.tgz
+          rm -rf apps/api/shared-dist apps/web/shared-dist
+          cp -R packages/shared apps/api/shared-dist
+          cp -R packages/shared apps/web/shared-dist
 
       - name: Build and deploy Static Web App
         uses: Azure/static-web-apps-deploy@v1

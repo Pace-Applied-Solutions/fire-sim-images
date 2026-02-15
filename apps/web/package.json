@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@fire-sim/shared": "file:./fire-sim-shared.tgz",
+    "@fire-sim/shared": "file:./shared-dist",
     "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@microsoft/applicationinsights-web": "^3.3.11",
     "@turf/area": "^7.3.4",
