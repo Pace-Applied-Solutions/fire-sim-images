@@ -107,7 +107,7 @@ Located in `apps/web/public/staticwebapp.config.json` and deployed with the web 
 ```json
 {
   "platform": {
-    "apiRuntime": "node:20"
+    "apiRuntime": "node:22"
   },
   "navigationFallback": {
     "rewrite": "/index.html",
@@ -118,7 +118,7 @@ Located in `apps/web/public/staticwebapp.config.json` and deployed with the web 
 
 This tells Azure Static Web Apps:
 
-- The API uses Node.js 20 runtime
+- The API uses Node.js 22 runtime
 - SPA routing rules for the front-end
 
 ### `host.json`

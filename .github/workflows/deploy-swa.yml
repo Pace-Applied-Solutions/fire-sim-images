@@ -31,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
           cache: 'npm'
 
       # ── 1. Install at workspace root (resolves @fire-sim/shared via symlinks) ──
@@ -83,7 +83,7 @@ jobs:
       # ── 4. Deploy: skip all Oryx builds, upload pre-built artifacts only ──
       #    Important: Azure Static Web Apps requires function language info when
       #    deploying pre-built API artifacts. This is configured via:
-      #    - staticwebapp.config.json in apps/web/public/ with apiRuntime: "node:20"
+      #    - staticwebapp.config.json in apps/web/public/ with apiRuntime: "node:22"
       #    - The config file is copied to dist/ during the Vite build and informs
       #      the SWA deployment service about the Node.js runtime version for Functions
       - name: Deploy to Azure Static Web Apps
