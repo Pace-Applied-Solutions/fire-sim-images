@@ -58,7 +58,7 @@ jobs:
           skip_app_build: true
           production_branch: main
 
-      # Verify the deployed page contains the expected commit SHA
+      # Verify the deployed page contains the expected commit SHA in a build-time meta tag
       - name: Verify deployment
         id: verify
         run: |
@@ -68,18 +68,23 @@ jobs:
           MAX_ATTEMPTS=18       # 18 × 10s = 3 minutes
           ATTEMPT=0
 
-          echo "Waiting for $URL to contain commit $SHORT_SHA ..."
+          echo "Waiting for $URL to contain commit $SHORT_SHA in <meta name=app-version> ..."
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             ATTEMPT=$((ATTEMPT + 1))
             sleep 10
 
-            # Fetch the page and look for the commit SHA in meta tag or page content
             PAGE=$(curl -s -m 10 "$URL" 2>/dev/null || echo '')
 
-            if echo "$PAGE" | grep -q "$EXPECTED"; then
-              echo "✅ Deployment verified — commit $SHORT_SHA found in page"
+            # Check the build-time meta tag injected by Vite transformIndexHtml
+            if echo "$PAGE" | grep -q "app-version.*$EXPECTED"; then
+              echo "✅ Deployment verified — commit $SHORT_SHA found in <meta name=app-version>"
               echo "deploy_verified=true" >> "$GITHUB_OUTPUT"
               exit 0
+            fi
+
+            # Also verify we're not serving the source index.html
+            if echo "$PAGE" | grep -q '/src/main.tsx'; then
+              echo "⚠️  Still serving source index.html — deployment may not have propagated yet"
             fi
 
             echo "Attempt $ATTEMPT/$MAX_ATTEMPTS — commit not found yet"
