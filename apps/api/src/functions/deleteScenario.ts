@@ -35,7 +35,7 @@ export async function deleteScenario(
     // Check if scenario exists by trying to get its metadata
     try {
       await blobService.getMetadata(scenarioId);
-    } catch (error) {
+    } catch {
       return {
         status: 404,
         jsonBody: {

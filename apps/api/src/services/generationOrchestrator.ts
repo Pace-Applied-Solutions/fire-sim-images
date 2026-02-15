@@ -290,7 +290,7 @@ export class GenerationOrchestrator {
                   model: metadata.model,
                   promptHash: metadata.promptHash,
                   generationTime: metadata.generationTime.toString(),
-                  usedReference: !!anchorImageData ? 'true' : 'false',
+                  usedReference: anchorImageData ? 'true' : 'false',
                 },
               }
             );
