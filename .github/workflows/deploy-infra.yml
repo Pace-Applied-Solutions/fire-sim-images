@@ -41,10 +41,19 @@ jobs:
           # Option 2: Use service principal credentials
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Resolve resource group
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "prod" ]; then
+            RG="firesim-rg-prod"
+          else
+            RG="firesim-rg-dev"
+          fi
+          echo "AZURE_RESOURCE_GROUP=$RG" >> $GITHUB_ENV
+
       - name: Validate Bicep templates
         run: |
           az deployment group validate \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
             --template-file infra/main.bicep \
             --parameters infra/parameters/${{ github.event.inputs.environment }}.bicepparam
 
@@ -52,7 +61,7 @@ jobs:
         if: ${{ github.event.inputs.validateOnly == 'false' }}
         run: |
           az deployment group create \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
             --template-file infra/main.bicep \
             --parameters infra/parameters/${{ github.event.inputs.environment }}.bicepparam \
             --name firesim-${{ github.event.inputs.environment }}-${{ github.run_number }} \
@@ -62,7 +71,7 @@ jobs:
         if: ${{ github.event.inputs.validateOnly == 'false' }}
         run: |
           az deployment group show \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --resource-group $AZURE_RESOURCE_GROUP \
             --name firesim-${{ github.event.inputs.environment }}-${{ github.run_number }} \
             --query properties.outputs \
             -o json
