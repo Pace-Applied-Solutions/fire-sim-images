@@ -105,6 +105,15 @@ resource scenarioContainer 'Microsoft.Storage/storageAccounts/blobServices/conta
   }
 }
 
+// Container for Function App deployment packages (required by Flex Consumption plan)
+resource deploymentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
+  parent: blobService
+  name: 'function-deployments'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
 // Lifecycle management policy
 resource lifecyclePolicy 'Microsoft.Storage/storageAccounts/managementPolicies@2023-01-01' = {
   parent: storageAccount

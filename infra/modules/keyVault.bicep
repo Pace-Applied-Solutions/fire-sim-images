@@ -20,6 +20,9 @@ param tags object = {}
 @description('Principal ID of the Static Web App managed identity')
 param staticWebAppPrincipalId string
 
+@description('Principal ID of the Function App managed identity')
+param functionAppPrincipalId string = ''
+
 @description('Azure AD tenant ID')
 param tenantId string = tenant().tenantId
 
@@ -49,23 +52,39 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-// Grant Static Web App access to secrets
-resource staticWebAppAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = {
+var accessPolicies = concat(
+  [
+    {
+      tenantId: tenantId
+      objectId: staticWebAppPrincipalId
+      permissions: {
+        secrets: [
+          'get'
+          'list'
+        ]
+      }
+    }
+  ],
+  !empty(functionAppPrincipalId) ? [
+    {
+      tenantId: tenantId
+      objectId: functionAppPrincipalId
+      permissions: {
+        secrets: [
+          'get'
+          'list'
+        ]
+      }
+    }
+  ] : []
+)
+
+// Grant Static Web App + Function App access to secrets
+resource accessPolicyAdd 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = {
   parent: keyVault
   name: 'add'
   properties: {
-    accessPolicies: [
-      {
-        tenantId: tenantId
-        objectId: staticWebAppPrincipalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-        }
-      }
-    ]
+    accessPolicies: accessPolicies
   }
 }
 

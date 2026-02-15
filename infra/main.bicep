@@ -83,6 +83,19 @@ param contentSafetySku string = 'S0'
 @maxValue(730)
 param appInsightsRetentionDays int = 90
 
+@description('Maximum instance count for the Function App Flex Consumption plan')
+@minValue(1)
+@maxValue(1000)
+param functionAppMaxInstanceCount int = 100
+
+@description('Instance memory in MB for the Function App Flex Consumption plan')
+@allowed([
+  512
+  2048
+  4096
+])
+param functionAppInstanceMemoryMB int = 2048
+
 // Variables
 var resourceNamePrefix = 'firesim-${environmentName}'
 var staticWebAppName = '${resourceNamePrefix}-web'
@@ -92,6 +105,8 @@ var appInsightsName = '${resourceNamePrefix}-ai'
 var contentSafetyName = '${resourceNamePrefix}-contentsafety'
 var foundryAccountName = replace('${resourceNamePrefix}ai', '-', '')
 var foundryProjectName = '${resourceNamePrefix}-project'
+var functionAppName = '${resourceNamePrefix}-api'
+var functionAppPlanName = '${resourceNamePrefix}-plan'
 
 // Deploy Static Web App
 module staticWebApp './modules/staticWebApp.bicep' = {
@@ -167,6 +182,47 @@ module storage './modules/storage.bicep' = {
   }
 }
 
+// Deploy Azure Functions App (Flex Consumption plan)
+module functionApp './modules/functionApp.bicep' = {
+  name: 'functionApp-deployment'
+  params: {
+    name: functionAppName
+    hostingPlanName: functionAppPlanName
+    location: location
+    tags: tags
+    storageAccountName: storage.outputs.name
+    appInsightsConnectionString: appInsights.outputs.connectionString
+    keyVaultUri: 'https://${keyVaultName}.${environment().suffixes.keyvaultDns}/'
+    maximumInstanceCount: functionAppMaxInstanceCount
+    instanceMemoryMB: functionAppInstanceMemoryMB
+    runtimeName: 'node'
+    runtimeVersion: '22'
+    deploymentContainerName: 'function-deployments'
+    additionalAppSettings: {
+      AZURE_STORAGE_CONTAINER_NAME: 'generated-images'
+      FOUNDRY_PROJECT_PATH: foundryProjectPath
+      FOUNDRY_PROJECT_REGION: foundryProjectRegion
+      FOUNDRY_IMAGE_MODEL: foundryImageModel
+    }
+  }
+}
+
+// Grant Function App's managed identity the Monitoring Metrics Publisher role
+// on Application Insights (required for AAD-based App Insights auth)
+resource appInsightsResource 'Microsoft.Insights/components@2020-02-02' existing = {
+  name: appInsightsName
+}
+
+resource appInsightsMonitoringRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appInsightsResource.id, functionAppName, '3913510d-42f4-4e42-8a64-420c390055eb')
+  scope: appInsightsResource
+  properties: {
+    principalId: functionApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
+  }
+}
+
 // Deploy Key Vault
 module keyVault './modules/keyVault.bicep' = {
   name: 'keyVault-deployment'
@@ -176,6 +232,7 @@ module keyVault './modules/keyVault.bicep' = {
     sku: keyVaultSku
     tags: tags
     staticWebAppPrincipalId: staticWebApp.outputs.principalId
+    functionAppPrincipalId: functionApp.outputs.principalId
   }
 }
 
@@ -227,6 +284,12 @@ output contentSafetyEndpoint string = contentSafety.outputs.endpoint
 output foundryProjectPath string = foundryProjectPath
 output foundryProjectRegion string = foundryProjectRegion
 output foundryImageModel string = foundryImageModel
+output functionAppName string = functionApp.outputs.name
+output functionAppUrl string = functionApp.outputs.url
+output functionAppDefaultHostname string = functionApp.outputs.defaultHostname
+output functionAppPrincipalId string = functionApp.outputs.principalId
+output functionAppHostingPlanName string = functionApp.outputs.hostingPlanName
+
 output foundryAccountName string = ''
 output foundryEndpoint string = ''
 output foundryDeploymentName string = ''

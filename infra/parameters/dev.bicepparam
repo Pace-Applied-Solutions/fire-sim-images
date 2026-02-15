@@ -32,6 +32,10 @@ param contentSafetySku = 'S0'
 // Application Insights
 param appInsightsRetentionDays = 90
 
+// Function App (Flex Consumption)
+param functionAppMaxInstanceCount = 40
+param functionAppInstanceMemoryMB = 2048
+
 // Tags
 param tags = {
   Project: 'NSW RFS Fire Simulation'
