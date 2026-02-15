@@ -452,7 +452,102 @@ Update this section after each issue or change.
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month + 50,000 geocoding requests/month (sufficient for development and early use; caching reduces actual API usage by ~40-60%)
   - Application Insights free tier: 5 GB/month data ingestion (sufficient for early development). When exceeded, billing starts automatically at $2.30/GB for overage. Monitor usage in Azure Portal > Application Insights > Usage and estimated costs.
-- **Next milestone:** Integration of feedback form into UI, E2E testing (post-MVP)
+- **Issue 15 complete:** CI/CD Pipeline, Documentation & Future Roadmap (Phase 5) ✅
+  - **CI/CD Pipeline:**
+    - Created comprehensive ci.yml workflow integrating existing test.yml functionality
+    - Sequential pipeline: install deps → build → format check → lint → typecheck → unit tests → coverage
+    - Integration tests run separately on manual workflow_dispatch trigger
+    - Created deploy-web.yml for Azure Static Web Apps deployment with environment variables
+    - Created deploy-api.yml for Azure Functions deployment with smoke tests
+    - Completed deploy-infra.yml with environment protection rules and summary reporting
+    - All workflows include summary reporting for GitHub Actions UI
+  - **Documentation:**
+    - Created docs/trainer-guide.md - Complete step-by-step scenario creation guide (11,667 chars)
+      - Getting started and signing in
+      - Interface overview
+      - 8-step scenario creation workflow
+      - Tips for better results (location, perimeter, weather, training value)
+      - FAQ covering common issues and questions
+    - Created docs/admin-guide.md - System administration guide (17,890 chars)
+      - User management (add/remove users, role definitions)
+      - Usage quotas and cost management ($0.65-1.25 per scenario estimate)
+      - Monitoring system health (Application Insights, health checks, log analysis)
+      - Deployment and updates (workflows, hotfixes, rollbacks)
+      - Configuration management (environment variables, Key Vault secrets)
+      - Troubleshooting common issues
+      - Security and compliance best practices
+    - Created docs/api-reference.md - Complete API documentation (17,080 chars)
+      - All 10 API endpoints with request/response examples
+      - Authentication, rate limits, error codes
+      - SDK examples for JavaScript/TypeScript, Python, cURL
+    - Created docs/roadmap.md - Future enhancements roadmap (11,704 chars)
+      - Phase 2: Enhanced spatial control (SDXL + ControlNet, depth maps, inpainting)
+      - Phase 3: Fire spread simulation (progressive injects, time-stepped scenarios)
+      - Phase 4: Longer and higher-quality video (30-60 second clips, 1080p+)
+      - Phase 5: Advanced features (custom cameras, AR overlay, integrations)
+      - Long-term vision (2+ years) with priority ranking
+  - **Architecture Decision Records (ADRs):**
+    - Created docs/adr/ directory structure
+    - ADR-001: Choice of GPT-Image (DALL-E 3) as default model
+      - Rationale: Fast integration, Azure native, reliability, security
+      - Trade-offs: Less spatial control, higher cost, resolution limits
+      - Future: SDXL integration in Phase 2
+    - ADR-002: Monorepo structure with shared types package
+      - Rationale: Type safety, single source of truth, simplified development
+      - Structure: packages/shared consumed by apps/web and apps/api
+      - Trade-offs: Build order matters, coupling between apps
+    - ADR-003: Azure Durable Functions for orchestration
+      - Rationale: Built-in state management, automatic retries, scalability
+      - Patterns: Fan-out/fan-in for parallel image generation
+      - Trade-offs: Complexity, learning curve, Azure-specific
+    - ADR-004: Mapbox GL JS over Azure Maps or CesiumJS
+      - Rationale: 3D terrain, performance, drawing tools, free tier
+      - Comparison: Evaluated Azure Maps, CesiumJS, Leaflet, Google Maps
+      - Trade-offs: Not part of Azure ecosystem, free tier limits
+    - ADR-005: Prompt template versioning strategy
+      - Rationale: Reproducibility, A/B testing, evolution tracking
+      - Versioning: Semantic versioning (major.minor.patch)
+      - Implementation: Multiple concurrent versions, metadata tracking
+  - **Environment Configuration:**
+    - Updated README with complete CI/CD and environment setup
+    - Documented required GitHub secrets for deployment
+    - Documented environment-specific configuration (dev, staging, production)
+    - Environment protection rules for production deployments
+  - **Code Quality:**
+    - Fixed all code formatting issues with Prettier across 95 files
+    - All builds passing, TypeScript strict mode compliant
+    - Ready for code review and security scan
+- **Current focus:** MVP validation complete - ready for trainer feedback and Phase 2 planning
+- **Completed milestones:**
+  - Master plan created as single source of truth.
+  - Background research and technical considerations documented.
+  - Copilot instructions file created.
+  - 15 comprehensive GitHub issues designed and seeded.
+  - Mapbox token environment variable recorded as `VITE_MAPBOX_TOKEN` (local + GitHub secrets).
+  - Local web environment file created with `VITE_MAPBOX_TOKEN` for Mapbox access.
+  - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
+  - **Infrastructure as Code complete:** Bicep templates for Azure deployment (Issue 2)
+  - **Issue 3 complete:** Front-End Shell, Design System & Navigation
+  - **Issue 4 complete:** 3D Map Integration & Fire Perimeter Drawing
+  - **Phase 1 complete:** Issue 5 - Scenario Input Panel & Parameter Controls
+  - **Issue 6 complete:** Geodata Integration & Geospatial Enrichment (Phase 2)
+  - **Issue 7 complete:** Prompt Generation Engine (Phase 3)
+  - **Issue 9 complete:** Multi-Perspective Rendering & Consistency (Phase 3)
+  - **Issue 13 complete:** Observability, Monitoring & Structured Logging (Phase 5)
+  - **Issue 14 complete:** End-to-End Testing & Trainer Validation (Phase 5)
+  - **Issue 15 complete:** CI/CD Pipeline, Documentation & Future Roadmap (Phase 5) ✅
+  - **MVP COMPLETE:** All 15 issues delivered, system ready for trainer validation
+- **Lessons learned:**
+  - Sequential CI pipeline more reliable than parallel for catching early failures
+  - Comprehensive documentation critical for adoption (trainer guide, admin guide)
+  - ADRs provide valuable context for future developers and decision-making
+  - Roadmap helps stakeholders understand future potential
+  - Environment configuration and deployment automation essential for reliability
+- **Next milestone:** Phase 2 planning and trainer feedback collection
+  - Gather trainer feedback on MVP features
+  - Prioritize Phase 2 enhancements based on real-world usage
+  - Begin SDXL + ControlNet integration for enhanced spatial control
+  - Plan fire spread simulation architecture
 
 ## 14. Change Control Process
 

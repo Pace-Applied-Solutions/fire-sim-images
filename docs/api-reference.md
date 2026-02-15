@@ -13,6 +13,7 @@ Complete reference for the Fire Simulation Inject Tool API endpoints.
 All endpoints except `/health` require authentication via Azure AD bearer token.
 
 **Request header:**
+
 ```
 Authorization: Bearer <access_token>
 ```
@@ -29,6 +30,7 @@ Starts a new scenario generation request.
 **Endpoint:** `POST /api/generate`
 
 **Request Body:**
+
 ```json
 {
   "perimeter": {
@@ -62,6 +64,7 @@ Starts a new scenario generation request.
 ```
 
 **Request Fields:**
+
 - `perimeter` (required): GeoJSON Feature with Polygon geometry
 - `scenarioInputs` (required): Fire and weather parameters
   - `windSpeed`: Number, 0-120 km/h
@@ -75,6 +78,7 @@ Starts a new scenario generation request.
 - `perspectives` (optional): Array of view types to generate (defaults to all)
 
 **Response (202 Accepted):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -84,11 +88,13 @@ Starts a new scenario generation request.
 ```
 
 **Response Fields:**
+
 - `id`: Unique identifier for this generation request
 - `status`: Current status (queued, processing, completed, failed)
 - `message`: Human-readable status message
 
 **Error Response (400 Bad Request):**
+
 ```json
 {
   "error": "Invalid request",
@@ -98,6 +104,7 @@ Starts a new scenario generation request.
 ```
 
 **Example:**
+
 ```bash
 curl -X POST https://your-api-url/api/generate \
   -H "Authorization: Bearer $TOKEN" \
@@ -114,9 +121,11 @@ Poll the status of a generation request.
 **Endpoint:** `GET /api/generate/{id}/status`
 
 **Path Parameters:**
+
 - `id`: Generation request ID returned from POST /api/generate
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -128,6 +137,7 @@ Poll the status of a generation request.
 ```
 
 **Response Fields:**
+
 - `id`: Generation request ID
 - `status`: One of queued, processing, completed, failed
 - `progress`: Percentage complete (0-100)
@@ -135,12 +145,14 @@ Poll the status of a generation request.
 - `estimatedCompletion`: ISO 8601 timestamp (optional)
 
 **Status Values:**
+
 - `queued`: Request accepted, waiting to start
 - `processing`: Generation in progress
 - `completed`: All images generated successfully
 - `failed`: Generation failed (see error message)
 
 **Example:**
+
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
   https://your-api-url/api/generate/550e8400-e29b-41d4-a716-446655440000/status
@@ -155,9 +167,11 @@ Retrieve completed generation results including image URLs.
 **Endpoint:** `GET /api/generate/{id}/results`
 
 **Path Parameters:**
+
 - `id`: Generation request ID
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -197,6 +211,7 @@ Retrieve completed generation results including image URLs.
 ```
 
 **Response Fields:**
+
 - `id`: Generation request ID
 - `status`: Generation status
 - `createdAt`: Request timestamp
@@ -214,6 +229,7 @@ Retrieve completed generation results including image URLs.
   - `promptVersion`: Prompt template version
 
 **Error Response (404 Not Found):**
+
 ```json
 {
   "error": "Not found",
@@ -222,6 +238,7 @@ Retrieve completed generation results including image URLs.
 ```
 
 **Example:**
+
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
   https://your-api-url/api/generate/550e8400-e29b-41d4-a716-446655440000/results
@@ -236,6 +253,7 @@ Retrieve vegetation, elevation, and terrain data for a location.
 **Endpoint:** `POST /api/geodata`
 
 **Request Body:**
+
 ```json
 {
   "perimeter": {
@@ -258,9 +276,11 @@ Retrieve vegetation, elevation, and terrain data for a location.
 ```
 
 **Request Fields:**
+
 - `perimeter`: GeoJSON Feature with Polygon geometry
 
 **Response (200 OK):**
+
 ```json
 {
   "vegetation": {
@@ -304,6 +324,7 @@ Retrieve vegetation, elevation, and terrain data for a location.
 ```
 
 **Response Fields:**
+
 - `vegetation`: Vegetation classification
   - `type`: Primary vegetation type
   - `subtype`: Specific classification
@@ -317,6 +338,7 @@ Retrieve vegetation, elevation, and terrain data for a location.
 - `confidence`: Data quality (low/medium/high)
 
 **Example:**
+
 ```bash
 curl -X POST https://your-api-url/api/geodata \
   -H "Authorization: Bearer $TOKEN" \
@@ -333,6 +355,7 @@ Generate AI prompts for image generation (for preview/debugging).
 **Endpoint:** `POST /api/prompts`
 
 **Request Body:**
+
 ```json
 {
   "geoContext": {
@@ -360,6 +383,7 @@ Generate AI prompts for image generation (for preview/debugging).
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "prompt": "Aerial photograph of an established bushfire in tall eucalypt forest...",
@@ -374,6 +398,7 @@ Generate AI prompts for image generation (for preview/debugging).
 ```
 
 **Example:**
+
 ```bash
 curl -X POST https://your-api-url/api/prompts \
   -H "Authorization: Bearer $TOKEN" \
@@ -390,12 +415,14 @@ Retrieve user's scenario history.
 **Endpoint:** `GET /api/scenarios`
 
 **Query Parameters:**
+
 - `limit` (optional): Number of results (default: 20, max: 100)
 - `offset` (optional): Pagination offset (default: 0)
 - `sortBy` (optional): Sort field (createdAt, completedAt, default: createdAt)
 - `sortOrder` (optional): Sort order (asc, desc, default: desc)
 
 **Response (200 OK):**
+
 ```json
 {
   "scenarios": [
@@ -425,6 +452,7 @@ Retrieve user's scenario history.
 ```
 
 **Example:**
+
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
   "https://your-api-url/api/scenarios?limit=10&sortOrder=desc"
@@ -439,12 +467,14 @@ Delete a scenario and its associated images/videos.
 **Endpoint:** `DELETE /api/scenarios/{id}`
 
 **Path Parameters:**
+
 - `id`: Scenario ID
 
 **Response (204 No Content):**
 No response body on success.
 
 **Error Response (404 Not Found):**
+
 ```json
 {
   "error": "Not found",
@@ -453,6 +483,7 @@ No response body on success.
 ```
 
 **Example:**
+
 ```bash
 curl -X DELETE -H "Authorization: Bearer $TOKEN" \
   https://your-api-url/api/scenarios/550e8400-e29b-41d4-a716-446655440000
@@ -467,9 +498,11 @@ Submit feedback on a generated scenario.
 **Endpoint:** `POST /api/scenarios/{id}/feedback`
 
 **Path Parameters:**
+
 - `id`: Scenario ID
 
 **Request Body:**
+
 ```json
 {
   "rating": 4,
@@ -480,12 +513,14 @@ Submit feedback on a generated scenario.
 ```
 
 **Request Fields:**
+
 - `rating` (required): Number 1-5
 - `comments` (optional): Text feedback
 - `perspective` (optional): Specific image perspective
 - `categories` (optional): Array of feedback categories
 
 **Response (200 OK):**
+
 ```json
 {
   "message": "Feedback submitted successfully",
@@ -494,6 +529,7 @@ Submit feedback on a generated scenario.
 ```
 
 **Example:**
+
 ```bash
 curl -X POST https://your-api-url/api/scenarios/550e8400/feedback \
   -H "Authorization: Bearer $TOKEN" \
@@ -512,6 +548,7 @@ Check API health and service dependencies.
 **No authentication required.**
 
 **Response (200 OK):**
+
 ```json
 {
   "status": "healthy",
@@ -526,6 +563,7 @@ Check API health and service dependencies.
 ```
 
 **Response (503 Service Unavailable):**
+
 ```json
 {
   "status": "unhealthy",
@@ -536,13 +574,12 @@ Check API health and service dependencies.
     "keyVault": "unhealthy",
     "openai": "healthy"
   },
-  "errors": [
-    "Unable to connect to Key Vault: Connection timeout"
-  ]
+  "errors": ["Unable to connect to Key Vault: Connection timeout"]
 }
 ```
 
 **Example:**
+
 ```bash
 curl https://your-api-url/api/health
 ```
@@ -558,10 +595,12 @@ Retrieve system-wide usage statistics (admin only).
 **Requires admin role.**
 
 **Query Parameters:**
+
 - `startDate` (optional): ISO 8601 date (default: 30 days ago)
 - `endDate` (optional): ISO 8601 date (default: now)
 
 **Response (200 OK):**
+
 ```json
 {
   "period": {
@@ -596,6 +635,7 @@ Retrieve system-wide usage statistics (admin only).
 ```
 
 **Example:**
+
 ```bash
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
   "https://your-api-url/api/admin/usage-summary?startDate=2026-01-01"
@@ -605,16 +645,16 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 
 ## Error Codes
 
-| Code | Meaning | Common Causes |
-|------|---------|---------------|
-| 400 | Bad Request | Invalid input parameters, malformed GeoJSON |
-| 401 | Unauthorized | Missing or invalid authentication token |
-| 403 | Forbidden | Insufficient permissions (e.g., non-admin accessing admin endpoint) |
-| 404 | Not Found | Scenario ID doesn't exist or user doesn't have access |
-| 409 | Conflict | Resource already exists |
-| 429 | Too Many Requests | Rate limit exceeded, quota exhausted |
-| 500 | Internal Server Error | Server-side error, check logs |
-| 503 | Service Unavailable | Dependent service down (Azure OpenAI, Storage) |
+| Code | Meaning               | Common Causes                                                       |
+| ---- | --------------------- | ------------------------------------------------------------------- |
+| 400  | Bad Request           | Invalid input parameters, malformed GeoJSON                         |
+| 401  | Unauthorized          | Missing or invalid authentication token                             |
+| 403  | Forbidden             | Insufficient permissions (e.g., non-admin accessing admin endpoint) |
+| 404  | Not Found             | Scenario ID doesn't exist or user doesn't have access               |
+| 409  | Conflict              | Resource already exists                                             |
+| 429  | Too Many Requests     | Rate limit exceeded, quota exhausted                                |
+| 500  | Internal Server Error | Server-side error, check logs                                       |
+| 503  | Service Unavailable   | Dependent service down (Azure OpenAI, Storage)                      |
 
 ## Rate Limits
 
@@ -623,6 +663,7 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 - **Admin endpoints**: 1000 requests per hour
 
 Rate limit headers included in responses:
+
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 87
@@ -729,16 +770,16 @@ echo "Generation started: $ID"
 while true; do
   STATUS=$(curl -s -H "Authorization: Bearer $TOKEN" \
     "https://your-api-url/api/generate/$ID/status" | jq -r '.status')
-  
+
   echo "Status: $STATUS"
-  
+
   if [ "$STATUS" = "completed" ]; then
     break
   elif [ "$STATUS" = "failed" ]; then
     echo "Generation failed"
     exit 1
   fi
-  
+
   sleep 5
 done
 

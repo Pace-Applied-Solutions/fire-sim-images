@@ -32,37 +32,37 @@ We will use **Azure Durable Functions** for generation workflow orchestration.
 ## Rationale
 
 **Architecture:**
+
 ```typescript
 // Orchestrator function
 async function generateScenarioOrchestrator(context: OrchestrationContext) {
   const input = context.getInput<GenerationRequest>();
-  
+
   // Step 1: Geodata lookup
   const geoContext = await context.callActivity('lookupGeodataActivity', input.perimeter);
-  
+
   // Step 2: Generate prompts
   const prompts = await context.callActivity('generatePromptsActivity', {
     geoContext,
     scenarioInputs: input.scenarioInputs,
   });
-  
+
   // Step 3: Generate images (fan-out/fan-in)
-  const imageTasks = prompts.map(prompt =>
-    context.callActivity('generateImageActivity', prompt)
-  );
+  const imageTasks = prompts.map((prompt) => context.callActivity('generateImageActivity', prompt));
   const images = await Promise.all(imageTasks);
-  
+
   // Step 4: Optional video generation
   if (input.generateVideo) {
     const video = await context.callActivity('generateVideoActivity', images);
     return { images, video };
   }
-  
+
   return { images };
 }
 ```
 
 **Advantages:**
+
 - **Built-in state management**: Framework handles checkpointing, replay, failure recovery
 - **Automatic retries**: Configurable retry policies for each activity
 - **Timeout handling**: Set timeouts per activity and overall workflow
@@ -72,6 +72,7 @@ async function generateScenarioOrchestrator(context: OrchestrationContext) {
 - **Cost-effective**: Only pay for execution time, no idle compute
 
 **Trade-offs:**
+
 - **Complexity**: More complex than simple HTTP functions
 - **Learning curve**: Developers must understand orchestration patterns
 - **Debugging**: Replays can be confusing (same code runs multiple times)
@@ -80,6 +81,7 @@ async function generateScenarioOrchestrator(context: OrchestrationContext) {
 ## Consequences
 
 **Positive:**
+
 - **Reliability**: Automatic retries handle transient failures (network issues, API throttling)
 - **Visibility**: Real-time status updates as workflow progresses
 - **Scalability**: Handles 100+ concurrent scenarios without manual scaling
@@ -87,11 +89,13 @@ async function generateScenarioOrchestrator(context: OrchestrationContext) {
 - **Resilience**: Workflow survives Azure Functions restarts, deployments
 
 **Negative:**
+
 - **Complexity**: More code and configuration than simple functions
 - **Testing overhead**: Must mock orchestration context in tests
 - **Migration difficulty**: Hard to move to non-Azure platform if needed
 
 **Implementation details:**
+
 - Orchestrator stored in `src/orchestrators/generateScenarioOrchestrator.ts`
 - Activities in `src/activities/` directory
 - Status stored in Azure Table Storage (managed by Durable Functions)
@@ -102,16 +106,18 @@ async function generateScenarioOrchestrator(context: OrchestrationContext) {
 ## Patterns Used
 
 ### Fan-Out/Fan-In
+
 Generate multiple images in parallel:
+
 ```typescript
-const imageTasks = perspectives.map(p => 
-  context.callActivity('generateImage', p)
-);
+const imageTasks = perspectives.map((p) => context.callActivity('generateImage', p));
 const images = await Promise.all(imageTasks);
 ```
 
 ### Human Interaction (Future)
+
 For scenarios requiring manual approval:
+
 ```typescript
 const approved = await context.waitForExternalEvent('approval');
 if (approved) {
@@ -120,7 +126,9 @@ if (approved) {
 ```
 
 ### Monitor Pattern (Future)
+
 For fire spread simulation with progressive updates:
+
 ```typescript
 while (context.currentUtcDateTime < deadline) {
   await context.callActivity('updateFireSpread', state);
@@ -131,21 +139,27 @@ while (context.currentUtcDateTime < deadline) {
 ## Alternatives Considered
 
 ### Azure Logic Apps
+
 **Rejected because:**
+
 - Visual designer adds friction for code-first team
 - More expensive than Functions ($0.001 per action)
 - Less flexible for complex logic (prompt generation, validation)
 - Harder to version control and test
 
 ### Custom State Machine
+
 **Rejected because:**
+
 - Significant development effort (retry logic, checkpointing, status tracking)
 - Error-prone (easy to introduce bugs in failure handling)
 - More code to maintain and test
 - No built-in monitoring or debugging tools
 
 ### Message Queue + Workers
+
 **Rejected because:**
+
 - Must manage multiple queues (geodata queue, image queue, video queue)
 - More complex deployment (multiple function apps)
 - Status tracking requires custom implementation

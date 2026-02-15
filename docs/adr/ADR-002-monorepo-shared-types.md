@@ -27,6 +27,7 @@ We will use a **monorepo with npm workspaces** and a dedicated `packages/shared`
 ## Rationale
 
 **Structure:**
+
 ```
 /
 ├── apps/
@@ -41,6 +42,7 @@ We will use a **monorepo with npm workspaces** and a dedicated `packages/shared`
 ```
 
 **Advantages:**
+
 - **Type safety**: Shared types ensure front-end and API use identical interfaces
 - **Single source of truth**: Domain types defined once, used everywhere
 - **Atomic changes**: Update types in one place, both apps see changes immediately
@@ -49,6 +51,7 @@ We will use a **monorepo with npm workspaces** and a dedicated `packages/shared`
 - **Refactoring confidence**: TypeScript catches breaking changes across apps
 
 **Trade-offs:**
+
 - Slightly more complex build process (must build shared package first)
 - Coupling between front-end and API (can't deploy independently without care)
 - Requires npm workspaces knowledge for developers
@@ -56,6 +59,7 @@ We will use a **monorepo with npm workspaces** and a dedicated `packages/shared`
 ## Consequences
 
 **Positive:**
+
 - **Developer experience**: Simple setup, single `npm install`, consistent commands
 - **Type consistency**: `FirePerimeter`, `ScenarioInputs`, etc. identical across codebase
 - **Reduced bugs**: Type mismatches caught at compile time, not runtime
@@ -63,11 +67,13 @@ We will use a **monorepo with npm workspaces** and a dedicated `packages/shared`
 - **Clear dependencies**: Explicit dependency graph via `package.json` workspace references
 
 **Negative:**
+
 - **Build order matters**: Must build `packages/shared` before `apps/api` or `apps/web`
 - **Versioning complexity**: Can't version shared types separately (mitigated by monorepo)
 - **Initial learning curve**: Developers must understand workspace structure
 
 **Implementation details:**
+
 - Shared package imported as `@fire-sim/shared` in both apps
 - Root `package.json` uses `"workspaces": ["apps/*", "packages/*"]`
 - Shared package built to `dist/` with TypeScript declaration files
@@ -77,20 +83,26 @@ We will use a **monorepo with npm workspaces** and a dedicated `packages/shared`
 ## Alternatives Considered
 
 ### Separate Repositories
+
 **Rejected because:**
+
 - Type drift between repos (front-end and API diverge)
 - Overhead of publishing and versioning shared package
 - Slower development (must publish before testing changes)
 - Complex CI/CD (coordinate deploys across repos)
 
 ### Single Application
+
 **Rejected because:**
+
 - Azure Static Web Apps architecture requires separate web and API builds
 - Front-end and API have different runtime environments (browser vs Node.js)
 - Harder to scale (can't optimize API and web builds independently)
 
 ### Published Shared Package
+
 **Rejected because:**
+
 - Overkill for single-team project
 - Slows development (publish → install → test cycle)
 - Versioning overhead (semver, deprecation, migration)

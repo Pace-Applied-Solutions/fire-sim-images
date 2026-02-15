@@ -55,6 +55,7 @@ The Fire Simulation Inject Tool consists of:
 Resources follow the pattern: `firesim-{env}-{resource-type}-{suffix}`
 
 Example:
+
 - `firesim-prod-swa-eastaus` (Static Web App)
 - `firesim-prod-func-eastaus` (Function App)
 - `firesim-prod-storage-eastaus` (Storage Account)
@@ -67,6 +68,7 @@ Example:
 The system uses Azure AD authentication. To add new users:
 
 **Option 1: Azure Portal**
+
 1. Navigate to **Azure Portal** > **Azure Active Directory**
 2. Go to **Enterprise Applications**
 3. Find the Fire Simulation Inject Tool app registration
@@ -79,6 +81,7 @@ The system uses Azure AD authentication. To add new users:
 8. Click **Assign**
 
 **Option 2: Azure CLI**
+
 ```bash
 # Add user to the application
 az ad app permission grant \
@@ -96,12 +99,14 @@ az role assignment create \
 ### Removing Users
 
 **Azure Portal:**
+
 1. Navigate to **Enterprise Applications** > Fire Simulation Inject Tool
 2. Click **Users and groups**
 3. Select the user
 4. Click **Remove**
 
 **Azure CLI:**
+
 ```bash
 az role assignment delete \
   --assignee <user-email> \
@@ -111,10 +116,10 @@ az role assignment delete \
 
 ### Role Definitions
 
-| Role | Permissions |
-|------|-------------|
-| **Trainer** | Create scenarios, view own scenarios, generate images/videos, access Gallery |
-| **Admin** | All Trainer permissions + user management, usage reports, system configuration, cost monitoring |
+| Role        | Permissions                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| **Trainer** | Create scenarios, view own scenarios, generate images/videos, access Gallery                    |
+| **Admin**   | All Trainer permissions + user management, usage reports, system configuration, cost monitoring |
 
 ### User Provisioning Best Practices
 
@@ -129,6 +134,7 @@ az role assignment delete \
 ### Understanding Costs
 
 Main cost drivers:
+
 1. **Azure OpenAI API calls** — $0.04-0.08 per image (DALL-E 3)
 2. **Storage** — ~$0.02/GB/month for images and videos
 3. **Compute** — Azure Functions consumption plan (~$0.20/million executions)
@@ -136,6 +142,7 @@ Main cost drivers:
 5. **Mapbox** — Free tier: 50,000 map loads/month, then $5/1000 loads
 
 **Estimated cost per scenario:**
+
 - 10-12 image perspectives: ~$0.50-1.00
 - Video generation: ~$0.10-0.20
 - Storage and compute: ~$0.05
@@ -144,6 +151,7 @@ Main cost drivers:
 ### Setting Usage Quotas
 
 **Per-user quota (recommended):**
+
 - Trainers: 50-100 scenarios per month
 - Admins: 200 scenarios per month
 
@@ -151,11 +159,13 @@ Main cost drivers:
 Quotas are managed via Azure API Management or custom middleware in the Functions API.
 
 **To adjust quotas:**
+
 1. Edit `apps/api/src/middleware/quotaCheck.ts`
 2. Update `MAX_SCENARIOS_PER_USER_PER_MONTH` constant
 3. Deploy updated API (see [Deployment](#deployment-and-updates))
 
 **To check current usage:**
+
 ```bash
 # Via API endpoint (requires admin token)
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -163,6 +173,7 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 ```
 
 Response includes:
+
 - Total scenarios generated
 - Cost estimates
 - Per-user breakdown
@@ -171,6 +182,7 @@ Response includes:
 ### Cost Alerts
 
 **Set up Azure Cost Management alerts:**
+
 1. Navigate to **Azure Portal** > **Cost Management + Billing**
 2. Click **Cost alerts** > **Add**
 3. Configure threshold (e.g., $500/month)
@@ -178,6 +190,7 @@ Response includes:
 5. Save alert
 
 **Recommended thresholds:**
+
 - Dev environment: $100/month
 - Staging environment: $250/month
 - Production environment: $1000/month (adjust based on user count)
@@ -185,6 +198,7 @@ Response includes:
 ### Reducing Costs
 
 **Strategies:**
+
 1. **Limit perspectives**: Reduce default views from 12 to 6 most-used
 2. **Cache results**: Store common scenarios for reuse
 3. **Lifecycle policies**: Auto-delete scenarios older than 90 days
@@ -192,6 +206,7 @@ Response includes:
 5. **Model selection**: Use standard resolution instead of HD when acceptable
 
 **Storage lifecycle policy (already configured):**
+
 - Move to cool tier after 30 days
 - Delete scenarios after 90 days (configurable in Bicep parameters)
 
@@ -203,24 +218,26 @@ Access at: **Azure Portal** > **Application Insights** > `firesim-{env}-appinsig
 
 **Key metrics to monitor:**
 
-| Metric | Healthy Range | Action if Outside Range |
-|--------|---------------|-------------------------|
-| API Response Time | <2 seconds | Investigate slow endpoints |
-| Error Rate | <1% | Check logs for errors |
-| Generation Success Rate | >95% | Review failed generations |
-| Active Users | Track trend | Capacity planning |
-| Storage Usage | Track trend | Clean up old scenarios |
+| Metric                  | Healthy Range | Action if Outside Range    |
+| ----------------------- | ------------- | -------------------------- |
+| API Response Time       | <2 seconds    | Investigate slow endpoints |
+| Error Rate              | <1%           | Check logs for errors      |
+| Generation Success Rate | >95%          | Review failed generations  |
+| Active Users            | Track trend   | Capacity planning          |
+| Storage Usage           | Track trend   | Clean up old scenarios     |
 
 ### Health Check Endpoint
 
 The API provides a health check endpoint: `/api/health`
 
 **Manual check:**
+
 ```bash
 curl https://your-api-url/api/health
 ```
 
 **Expected response:**
+
 ```json
 {
   "status": "healthy",
@@ -235,6 +252,7 @@ curl https://your-api-url/api/health
 
 **Automated monitoring:**
 Set up Azure Application Insights Availability Test:
+
 1. Go to **Application Insights** > **Availability**
 2. Click **Add Standard test**
 3. Configure:
@@ -246,6 +264,7 @@ Set up Azure Application Insights Availability Test:
 ### Log Analysis
 
 **View logs in Application Insights:**
+
 1. Navigate to **Application Insights** > **Logs**
 2. Run KQL queries:
 
@@ -275,12 +294,14 @@ customEvents
 ### Performance Monitoring
 
 **Key performance indicators:**
+
 - **P50/P95/P99 latency**: Generation should complete in <5 minutes (P95)
 - **Success rate**: >95% of generations should succeed
 - **Queue depth**: Monitor for backlog during peak hours
 - **Throttling events**: Track rate limit hits on Azure OpenAI
 
 **Configure alerts:**
+
 1. Go to **Application Insights** > **Alerts**
 2. Create alert rules for:
    - Response time >10 seconds
@@ -317,6 +338,7 @@ The system uses GitHub Actions for CI/CD:
 ### Deploying a Hotfix
 
 1. Create a hotfix branch from `main`:
+
    ```bash
    git checkout main
    git pull
@@ -324,12 +346,14 @@ The system uses GitHub Actions for CI/CD:
    ```
 
 2. Make your changes and commit:
+
    ```bash
    git add .
    git commit -m "Fix: description of fix"
    ```
 
 3. Push and create PR:
+
    ```bash
    git push origin hotfix/fix-description
    ```
@@ -346,12 +370,14 @@ The system uses GitHub Actions for CI/CD:
 ### Rolling Back a Deployment
 
 **Web App (Static Web Apps):**
+
 1. Go to **Azure Portal** > **Static Web Apps** > Your app
 2. Click **Deployments** under Settings
 3. Find the previous working deployment
 4. Click **Activate** to roll back
 
 **API (Azure Functions):**
+
 1. Go to **Azure Portal** > **Function App** > Your app
 2. Click **Deployment slots** > **Swap**
 3. Or re-deploy previous version from GitHub Actions:
@@ -360,6 +386,7 @@ The system uses GitHub Actions for CI/CD:
    - Click **Re-run all jobs**
 
 **Infrastructure:**
+
 - Infrastructure changes should be tested in dev first
 - Use `validateOnly: true` parameter to validate before deploying
 - Keep previous Bicep templates in version control for rollback
@@ -381,25 +408,27 @@ The system uses GitHub Actions for CI/CD:
 
 **Required secrets in GitHub:**
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `AZURE_CREDENTIALS` | Service principal JSON | `{"clientId": "...", ...}` |
-| `AZURE_RESOURCE_GROUP` | Resource group name | `firesim-prod-rg` |
-| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID | `12345678-...` |
-| `VITE_MAPBOX_TOKEN` | Mapbox API token | `pk.eyJ1...` |
-| `VITE_API_BASE_URL` | API base URL | `https://your-api-url` |
-| `VITE_APPINSIGHTS_CONNECTION_STRING` | Application Insights connection | `InstrumentationKey=...` |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | SWA deployment token | Auto-generated |
-| `AZURE_FUNCTION_APP_NAME` | Function app name | `firesim-prod-func` |
-| `AZURE_FUNCTION_APP_URL` | Function app URL | `https://your-api-url` |
+| Secret Name                          | Description                     | Example                    |
+| ------------------------------------ | ------------------------------- | -------------------------- |
+| `AZURE_CREDENTIALS`                  | Service principal JSON          | `{"clientId": "...", ...}` |
+| `AZURE_RESOURCE_GROUP`               | Resource group name             | `firesim-prod-rg`          |
+| `AZURE_SUBSCRIPTION_ID`              | Azure subscription ID           | `12345678-...`             |
+| `VITE_MAPBOX_TOKEN`                  | Mapbox API token                | `pk.eyJ1...`               |
+| `VITE_API_BASE_URL`                  | API base URL                    | `https://your-api-url`     |
+| `VITE_APPINSIGHTS_CONNECTION_STRING` | Application Insights connection | `InstrumentationKey=...`   |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN`    | SWA deployment token            | Auto-generated             |
+| `AZURE_FUNCTION_APP_NAME`            | Function app name               | `firesim-prod-func`        |
+| `AZURE_FUNCTION_APP_URL`             | Function app URL                | `https://your-api-url`     |
 
 **To add/update secrets:**
+
 1. Go to **GitHub repository** > **Settings** > **Secrets and variables** > **Actions**
 2. Click **New repository secret**
 3. Enter name and value
 4. Click **Add secret**
 
 **Environment-specific secrets:**
+
 - Use GitHub Environments (dev, staging, production)
 - Each environment has its own secret values
 - Configure protection rules for production
@@ -407,6 +436,7 @@ The system uses GitHub Actions for CI/CD:
 ### Key Vault Management
 
 **To add a new secret to Key Vault:**
+
 ```bash
 az keyvault secret set \
   --vault-name firesim-prod-kv-eastaus \
@@ -415,6 +445,7 @@ az keyvault secret set \
 ```
 
 **To rotate secrets:**
+
 1. Generate new secret in source system (e.g., Azure OpenAI)
 2. Add new secret to Key Vault with version suffix
 3. Update application configuration to use new secret
@@ -423,6 +454,7 @@ az keyvault secret set \
 6. Delete old secret after 24 hours
 
 **Access policies:**
+
 - Managed identity has `Get` and `List` permissions
 - Admin service principal has `Get`, `List`, `Set`, `Delete`
 - Never grant `purge` permission in production
@@ -436,11 +468,13 @@ az keyvault secret set \
 **Symptoms:** Login page appears but authentication fails
 
 **Diagnosis:**
+
 1. Check Azure AD app registration is configured correctly
 2. Verify redirect URIs include your app URL
 3. Check user has been assigned to the application
 
 **Resolution:**
+
 1. Go to **Azure AD** > **App registrations** > Your app
 2. Check **Authentication** > **Redirect URIs**
 3. Ensure user is assigned in **Enterprise applications**
@@ -450,11 +484,13 @@ az keyvault secret set \
 **Symptoms:** Grey screen where map should be, or error overlay
 
 **Diagnosis:**
+
 1. Check browser console for errors (F12)
 2. Verify Mapbox token is configured
 3. Check token hasn't exceeded free tier limits
 
 **Resolution:**
+
 1. Verify `VITE_MAPBOX_TOKEN` is set in environment
 2. Check token at https://account.mapbox.com/
 3. Generate new token if needed
@@ -465,12 +501,14 @@ az keyvault secret set \
 **Symptoms:** "Generation failed" error, or request times out
 
 **Diagnosis:**
+
 1. Check Application Insights for error logs
 2. Verify Azure OpenAI service is running
 3. Check quota limits haven't been exceeded
 4. Verify Key Vault secrets are accessible
 
 **Resolution:**
+
 1. Review error logs in Application Insights:
    ```kusto
    traces | where message contains "generation" and severityLevel >= 3
@@ -484,11 +522,13 @@ az keyvault secret set \
 **Symptoms:** Long wait times, timeouts
 
 **Diagnosis:**
+
 1. Check Application Insights performance metrics
 2. Monitor Azure OpenAI throttling
 3. Check Function App scaling
 
 **Resolution:**
+
 1. Review API response times in Application Insights
 2. Increase Azure OpenAI quota if throttled
 3. Enable Function App premium plan for faster cold starts
@@ -499,11 +539,13 @@ az keyvault secret set \
 **Symptoms:** Upload failures, storage errors
 
 **Diagnosis:**
+
 1. Check storage account metrics in Azure Portal
 2. Review lifecycle policy is working
 3. Calculate total scenario count
 
 **Resolution:**
+
 1. Increase storage quota if justified
 2. Reduce lifecycle policy retention (90 days → 60 days)
 3. Manually clean up old scenarios:
@@ -518,12 +560,14 @@ az keyvault secret set \
 ### Getting Support
 
 **Internal support escalation:**
+
 1. Check this guide and documentation
 2. Review Application Insights logs
 3. Contact Azure support for platform issues
 4. Contact development team for application bugs
 
 **Reporting bugs:**
+
 1. Capture error message and timestamp
 2. Note user account and scenario details
 3. Export relevant logs from Application Insights
@@ -566,16 +610,19 @@ az keyvault secret set \
 ### Compliance Considerations
 
 **Data residency:**
+
 - All data stays within configured Azure region
 - No data sent to third-party services (except Mapbox for tiles)
 - Generated content owned by your organization
 
 **Retention policies:**
+
 - Images/videos: 90 days (configurable)
 - Logs: 30 days (Application Insights)
 - Audit logs: 1 year (Azure Activity Log)
 
 **User privacy:**
+
 - Minimal personal data collected (Azure AD user ID)
 - No PII in generated content
 - Users can delete their own scenarios
@@ -583,6 +630,7 @@ az keyvault secret set \
 ### Incident Response
 
 **In case of security incident:**
+
 1. Isolate affected systems
 2. Disable compromised accounts
 3. Rotate all secrets immediately
@@ -591,6 +639,7 @@ az keyvault secret set \
 6. Document incident and lessons learned
 
 **Emergency contacts:**
+
 - Azure Support: https://portal.azure.com (Support request)
 - Security team: [Your organization's security contact]
 - Development team: [Your team contact]

@@ -15,12 +15,14 @@ The Fire Simulation Inject Tool generates AI prompts that combine:
 - Safety constraints (no people, no text, no misleading elements)
 
 These prompts are critical to output quality. Changes to prompts can significantly affect:
+
 - Visual consistency across scenarios
 - Realism and accuracy
 - Ability to reproduce previous results
 - Training effectiveness
 
 We need a strategy for:
+
 1. Versioning prompt templates
 2. Tracking which version generated each image
 3. Evolving prompts without breaking existing scenarios
@@ -40,6 +42,7 @@ We will implement **explicit prompt template versioning** with the following str
 ## Rationale
 
 **Version format:**
+
 ```
 v{major}.{minor}.{patch}
 
@@ -50,11 +53,13 @@ v2.0.0 — Complete prompt restructure with new template system
 ```
 
 **Versioning rules:**
+
 - **Major**: Breaking changes to prompt structure or complete rewrites
 - **Minor**: New features (new perspectives, new intensity levels, new terms)
 - **Patch**: Bug fixes, typos, minor wording improvements
 
 **Template structure:**
+
 ```typescript
 export const PROMPT_TEMPLATES = {
   'v1.0.0': {
@@ -73,20 +78,22 @@ export const DEFAULT_PROMPT_VERSION = 'v1.1.0';
 ```
 
 **Metadata tracking:**
+
 ```typescript
 interface GenerationResult {
   images: Array<{
     url: string;
     perspective: string;
-    promptVersion: string;  // "v1.1.0"
-    prompt: string;         // Full prompt used
-    modelVersion: string;   // "dall-e-3"
+    promptVersion: string; // "v1.1.0"
+    prompt: string; // Full prompt used
+    modelVersion: string; // "dall-e-3"
     seed: number;
   }>;
 }
 ```
 
 **Advantages:**
+
 - **Reproducibility**: Know exactly which prompt version generated each image
 - **A/B testing**: Compare v1.0.0 vs v1.1.0 outputs side-by-side
 - **Rollback safety**: Revert to previous version if new prompts degrade quality
@@ -95,6 +102,7 @@ interface GenerationResult {
 - **Documentation**: Changelog explains what changed in each version
 
 **Trade-offs:**
+
 - Code complexity (must maintain multiple template versions)
 - Storage overhead (store prompt version with every image)
 - Migration overhead (must explicitly bump version, can't hot-fix prompts)
@@ -102,6 +110,7 @@ interface GenerationResult {
 ## Consequences
 
 **Positive:**
+
 - **Confidence**: Can evolve prompts without fear of breaking existing scenarios
 - **Comparison**: Trainers can regenerate with different prompt versions to compare
 - **Audit trail**: Complete record of what changed and why
@@ -109,6 +118,7 @@ interface GenerationResult {
 - **Reproducibility**: Can regenerate exact same output years later
 
 **Negative:**
+
 - **Template proliferation**: Must keep old versions around forever (or migrate data)
 - **Testing burden**: Must test new versions across all perspectives and intensities
 - **Default version management**: Must decide when to update default version
@@ -117,6 +127,7 @@ interface GenerationResult {
 **Implementation details:**
 
 1. **Template storage:**
+
    ```
    packages/shared/src/prompts/
    ├── v1.0.0/
@@ -131,24 +142,28 @@ interface GenerationResult {
    ```
 
 2. **Version selection:**
+
    ```typescript
    // Use default version
    const prompt = generatePrompt(context, 'aerial');
-   
+
    // Use specific version
    const prompt = generatePrompt(context, 'aerial', { version: 'v1.0.0' });
    ```
 
 3. **Changelog maintenance:**
+
    ```markdown
    # Prompt Template Changelog
-   
+
    ## v1.1.0 (2026-02-20)
+
    - Added time-of-day lighting descriptions
    - Improved smoke color descriptors
    - Added Australian vegetation terminology
-   
+
    ## v1.0.0 (2026-02-15)
+
    - Initial prompt templates
    - 6 intensity levels
    - 12 perspective types
@@ -163,6 +178,7 @@ interface GenerationResult {
 ## Prompt Evolution Workflow
 
 **Adding a new feature (minor version):**
+
 1. Create new directory: `prompts/v1.2.0/`
 2. Copy templates from `v1.1.0/`
 3. Make changes to templates
@@ -173,6 +189,7 @@ interface GenerationResult {
 8. If successful, remove feature flag
 
 **Fixing a bug (patch version):**
+
 1. Create new directory: `prompts/v1.1.1/`
 2. Copy templates from `v1.1.0/`
 3. Fix the bug
@@ -180,6 +197,7 @@ interface GenerationResult {
 5. Deploy immediately (bug fixes are low-risk)
 
 **Major rewrite (major version):**
+
 1. Create new directory: `prompts/v2.0.0/`
 2. Rewrite from scratch
 3. Extensive testing with multiple scenarios
@@ -190,28 +208,36 @@ interface GenerationResult {
 ## Alternatives Considered
 
 ### Git-based versioning
+
 **Rejected because:**
+
 - Requires git SHA lookup at runtime
 - Can't have multiple versions in production simultaneously
 - Harder to understand than semantic versioning
 - No clear rollback mechanism
 
 ### Database-stored prompts
+
 **Rejected because:**
+
 - Adds database dependency
 - Prompts are code, belong in version control
 - Harder to review changes (no PR diff)
 - Risk of prod database edit breaking all generations
 
 ### No versioning (hot-fix prompts)
+
 **Rejected because:**
+
 - No reproducibility (can't regenerate old scenarios)
 - No rollback (can't undo bad changes)
 - No A/B testing (can't compare versions)
 - Risky evolution (one bad change breaks all generations)
 
 ### Prompt hashing
+
 **Rejected because:**
+
 - Hash doesn't convey meaning (what changed?)
 - No semantic versioning benefits
 - Harder to debug (hash doesn't explain version)

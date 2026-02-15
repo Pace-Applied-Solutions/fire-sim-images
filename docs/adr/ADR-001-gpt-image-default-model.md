@@ -22,6 +22,7 @@ We will use **Azure OpenAI DALL-E 3** as the default image generation model for 
 ## Rationale
 
 **Advantages:**
+
 - **Fast integration**: Native Azure OpenAI SDK, managed identities, Key Vault integration
 - **Reliability**: Microsoft SLA, proven uptime, automatic scaling
 - **Security**: Data stays in tenant, no third-party API calls, Azure compliance
@@ -30,6 +31,7 @@ We will use **Azure OpenAI DALL-E 3** as the default image generation model for 
 - **Cost predictable**: Clear per-image pricing, usage quotas, cost management tools
 
 **Trade-offs:**
+
 - Less spatial control than SDXL + ControlNet (can't precisely place fire in specific areas)
 - Higher per-image cost (~$0.04-0.08 vs ~$0.01 for self-hosted SDXL)
 - Limited customization options (can't fine-tune model)
@@ -39,6 +41,7 @@ We will use **Azure OpenAI DALL-E 3** as the default image generation model for 
 ## Consequences
 
 **Positive:**
+
 - Rapid MVP delivery (integration takes days, not weeks)
 - Reliable service with Microsoft support
 - Simplified infrastructure (no model hosting, GPU management)
@@ -46,12 +49,14 @@ We will use **Azure OpenAI DALL-E 3** as the default image generation model for 
 - Easy to monitor costs and usage
 
 **Negative:**
+
 - Higher operational costs at scale (mitigated by quota management)
 - Limited spatial precision (fire placement approximate, not pixel-perfect)
 - Resolution constraints (acceptable for training use case)
 - Vendor lock-in to Azure OpenAI (mitigated by modular design)
 
 **Mitigation strategies:**
+
 1. **Modular design**: Abstract image generation behind service interface for future model swaps
 2. **Phase 2 planning**: SDXL + ControlNet integration planned for enhanced spatial control
 3. **Cost management**: Per-user quotas, lifecycle policies, cost alerts
