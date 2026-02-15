@@ -410,11 +410,24 @@ Update this section after each issue or change.
   - **Infra Tooling:** Added explicit Key Vault dependency for Foundry secret creation
   - **Foundry Integration:** API now reads Foundry settings from Key Vault with env fallback and logs active config
   - **Map UI:** Unified address search and viewpoint controls into a single top toolbar to prevent overlap with map controls
+  - **Issue 13 complete:** Observability, Monitoring & Structured Logging (Phase 5)
+    - Created structured logging utility with Application Insights integration
+    - Logger supports debug, info, warn, error levels with context (scenarioId, userId, correlationId)
+    - Performance metrics tracking for generation durations, geodata lookups, model calls, blob uploads
+    - Cost estimation and tracking for scenarios (images, videos, storage)
+    - Usage summary API endpoint: GET /api/admin/usage-summary
+    - Enhanced health check endpoint with connectivity tests for all services
+    - Application Insights SDK added to React front-end with error boundary
+    - Auto-tracking of page views, route changes, and API calls in web app
+    - Comprehensive observability testing documentation in docs/OBSERVABILITY_TESTING.md
+    - GenerationOrchestrator instrumented with structured logging and metrics
+    - All builds pass, linting clean, TypeScript strict mode compliant
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month + 50,000 geocoding requests/month (sufficient for development and early use; caching reduces actual API usage by ~40-60%)
-- **Next milestone:** Phase 2 - Geospatial data integration (Issue 6)
+  - Application Insights free tier: 5 GB/month data ingestion (sufficient for early development). When exceeded, billing starts automatically at $2.30/GB for overage. Monitor usage in Azure Portal > Application Insights > Usage and estimated costs.
+- **Next milestone:** Phase 5 - End-to-End Testing & Trainer Validation (Issue 14)
 
 ## 14. Change Control Process
 

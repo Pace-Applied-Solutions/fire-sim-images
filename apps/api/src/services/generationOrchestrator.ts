@@ -10,6 +10,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { ImageGeneratorService } from './imageGenerator.js';
 import { BlobStorageService } from './blobStorage.js';
 import { ConsistencyValidator } from '../validation/consistencyValidator.js';
+import { createLogger } from '../utils/logger.js';
+import { startTimer, GenerationMetrics } from '../utils/metrics.js';
+import { globalCostEstimator, globalUsageTracker } from '../utils/costTracking.js';
 
 export interface GenerationProgress {
   scenarioId: string;
@@ -35,11 +38,13 @@ export class GenerationOrchestrator {
   private imageGenerator: ImageGeneratorService;
   private blobStorage: BlobStorageService;
   private consistencyValidator: ConsistencyValidator;
+  private logger;
 
   constructor(private context: InvocationContext) {
     this.imageGenerator = new ImageGeneratorService(context);
     this.blobStorage = new BlobStorageService(context);
     this.consistencyValidator = new ConsistencyValidator();
+    this.logger = createLogger(context);
   }
 
   /**
@@ -66,16 +71,16 @@ export class GenerationOrchestrator {
 
     progressStore.set(scenarioId, progress);
 
-    this.context.log('Generation request started', {
+    this.logger.info('Generation request received', {
       scenarioId,
-      requestedViews: request.requestedViews,
-      totalImages: progress.totalImages,
+      requestedViews: request.requestedViews.length,
+      viewpoints: request.requestedViews,
       seed,
     });
 
     // Start generation asynchronously (don't await)
     this.executeGeneration(scenarioId, { ...request, seed }).catch((error) => {
-      this.context.error('Generation orchestration failed', { scenarioId, error });
+      this.logger.error('Generation orchestration failed', error, { scenarioId });
     });
 
     return scenarioId;
@@ -125,11 +130,21 @@ export class GenerationOrchestrator {
     const progress = progressStore.get(scenarioId)!;
     progress.status = 'in_progress';
     progress.updatedAt = new Date().toISOString();
+    
+    const logger = this.logger.child({ scenarioId });
+    const endToEndTimer = startTimer('generation', { scenarioId });
 
     try {
       // Step 1: Generate prompts for all viewpoints
-      this.context.log('Generating prompts', { scenarioId });
+      logger.info('Generating prompts');
+      const promptTimer = startTimer('prompt.generation', { scenarioId });
       const promptSet = generatePrompts(request);
+      promptTimer.stop();
+
+      logger.info('Prompts generated', {
+        promptCount: promptSet.prompts.length,
+        templateVersion: promptSet.templateVersion,
+      });
 
       // Step 2: Determine anchor viewpoint (prefer aerial, fallback to first available)
       const maxImages = 10;
@@ -140,8 +155,7 @@ export class GenerationOrchestrator {
           ? 'helicopter_above'
           : viewpointsToGenerate[0];
 
-      this.context.log('Starting anchor image generation', {
-        scenarioId,
+      logger.info('Starting anchor image generation', {
         anchorViewpoint,
         seed: request.seed,
       });
@@ -153,11 +167,20 @@ export class GenerationOrchestrator {
 
       if (anchorPrompt) {
         try {
+          const imageGenTimer = startTimer('image.generation.anchor', { scenarioId, viewpoint: anchorViewpoint });
           const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
             seed: request.seed,
           });
+          const imageGenDuration = imageGenTimer.stop();
+
+          logger.info('Anchor image generated', {
+            viewpoint: anchorViewpoint,
+            durationMs: imageGenDuration,
+            model: result.metadata.model,
+          });
 
           // Upload anchor image
+          const uploadTimer = startTimer('blob.upload', { scenarioId, viewpoint: anchorViewpoint });
           const blobUrl = await this.blobStorage.uploadImage(
             scenarioId,
             anchorViewpoint,
@@ -172,6 +195,7 @@ export class GenerationOrchestrator {
               },
             }
           );
+          uploadTimer.stop();
 
           const sasUrl = await this.blobStorage.generateSASUrl(blobUrl, {
             expiresInHours: 24,
@@ -196,17 +220,11 @@ export class GenerationOrchestrator {
           progress.completedImages++;
           progress.anchorImage = anchorImage;
           progress.seed = request.seed;
-
-          this.context.log('Anchor image generated', {
-            scenarioId,
-            viewpoint: anchorViewpoint,
-          });
         } catch (error) {
-          this.context.error('Anchor image generation failed', {
-            scenarioId,
+          logger.error('Anchor image generation failed', error instanceof Error ? error : undefined, {
             viewpoint: anchorViewpoint,
-            error,
           });
+          GenerationMetrics.trackGenerationError({ scenarioId, viewpoint: anchorViewpoint });
           progress.failedImages++;
         }
       }
@@ -216,8 +234,7 @@ export class GenerationOrchestrator {
         (v) => v !== anchorViewpoint
       );
 
-      this.context.log('Starting derived views generation', {
-        scenarioId,
+      logger.info('Starting derived views generation', {
         totalViewpoints: remainingViewpoints.length,
         maxConcurrent: this.imageGenerator.getMaxConcurrent(),
         usingAnchorReference: !!anchorImageData,
@@ -235,7 +252,6 @@ export class GenerationOrchestrator {
 
       // Step 5: Upload images to blob storage and generate SAS URLs
       const images: GeneratedImage[] = anchorImage ? [anchorImage] : [];
-      let totalCost = anchorImage ? 0.04 : 0;
 
       for (const result of results) {
         if (result.status === 'fulfilled') {
@@ -254,6 +270,7 @@ export class GenerationOrchestrator {
 
           try {
             // Upload to blob storage
+            const uploadTimer = startTimer('blob.upload', { scenarioId, viewpoint });
             const blobUrl = await this.blobStorage.uploadImage(
               scenarioId,
               viewpoint,
@@ -268,6 +285,7 @@ export class GenerationOrchestrator {
                 },
               }
             );
+            uploadTimer.stop();
 
             // Generate SAS URL for 24-hour access
             const sasUrl = await this.blobStorage.generateSASUrl(blobUrl, {
@@ -292,28 +310,23 @@ export class GenerationOrchestrator {
             images.push(generatedImage);
             progress.completedImages++;
 
-            // Estimate cost (approximate $0.04 per image for DALL-E 3 / Stable Diffusion)
-            totalCost += 0.04;
-
-            this.context.log('Image generated and uploaded', {
-              scenarioId,
+            logger.info('Image generated and uploaded', {
               viewpoint,
               progress: `${progress.completedImages}/${progress.totalImages}`,
+              model: metadata.model,
             });
           } catch (uploadError) {
-            this.context.error('Failed to upload image', {
-              scenarioId,
+            logger.error('Failed to upload image', uploadError instanceof Error ? uploadError : undefined, {
               viewpoint,
-              error: uploadError,
             });
             progress.failedImages++;
           }
         } else {
-          this.context.error('Image generation failed', {
-            scenarioId,
+          logger.error('Image generation failed', undefined, {
             viewpoint: result.reason?.viewpoint,
             error: result.reason?.error,
           });
+          GenerationMetrics.trackGenerationError({ scenarioId, viewpoint: result.reason?.viewpoint });
           progress.failedImages++;
         }
       }
@@ -321,20 +334,24 @@ export class GenerationOrchestrator {
       // Step 6: Validate consistency
       let validationResult;
       if (images.length > 1) {
-        this.context.log('Running consistency validation', { scenarioId });
+        logger.info('Running consistency validation', { imageCount: images.length });
         validationResult = this.consistencyValidator.validateImageSet(
           images,
           request.inputs,
           anchorImage
         );
 
-        const report = this.consistencyValidator.generateReport(validationResult);
-        this.context.log('Consistency validation complete', {
-          scenarioId,
+        logger.info('Consistency validation complete', {
           score: validationResult.score,
           passed: validationResult.passed,
+          warnings: validationResult.warnings.length,
         });
-        this.context.log(report);
+
+        if (validationResult.warnings.length > 0) {
+          logger.warn('Consistency validation warnings', {
+            warnings: validationResult.warnings,
+          });
+        }
 
         // Add validation warnings to error field if score is low
         if (!validationResult.passed && validationResult.warnings.length > 0) {
@@ -364,6 +381,23 @@ export class GenerationOrchestrator {
 
       await this.blobStorage.uploadMetadata(scenarioId, scenarioMetadata);
 
+      // Calculate and track costs
+      const costBreakdown = globalCostEstimator.estimateScenarioCost({
+        imageCount: progress.completedImages,
+        videoCount: 0, // Videos not yet implemented
+        imageQuality: 'standard',
+        imageProvider: 'stable-image-core',
+        estimatedStorageMB: 10,
+      });
+
+      globalUsageTracker.recordScenario(scenarioId, costBreakdown);
+
+      logger.info('Cost estimated', {
+        totalCost: costBreakdown.totalCost,
+        imageCount: costBreakdown.images.count,
+        costPerImage: costBreakdown.images.costPerImage,
+      });
+
       // Update progress
       progress.images = images;
       progress.status = progress.failedImages === progress.totalImages ? 'failed' : 'completed';
@@ -373,19 +407,26 @@ export class GenerationOrchestrator {
         progress.error = `Partial success: ${progress.completedImages} succeeded, ${progress.failedImages} failed`;
       }
 
-      this.context.log('Generation completed', {
-        scenarioId,
+      // Track final metrics
+      const totalDuration = endToEndTimer.stop();
+      GenerationMetrics.trackGenerationDuration(totalDuration, { scenarioId });
+      GenerationMetrics.trackImagesCount(progress.completedImages, { scenarioId });
+
+      logger.info('Generation completed', {
         status: progress.status,
         completedImages: progress.completedImages,
         failedImages: progress.failedImages,
-        estimatedCost: totalCost,
+        totalDurationMs: totalDuration,
+        estimatedCost: costBreakdown.totalCost,
         seed: request.seed,
       });
     } catch (error) {
-      this.context.error('Generation pipeline failed', { scenarioId, error });
+      logger.error('Generation pipeline failed', error instanceof Error ? error : new Error(String(error)));
+      GenerationMetrics.trackGenerationError({ scenarioId });
       progress.status = 'failed';
-      progress.error = error instanceof Error ? error.message : 'Unknown error';
+      progress.error = error instanceof Error ? error.message : String(error);
       progress.updatedAt = new Date().toISOString();
+      endToEndTimer.stop();
     }
   }
 

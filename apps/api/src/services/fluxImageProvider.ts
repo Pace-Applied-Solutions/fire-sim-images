@@ -1,4 +1,3 @@
-import { request } from 'undici';
 import crypto from 'node:crypto';
 import type { ImageGenerationProvider, ImageGenOptions, ImageGenResult } from './imageGenerationProvider.js';
 import type { FluxConfig } from '../fluxConfig.js';
@@ -25,7 +24,7 @@ export class FluxImageProvider implements ImageGenerationProvider {
       response_format: 'b64_json',
     } as Record<string, unknown>;
 
-    const response = await request(url, {
+    const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
@@ -34,12 +33,12 @@ export class FluxImageProvider implements ImageGenerationProvider {
       },
     });
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      const text = await response.body.text();
-      throw new Error(`Flux image generation failed (${response.statusCode}): ${text}`);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Flux image generation failed (${response.status}): ${text}`);
     }
 
-    const payload = await response.body.json() as {
+    const payload = await response.json() as {
       data?: Array<{ b64_json?: string }>;
     };
 
