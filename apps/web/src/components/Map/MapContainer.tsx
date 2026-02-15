@@ -72,7 +72,8 @@ export const MapContainer = () => {
 	const [viewMode, setViewMode] = useState<ViewMode>('helicopter');
 	const [currentDirection, setCurrentDirection] = useState<ViewDirection>('north');
 
-	const { setPerimeter: setAppPerimeter, setState } = useAppStore();
+	const setAppPerimeter = useAppStore((s) => s.setPerimeter);
+	const setState = useAppStore((s) => s.setState);
 	const { addToast } = useToastStore();
 
 	const setMapCursor = useCallback((cursor: string | null) => {

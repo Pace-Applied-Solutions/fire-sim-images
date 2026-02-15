@@ -9,7 +9,7 @@ The infrastructure consists of the following Azure resources:
 - **Static Web App** — Hosts the React front-end and embedded Azure Functions API at `/api`
 - **Storage Account** — Blob storage for generated images, videos, and scenario data
 - **Key Vault** — Secure storage for API keys and secrets
-- **Azure OpenAI** — Image generation service with DALL-E 3 model deployment
+- **Azure AI Foundry (AIServices)** — Account + project with Stable Diffusion (Stable Image Core) deployment for real image generation
 
 All resources use managed identities and are deployed to Australia East by default.
 
@@ -153,7 +153,7 @@ Optimized for cost and development speed:
 - Static Web App: Free tier
 - Storage: Locally redundant (LRS)
 - Key Vault: Standard tier
-- Azure OpenAI: S0 tier with single capacity unit
+- AI Foundry (AIServices): Stable Image Core deployment (capacity 1)
 - Region: Australia East
 
 ### Production (`prod.bicepparam`)
@@ -162,7 +162,7 @@ Optimized for reliability and performance:
 - Static Web App: Standard tier (with staging environments)
 - Storage: Read-access geo-redundant (RAGRS)
 - Key Vault: Premium tier (HSM-backed keys)
-- Azure OpenAI: S0 tier with higher capacity
+- AI Foundry (AIServices): Stable Image Core deployment (capacity 2 by default)
 - Region: Australia East
 
 ## Resource Configuration
@@ -209,7 +209,11 @@ Deployed with DALL-E 3 model for image generation:
 - Capacity: 1 unit (dev), 2 units (prod)
 - Content filtering: Default policy
 
-**Note:** Azure OpenAI availability varies by region. If not available in Australia East, consider deploying to East US 2 as a fallback.
+**Note:** If you are supplying an existing Cognitive Services deployment (e.g., FLUX.1-Kontext-pro), skip the AI deployment modules and populate these secrets manually in Key Vault for the Functions app to read:
+- `Flux--Endpoint` — e.g., https://your-resource.cognitiveservices.azure.com
+- `Flux--ApiKey` — the key from the deployment
+- `Flux--Deployment` — the deployment name (e.g., FLUX.1-Kontext-pro)
+- `Flux--ApiVersion` — API version (default: 2024-12-01-preview)
 
 ## Post-Deployment Configuration
 
@@ -238,6 +242,17 @@ After deployment, you'll need to:
 3. **Grant additional access** (if needed):
    - Add developers or deployment pipelines to Key Vault access policies
    - Configure network restrictions if required
+
+### AI Foundry (Stable Diffusion) specifics
+
+- The deployment creates an **AIServices** account, a default project, and a Stable Image Core deployment.
+- Secrets stored in Key Vault:
+  - `Foundry--Endpoint`
+  - `Foundry--DeploymentName`
+  - `Foundry--ApiKey`
+  - Existing Foundry config secrets (`Foundry--ProjectPath`, `Foundry--ProjectRegion`, `Foundry--ImageModel`)
+- Static Web App app settings include `FOUNDRY_ENDPOINT` and `FOUNDRY_DEPLOYMENT_NAME` for Functions runtime access; API key is read from Key Vault via managed identity.
+- Default Foundry region is `eastus` to align with current Stable Image Core availability. Adjust `foundryProjectRegion` in parameter files if needed.
 
 ## Validation
 
@@ -270,6 +285,12 @@ az cognitiveservices account deployment list \
   --name <openai-name> \
   --resource-group firesim-rg-dev \
   --output table
+
+# Check AI Foundry (AIServices) deployment
+az cognitiveservices account deployment show \
+  --name <ai-foundry-account-name> \
+  --resource-group firesim-rg-dev \
+  --deployment-name <deployment-name>
 ```
 
 ## Troubleshooting

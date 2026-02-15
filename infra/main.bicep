@@ -49,6 +49,25 @@ param foundryProjectRegion string = 'eastus'
 @description('Image model to use in Foundry')
 param foundryImageModel string = 'stable-image-core'
 
+@description('AI Foundry account SKU (AIServices)')
+param foundrySku string = 'S0'
+
+@description('AI Foundry deployment capacity (throughput units)')
+@minValue(1)
+param foundryDeploymentCapacity int = 1
+
+@description('AI Foundry deployment name')
+param foundryDeploymentName string = 'stable-image-core'
+
+@description('AI Foundry model version')
+param foundryModelVersion string = '1.0'
+
+@description('AI Foundry model format')
+param foundryModelFormat string = 'OpenAI'
+
+@description('AI Foundry model publisher')
+param foundryModelPublisher string = 'stabilityai'
+
 @description('Content Safety SKU')
 @allowed([
   'F0'
@@ -68,6 +87,8 @@ var storageAccountName = replace('${resourceNamePrefix}stor', '-', '')
 var keyVaultName = '${resourceNamePrefix}-kv'
 var appInsightsName = '${resourceNamePrefix}-ai'
 var contentSafetyName = '${resourceNamePrefix}-contentsafety'
+var foundryAccountName = replace('${resourceNamePrefix}ai', '-', '')
+var foundryProjectName = '${resourceNamePrefix}-project'
 
 // Deploy Static Web App
 module staticWebApp './modules/staticWebApp.bicep' = {
@@ -81,10 +102,35 @@ module staticWebApp './modules/staticWebApp.bicep' = {
       FOUNDRY_PROJECT_PATH: foundryProjectPath
       FOUNDRY_PROJECT_REGION: foundryProjectRegion
       FOUNDRY_IMAGE_MODEL: foundryImageModel
-      KEY_VAULT_URI: 'https://${keyVaultName}.vault.azure.net/'
+      FOUNDRY_ENDPOINT: foundry.outputs.endpoint
+      FOUNDRY_DEPLOYMENT_NAME: foundry.outputs.deploymentName
+      KEY_VAULT_URI: 'https://${keyVaultName}.${environment().suffixes.keyvaultDns}/'
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.outputs.connectionString
     }
   }
+}
+
+// Deploy AI Foundry (AIServices) account, project, and Stable Diffusion deployment
+module foundry './modules/foundry.bicep' = {
+  name: 'foundry-deployment'
+  params: {
+    name: foundryAccountName
+    location: foundryProjectRegion
+    sku: foundrySku
+    tags: tags
+    projectName: foundryProjectName
+    deploymentName: foundryDeploymentName
+    modelName: foundryImageModel
+    modelVersion: foundryModelVersion
+    modelFormat: foundryModelFormat
+    modelPublisher: foundryModelPublisher
+    capacity: foundryDeploymentCapacity
+  }
+}
+
+// Reference the AI Foundry account for key retrieval (no deployment output of secrets)
+resource foundryAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+  name: foundryAccountName
 }
 
 // Deploy Application Insights
@@ -166,6 +212,38 @@ resource foundryImageModelSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' 
   }
 }
 
+// Store AI Foundry runtime settings in Key Vault
+resource foundryEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/Foundry--Endpoint'
+  dependsOn: [
+    keyVault
+  ]
+  properties: {
+    value: foundry.outputs.endpoint
+  }
+}
+
+resource foundryDeploymentNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/Foundry--DeploymentName'
+  dependsOn: [
+    keyVault
+  ]
+  properties: {
+    value: foundry.outputs.deploymentName
+  }
+}
+
+resource foundryApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/Foundry--ApiKey'
+  dependsOn: [
+    keyVault
+    foundry
+  ]
+  properties: {
+    value: foundryAccount.listKeys().key1
+  }
+}
+
 // Store Content Safety credentials in Key Vault
 resource contentSafetyEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/ContentSafety--Endpoint'
@@ -211,3 +289,6 @@ output contentSafetyEndpoint string = contentSafety.outputs.endpoint
 output foundryProjectPath string = foundryProjectPath
 output foundryProjectRegion string = foundryProjectRegion
 output foundryImageModel string = foundryImageModel
+output foundryAccountName string = foundry.outputs.accountName
+output foundryEndpoint string = foundry.outputs.endpoint
+output foundryDeploymentName string = foundry.outputs.deploymentName

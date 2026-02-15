@@ -5,6 +5,8 @@
 import type { InvocationContext } from '@azure/functions';
 import type { ImageGenerationProvider, ImageGenOptions, ImageGenResult } from './imageGenerationProvider.js';
 import { StableDiffusionProvider } from './stableDiffusionProvider.js';
+import { FluxImageProvider } from './fluxImageProvider.js';
+import { getFluxConfig } from '../fluxConfig.js';
 
 export interface ImageGeneratorConfig {
   provider?: ImageGenerationProvider;
@@ -41,6 +43,15 @@ export class ImageGeneratorService {
     prompt: string,
     options?: ImageGenOptions
   ): Promise<ImageGenResult> {
+    // Attempt to switch to Flux provider if configured and available
+    if (this.provider instanceof StableDiffusionProvider) {
+      const fluxConfig = await getFluxConfig(this.context);
+      if (fluxConfig) {
+        this.context.log('Using Flux image provider');
+        this.provider = new FluxImageProvider(fluxConfig);
+      }
+    }
+
     const mergedOptions: ImageGenOptions = {
       size: options?.size || this.config.defaultSize,
       quality: options?.quality || this.config.defaultQuality,

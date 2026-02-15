@@ -15,9 +15,15 @@ param storageSku = 'Standard_LRS'
 param keyVaultSku = 'standard'
 
 // Azure AI Foundry
-param foundryProjectPath = 'open-ai-firesim-test/open-ai-firesim-test-project'
+param foundryProjectPath = 'firesimdevai/firesim-dev-project'
 param foundryProjectRegion = 'eastus'
 param foundryImageModel = 'stable-image-core'
+param foundrySku = 'S0'
+param foundryDeploymentCapacity = 1
+param foundryDeploymentName = 'stable-image-core'
+param foundryModelVersion = '1.0'
+param foundryModelFormat = 'OpenAI'
+param foundryModelPublisher = 'stabilityai'
 
 // Content Safety
 param contentSafetySku = 'S0'

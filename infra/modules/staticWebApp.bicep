@@ -48,7 +48,7 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
 
 // App settings for the Static Web App
 // These will be available to the embedded API functions
-resource appSettings 'Microsoft.Web/staticSites/config@2023-01-01' = {
+resource appSettingsConfig 'Microsoft.Web/staticSites/config@2023-01-01' = {
   parent: staticWebApp
   name: 'appsettings'
   properties: union({
