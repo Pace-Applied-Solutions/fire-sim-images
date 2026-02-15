@@ -358,6 +358,7 @@ Update this section after each issue or change.
     - Extended ImageGenOptions with referenceImage, referenceStrength, mapScreenshot fields
     - Created map screenshot capture utility supporting all 12 viewpoints
     - Implemented consistent seed management (auto-generated 0-1,000,000 range)
+  - Resolved merge conflicts in shared types and lockfile to align authentication, safety, and gallery metadata models
     - Created ConsistencyValidator with 4-dimension validation (smoke, fire size, lighting, color)
     - Weighted scoring system (0-100) with 70% passing threshold
     - Built ImageComparison component with grid, side-by-side, and carousel views
@@ -366,6 +367,10 @@ Update this section after each issue or change.
     - Comprehensive documentation in docs/current_state/multi_perspective_consistency.md
     - All builds pass, 0 security vulnerabilities, code review feedback addressed
     - Ready for production image processing and regeneration API endpoint (future enhancements)
+  - Resolved merge conflicts in shared type definitions and the npm lockfile
+  - Rebased onto main and resolved package-lock.json/types.ts conflicts
+  - Fixed stray merge artifact in shared types to restore successful TypeScript builds
+  - Fixed API TypeScript build errors in list scenarios summary creation and audit log telemetry flush handling
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2

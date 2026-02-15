@@ -37,11 +37,16 @@ export class ImagePostProcessor {
    * Apply post-processing to an image buffer.
    * For dev mode with mock images, this is a placeholder.
    * In production, would use sharp or similar library for actual image processing.
+   * 
+   * @param imageData - Image buffer to process
+   * @param _viewpoint - Viewpoint identifier (unused in current impl, reserved for future watermarking)
+   * @param _scenarioId - Scenario identifier (unused in current impl, reserved for future watermarking)
+   * @param options - Processing options
    */
   async processImage(
     imageData: Buffer,
-    viewpoint: ViewPoint,
-    scenarioId: string,
+    _viewpoint: ViewPoint,
+    _scenarioId: string,
     options: PostProcessingOptions = {}
   ): Promise<PostProcessingResult> {
     const adjustmentsApplied: string[] = [];
@@ -83,7 +88,7 @@ export class ImagePostProcessor {
    */
   async normalizeColorPalette(
     images: Array<{ viewpoint: ViewPoint; imageData: Buffer }>,
-    anchorImage?: { viewpoint: ViewPoint; imageData: Buffer }
+    _anchorImage?: { viewpoint: ViewPoint; imageData: Buffer }
   ): Promise<Array<{ viewpoint: ViewPoint; imageData: Buffer }>> {
     // Placeholder for production implementation
     // Would analyze anchor image's color histogram and apply matching adjustments to others

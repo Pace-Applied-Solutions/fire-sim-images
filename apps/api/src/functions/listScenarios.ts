@@ -30,7 +30,7 @@ export async function listScenarios(
       .map(({ scenarioId, metadata }) => {
         try {
           const scenarioMetadata = metadata as ScenarioMetadata;
-          return createScenarioSummary(scenarioId, scenarioMetadata, blobService);
+          return createScenarioSummary(scenarioId, scenarioMetadata);
         } catch (error) {
           context.warn(`Failed to create summary for scenario ${scenarioId}`, error);
           return null;
@@ -81,8 +81,7 @@ export async function listScenarios(
  */
 function createScenarioSummary(
   scenarioId: string,
-  metadata: ScenarioMetadata,
-  blobService: BlobStorageService
+  metadata: ScenarioMetadata
 ): ScenarioSummary {
   // Calculate centroid from perimeter
   const coordinates = metadata.perimeter.geometry.coordinates[0];
