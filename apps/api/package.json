@@ -8,7 +8,11 @@
     "dev": "echo 'Note: Azure Functions requires Azure Functions Core Tools to be installed globally.' && echo 'Install with: npm i -g azure-functions-core-tools@4' && echo '' && npm run build && func start",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@azure-rest/ai-content-safety": "^1.0.1",
@@ -25,6 +29,9 @@
   },
   "devDependencies": {
     "@types/node": "^25.2.3",
-    "typescript": "^5.3.3"
+    "@vitest/ui": "^4.0.18",
+    "happy-dom": "^20.6.1",
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }
