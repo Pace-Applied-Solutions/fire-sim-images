@@ -36,13 +36,14 @@ The Fire Simulation Inject Tool consists of:
    - Lifecycle management for old content
 
 4. **Azure Key Vault**
-   - Manages API keys (Mapbox, Azure OpenAI)
+   - Manages API keys (Mapbox, AI Foundry credentials)
    - Stores connection strings and secrets
    - Accessed via managed identities
 
-5. **Azure OpenAI Service**
-   - DALL-E 3 model for image generation
-   - Region-specific deployment
+5. **Azure AI Foundry (AIServices)**
+   - Stable Image Core model for image generation
+   - Project-based deployment in East US
+   - Flux fallback provider support
    - Quota and rate limit management
 
 6. **Application Insights**
@@ -65,7 +66,7 @@ Example:
 
 ### Adding Users
 
-The system uses Azure AD authentication. To add new users:
+The system uses Microsoft Entra External ID (CIAM) authentication. To add new users:
 
 **Option 1: Azure Portal**
 
@@ -123,7 +124,7 @@ az role assignment delete \
 
 ### User Provisioning Best Practices
 
-- Use Azure AD groups for bulk user management
+- Use Microsoft Entra External ID (CIAM) groups for bulk user management
 - Assign roles at the group level, not individual level
 - Use Conditional Access policies for additional security (MFA, IP restrictions)
 - Regularly audit user access (quarterly review recommended)
@@ -135,7 +136,9 @@ az role assignment delete \
 
 Main cost drivers:
 
-1. **Azure OpenAI API calls** — $0.04-0.08 per image (DALL-E 3)
+1. **AI image generation** — Varies by provider:
+   - Stable Image Core (AI Foundry): ~$0.02-0.04 per image
+   - Flux: ~$0.01-0.02 per image (if configured)
 2. **Storage** — ~$0.02/GB/month for images and videos
 3. **Compute** — Azure Functions consumption plan (~$0.20/million executions)
 4. **Bandwidth** — Egress charges for downloads
@@ -143,9 +146,13 @@ Main cost drivers:
 
 **Estimated cost per scenario:**
 
-- 10-12 image perspectives: ~$0.50-1.00
-- Video generation: ~$0.10-0.20
+- 10-12 image perspectives: ~$0.20-0.50
+- Video generation: ~$0.10-0.20 (if enabled)
 - Storage and compute: ~$0.05
+- **Total: $0.35-0.75 per complete scenario**
+
+### Setting Usage Quotas
+
 - **Total: $0.65-1.25 per complete scenario**
 
 ### Setting Usage Quotas
@@ -298,7 +305,7 @@ customEvents
 - **P50/P95/P99 latency**: Generation should complete in <5 minutes (P95)
 - **Success rate**: >95% of generations should succeed
 - **Queue depth**: Monitor for backlog during peak hours
-- **Throttling events**: Track rate limit hits on Azure OpenAI
+- **Throttling events**: Track rate limit hits on AI Foundry
 
 **Configure alerts:**
 
@@ -440,13 +447,13 @@ The system uses GitHub Actions for CI/CD:
 ```bash
 az keyvault secret set \
   --vault-name firesim-prod-kv-eastaus \
-  --name "OpenAIApiKey" \
+  --name "FoundryApiKey" \
   --value "sk-..."
 ```
 
 **To rotate secrets:**
 
-1. Generate new secret in source system (e.g., Azure OpenAI)
+1. Generate new secret in source system (e.g., AI Foundry)
 2. Add new secret to Key Vault with version suffix
 3. Update application configuration to use new secret
 4. Deploy updated configuration
@@ -469,13 +476,13 @@ az keyvault secret set \
 
 **Diagnosis:**
 
-1. Check Azure AD app registration is configured correctly
+1. Check Microsoft Entra External ID (CIAM) app registration is configured correctly
 2. Verify redirect URIs include your app URL
 3. Check user has been assigned to the application
 
 **Resolution:**
 
-1. Go to **Azure AD** > **App registrations** > Your app
+1. Go to **Microsoft Entra External ID (CIAM)** > **App registrations** > Your app
 2. Check **Authentication** > **Redirect URIs**
 3. Ensure user is assigned in **Enterprise applications**
 
@@ -503,7 +510,7 @@ az keyvault secret set \
 **Diagnosis:**
 
 1. Check Application Insights for error logs
-2. Verify Azure OpenAI service is running
+2. Verify AI Foundry service is running
 3. Check quota limits haven't been exceeded
 4. Verify Key Vault secrets are accessible
 
@@ -513,7 +520,7 @@ az keyvault secret set \
    ```kusto
    traces | where message contains "generation" and severityLevel >= 3
    ```
-2. Check Azure OpenAI quota in Azure Portal
+2. Check AI Foundry quota in Azure Portal
 3. Verify managed identity has Key Vault access
 4. Test health endpoint: `/api/health`
 
@@ -524,13 +531,13 @@ az keyvault secret set \
 **Diagnosis:**
 
 1. Check Application Insights performance metrics
-2. Monitor Azure OpenAI throttling
+2. Monitor AI Foundry throttling
 3. Check Function App scaling
 
 **Resolution:**
 
 1. Review API response times in Application Insights
-2. Increase Azure OpenAI quota if throttled
+2. Increase AI Foundry quota if throttled
 3. Enable Function App premium plan for faster cold starts
 4. Add caching for common geospatial lookups
 
@@ -578,7 +585,7 @@ az keyvault secret set \
 ### Security Best Practices
 
 1. **Access Control**
-   - Use Azure AD for authentication
+   - Use Microsoft Entra External ID (CIAM) for authentication
    - Implement role-based access control (RBAC)
    - Enable MFA for all admin accounts
    - Use Conditional Access policies
@@ -623,7 +630,7 @@ az keyvault secret set \
 
 **User privacy:**
 
-- Minimal personal data collected (Azure AD user ID)
+- Minimal personal data collected (Microsoft Entra External ID (CIAM) user ID)
 - No PII in generated content
 - Users can delete their own scenarios
 

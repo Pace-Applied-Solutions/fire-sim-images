@@ -13,7 +13,7 @@ Fire service trainers need realistic, location-specific visuals to help crews an
 
 The problem we are solving is twofold: speed and fidelity. Speed means a trainer can sketch a perimeter and quickly produce multiple views that feel like real observations from the fireground. Fidelity means those outputs respect the actual vegetation type, terrain slope, and weather conditions so the visuals do not mislead trainees. The tool is not intended to replace physics-based fire simulators; instead it creates visual injects that complement existing operational planning tools and improve training immersion. By anchoring each scenario to authoritative datasets (vegetation, elevation, imagery) and structuring prompts with fire behavior parameters, the outputs remain credible and consistent with how fire agencies describe and assess fire behavior.
 
-The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as embedded Azure Functions within the Static Web App at the `/api` endpoint. This API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure OpenAI (DALL-E 3) for rapid integration, with the option to use SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management and managed identities for service-to-service authentication.
+The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as embedded Azure Functions within the Static Web App at the `/api` endpoint. This API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure AI Foundry with Stable Image Core (from Stability AI) for rapid integration and regional availability, with Flux as an optional fallback provider. Future enhancements will add SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management, Microsoft Entra External ID (CIAM) for authentication, and managed identities for service-to-service authentication.
 
 Key architectural principles include keeping data within the target agency's Azure environment, favoring regional and national datasets for geographic accuracy, and maintaining model modularity so newer AI services can be swapped in as they mature. This allows the system to start small and reliable, then evolve toward higher fidelity and longer-duration outputs without reworking the entire stack. The end result is a practical training tool that can quickly generate credible fireground visuals, improve scenario realism, and support consistent, repeatable training outcomes.
 
@@ -111,7 +111,7 @@ Key architectural principles include keeping data within the target agency's Azu
 - Durable Functions for long-running generation tasks.
 - Geodata lookup for vegetation, slope, elevation.
 - Prompt builder for multi-view outputs.
-- Image generation via Azure OpenAI (DALL-E 3) or SDXL (ControlNet optional).
+- Image generation via Azure AI Foundry (Stable Image Core) or SDXL (ControlNet optional).
 - Video generation via SVD or external service.
 
 **Storage and Security**
@@ -242,7 +242,7 @@ Update this section after each issue or change.
     - Static Web App with embedded Azure Functions API at `/api`
     - Azure Blob Storage with three containers and lifecycle management
     - Azure Key Vault with managed identity access
-    - Azure OpenAI with DALL-E 3 model deployment
+    - Azure OpenAI with Stable Image Core model deployment
     - Dev and prod parameter files
     - Deployment script (`deploy.sh`) and GitHub Actions workflow
     - Comprehensive infrastructure documentation
@@ -428,7 +428,7 @@ Update this section after each issue or change.
     - 213 unit tests passing (120 shared, 72 API, 21 web)
     - Prompt quality test suite validates RFS terminology, blocked terms, viewpoint uniqueness
     - Consistency validator tests fire size, lighting, smoke direction, color palette
-    - Cost estimation tests for all pricing models (DALL-E 3, Stable Image Core)
+    - Cost estimation tests for all pricing models (Stable Image Core, Stable Image Core)
     - State management tests for React store (Zustand)
     - CI workflow configured with GitHub Actions for automated testing
     - Trainer feedback workflow implemented:
@@ -488,7 +488,7 @@ Update this section after each issue or change.
       - Long-term vision (2+ years) with priority ranking
   - **Architecture Decision Records (ADRs):**
     - Created docs/adr/ directory structure
-    - ADR-001: Choice of GPT-Image (DALL-E 3) as default model
+    - ADR-001: Choice of GPT-Image (Stable Image Core) as default model
       - Rationale: Fast integration, Azure native, reliability, security
       - Trade-offs: Less spatial control, higher cost, resolution limits
       - Future: SDXL integration in Phase 2

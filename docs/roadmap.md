@@ -32,7 +32,7 @@ The MVP provides:
 
 - **Mask-based fire placement**: Draw exactly where fire appears in the image
 - **Multi-model strategy**:
-  - DALL-E 3 for speed and general scenarios
+  - Stable Image Core for speed and general scenarios
   - SDXL + ControlNet for precision and spatial control
 - **Model selection UI**: Toggle between models based on use case
 - **Cost optimization**: Use SDXL only when precision required
@@ -61,7 +61,7 @@ The MVP provides:
 ### Technical Considerations
 
 - Self-hosted SDXL model or Azure AI Foundry Stable Image Core
-- GPU compute costs vs. DALL-E API costs
+- GPU compute costs vs. Stable Image Core API costs
 - Longer generation time (30-60 seconds per image vs. 2-5 seconds)
 - Storage for depth maps and control masks
 

@@ -10,7 +10,7 @@ Complete reference for the Fire Simulation Inject Tool API endpoints.
 
 ## Authentication
 
-All endpoints except `/health` require authentication via Azure AD bearer token.
+All endpoints except `/health` require authentication via Microsoft Entra External ID (CIAM) bearer token.
 
 **Request header:**
 
@@ -19,7 +19,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Obtaining a token:**
-The web application handles token acquisition automatically. For direct API access, use Azure AD authentication flow.
+The web application handles token acquisition automatically. For direct API access, use Microsoft Entra External ID (CIAM) authentication flow.
 
 ## Endpoints
 
@@ -204,7 +204,7 @@ Retrieve completed generation results including image URLs.
       "aspect": "NW"
     },
     "seed": 742583,
-    "modelVersion": "dall-e-3",
+    "modelVersion": "stable-image-core",
     "promptVersion": "1.0.0"
   }
 }
@@ -694,7 +694,7 @@ import { FireSimClient } from '@fire-sim/client';
 const client = new FireSimClient({
   apiUrl: 'https://your-api-url/api',
   getToken: async () => {
-    // Your Azure AD token acquisition logic
+    // Your Microsoft Entra External ID (CIAM) token acquisition logic
     return await acquireToken();
   },
 });
@@ -754,7 +754,7 @@ print(f"Generated {len(result.images)} images")
 ```bash
 #!/bin/bash
 
-# Get token (simplified - use proper Azure AD flow in production)
+# Get token (simplified - use proper Microsoft Entra External ID (CIAM) flow in production)
 TOKEN=$(az account get-access-token --resource https://your-api-url --query accessToken -o tsv)
 
 # Start generation
