@@ -250,6 +250,7 @@ Update this section after each issue or change.
     - Added AI Foundry (AIServices) deployment with Stable Image Core model and project scaffolding; outputs and secrets wired to Key Vault and Static Web App app settings
     - Added Flex Consumption Function App module with deployment container, managed identity RBAC, and App Insights role assignment; wired Key Vault access and environment parameters
     - Consolidated Key Vault access policies to support both SWA and Function App identities
+    - Added AzureWebJobsStorage__accountName setting for Flex Consumption validation in CI/CD
   - **Issue 3 complete:** Front-End Shell, Design System & Navigation
     - Comprehensive design token system with dark theme optimized for training rooms
     - Responsive layout with Header, Sidebar, MainArea, and ResultsPanel components

@@ -71,6 +71,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing 
 // are replaced by functionAppConfig.runtime.
 var baseAppSettings = {
   // Managed-identity storage endpoints (replaces AzureWebJobsStorage connection string)
+  AzureWebJobsStorage__accountName: storageAccountName
   AzureWebJobsStorage__credential: 'managedidentity'
   AzureWebJobsStorage__blobServiceUri: 'https://${storageAccountName}.blob.${environment().suffixes.storage}'
   AzureWebJobsStorage__queueServiceUri: 'https://${storageAccountName}.queue.${environment().suffixes.storage}'
