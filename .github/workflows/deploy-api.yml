@@ -3,10 +3,10 @@ name: Deploy Azure Functions API
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - 'infra/**'
-      - '*.md'
+    paths:
+      - 'apps/api/**'
+      - 'packages/shared/**'
+      - '.github/workflows/deploy-api.yml'
   workflow_dispatch:
 
 permissions:
