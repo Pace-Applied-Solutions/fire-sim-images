@@ -1,4 +1,4 @@
-name: Deploy Azure Functions API
+name: Deploy API
 
 on:
   push:
@@ -141,7 +141,6 @@ jobs:
               repo: context.repo.repo,
               title: `🚨 API deployment failed (${sha})`,
               labels: ['infrastructure', 'bug'],
-              assignees: ['copilot'],
               body: [
                 `## API Deployment Failure`,
                 ``,

@@ -104,7 +104,6 @@ jobs:
               repo: context.repo.repo,
               title: `🚨 SWA deployment failed (${sha})`,
               labels: ['infrastructure', 'bug'],
-              assignees: ['copilot'],
               body: [
                 `## Static Web App Deployment Failure`,
                 ``,
