@@ -526,6 +526,14 @@ Update this section after each issue or change.
     - Updated `.github/workflows/deploy-swa.yml` with documentation explaining the function language requirement
     - Configuration file automatically deployed via Vite build process (copied from public to dist folder)
     - All builds passing, code review clean, security scan completed with no alerts
+  - **CI Fix: Azure Functions v4 Runtime Discovery:**
+    - Azure SWA deployment was failing with "Failed to deploy the Azure Functions" after artifacts uploaded successfully
+    - Root cause: Azure Functions v4 programming model requires `app` object export from main entry point for runtime function discovery
+    - Added `export default app` to `apps/api/src/index.ts` (imported from `@azure/functions`)
+    - Created comprehensive deployment documentation at `docs/current_state/azure_functions_deployment.md`
+    - Documents critical requirements: app export, ESM support, package configuration, function registration patterns
+    - Includes troubleshooting guide and local development setup instructions
+    - Fix enables Azure Functions runtime to discover all registered functions in v4 programming model during pre-built deployments
 - **Current focus:** MVP validation complete - ready for trainer feedback and Phase 2 planning
 - **Completed milestones:**
   - Master plan created as single source of truth.
