@@ -379,6 +379,7 @@ Update this section after each issue or change.
   - Added SWA CLI dev scripts to run a local Static Web Apps-style proxy for integrated front-end and API
   - Added .nvmrc and Node 22 preflight check for SWA dev to avoid running with unsupported Node versions
   - **CI/CD alignment:** Consolidated Static Web App deployment so front-end and embedded `/api` ship together via a single workflow; removed separate web/API deploy jobs and pointed the SWA module to `apps/api`
+  - **Workflow triggers:** Only the unified SWA deploy runs on pushes to `main`; CI now runs on pull requests or manual dispatch; infra deploy remains manual
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
