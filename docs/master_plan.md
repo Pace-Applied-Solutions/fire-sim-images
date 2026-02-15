@@ -372,6 +372,11 @@ Update this section after each issue or change.
   - Fixed stray merge artifact in shared types to restore successful TypeScript builds
   - Fixed API TypeScript build errors in list scenarios summary creation and audit log telemetry flush handling
   - Added local dev proxy for /api plus favicon/manifest assets to prevent 404s during web development
+  - Fixed local Azure Functions dev startup by aligning API entrypoint imports to TypeScript sources
+  - Updated API function and service imports to TypeScript sources to avoid local runtime module resolution errors
+  - Switched API local dev to build from dist with entrypoint set to dist/index.js to fix Functions metadata discovery
+  - Added SWA CLI dev scripts to run a local Static Web Apps-style proxy for integrated front-end and API
+  - Added .nvmrc and Node 22 preflight check for SWA dev to avoid running with unsupported Node versions
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2

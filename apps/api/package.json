@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "echo 'Note: Azure Functions requires Azure Functions Core Tools to be installed globally.' && echo 'Install with: npm i -g azure-functions-core-tools@4' && echo '' && func start",
+    "dev": "echo 'Note: Azure Functions requires Azure Functions Core Tools to be installed globally.' && echo 'Install with: npm i -g azure-functions-core-tools@4' && echo '' && npm run build && func start",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "watch": "tsc --watch"

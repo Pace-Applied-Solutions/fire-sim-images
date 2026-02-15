@@ -5,11 +5,9 @@
     "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "node",
+    "rootDir": "./src",
     "outDir": "./dist",
-    "esModuleInterop": true,
-    "paths": {
-      "@fire-sim/shared": ["../../packages/shared/src/index.ts"]
-    }
+    "esModuleInterop": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
