@@ -68,6 +68,9 @@ param foundryModelFormat string = 'OpenAI'
 @description('AI Foundry model publisher')
 param foundryModelPublisher string = 'stabilityai'
 
+@description('Deploy AI Foundry resources (set to false when using an existing deployment)')
+param deployFoundry bool = false
+
 @description('Content Safety SKU')
 @allowed([
   'F0'
@@ -102,8 +105,8 @@ module staticWebApp './modules/staticWebApp.bicep' = {
       FOUNDRY_PROJECT_PATH: foundryProjectPath
       FOUNDRY_PROJECT_REGION: foundryProjectRegion
       FOUNDRY_IMAGE_MODEL: foundryImageModel
-      FOUNDRY_ENDPOINT: foundry.outputs.endpoint
-      FOUNDRY_DEPLOYMENT_NAME: foundry.outputs.deploymentName
+      FOUNDRY_ENDPOINT: ''
+      FOUNDRY_DEPLOYMENT_NAME: ''
       KEY_VAULT_URI: 'https://${keyVaultName}.${environment().suffixes.keyvaultDns}/'
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.outputs.connectionString
     }
@@ -111,7 +114,7 @@ module staticWebApp './modules/staticWebApp.bicep' = {
 }
 
 // Deploy AI Foundry (AIServices) account, project, and Stable Diffusion deployment
-module foundry './modules/foundry.bicep' = {
+module foundry './modules/foundry.bicep' = if (deployFoundry) {
   name: 'foundry-deployment'
   params: {
     name: foundryAccountName
@@ -126,11 +129,6 @@ module foundry './modules/foundry.bicep' = {
     modelPublisher: foundryModelPublisher
     capacity: foundryDeploymentCapacity
   }
-}
-
-// Reference the AI Foundry account for key retrieval (no deployment output of secrets)
-resource foundryAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
-  name: foundryAccountName
 }
 
 // Deploy Application Insights
@@ -182,67 +180,7 @@ module keyVault './modules/keyVault.bicep' = {
 }
 
 // Store Foundry project settings in Key Vault
-resource foundryProjectPathSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/Foundry--ProjectPath'
-  dependsOn: [
-    keyVault
-  ]
-  properties: {
-    value: foundryProjectPath
-  }
-}
-
-resource foundryProjectRegionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/Foundry--ProjectRegion'
-  dependsOn: [
-    keyVault
-  ]
-  properties: {
-    value: foundryProjectRegion
-  }
-}
-
-resource foundryImageModelSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/Foundry--ImageModel'
-  dependsOn: [
-    keyVault
-  ]
-  properties: {
-    value: foundryImageModel
-  }
-}
-
-// Store AI Foundry runtime settings in Key Vault
-resource foundryEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/Foundry--Endpoint'
-  dependsOn: [
-    keyVault
-  ]
-  properties: {
-    value: foundry.outputs.endpoint
-  }
-}
-
-resource foundryDeploymentNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/Foundry--DeploymentName'
-  dependsOn: [
-    keyVault
-  ]
-  properties: {
-    value: foundry.outputs.deploymentName
-  }
-}
-
-resource foundryApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/Foundry--ApiKey'
-  dependsOn: [
-    keyVault
-    foundry
-  ]
-  properties: {
-    value: foundryAccount.listKeys().key1
-  }
-}
+// Foundry secrets skipped when deployFoundry is false; use manual Key Vault secrets for external deployments
 
 // Store Content Safety credentials in Key Vault
 resource contentSafetyEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
@@ -289,6 +227,6 @@ output contentSafetyEndpoint string = contentSafety.outputs.endpoint
 output foundryProjectPath string = foundryProjectPath
 output foundryProjectRegion string = foundryProjectRegion
 output foundryImageModel string = foundryImageModel
-output foundryAccountName string = foundry.outputs.accountName
-output foundryEndpoint string = foundry.outputs.endpoint
-output foundryDeploymentName string = foundry.outputs.deploymentName
+output foundryAccountName string = ''
+output foundryEndpoint string = ''
+output foundryDeploymentName string = ''

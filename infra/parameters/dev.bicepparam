@@ -24,6 +24,7 @@ param foundryDeploymentName = 'stable-image-core'
 param foundryModelVersion = '1.0'
 param foundryModelFormat = 'OpenAI'
 param foundryModelPublisher = 'stabilityai'
+param deployFoundry = false
 
 // Content Safety
 param contentSafetySku = 'S0'
