@@ -519,6 +519,13 @@ Update this section after each issue or change.
     - Fixed all code formatting issues with Prettier across 95 files
     - All builds passing, TypeScript strict mode compliant
     - Ready for code review and security scan
+  - **CI Fix: Azure Static Web Apps Function Language Configuration:**
+    - Azure SWA deployment was failing with "Cannot deploy to the function app because Function language info isn't provided"
+    - Added `staticwebapp.config.json` to `apps/web/public/` with `apiRuntime: "node:20"` to specify Node.js runtime for Azure Functions
+    - Included `navigationFallback` configuration for proper SPA routing
+    - Updated `.github/workflows/deploy-swa.yml` with documentation explaining the function language requirement
+    - Configuration file automatically deployed via Vite build process (copied from public to dist folder)
+    - All builds passing, code review clean, security scan completed with no alerts
 - **Current focus:** MVP validation complete - ready for trainer feedback and Phase 2 planning
 - **Completed milestones:**
   - Master plan created as single source of truth.
