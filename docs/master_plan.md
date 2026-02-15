@@ -369,6 +369,7 @@ Update this section after each issue or change.
     - Ready for production image processing and regeneration API endpoint (future enhancements)
   - Resolved merge conflicts in shared type definitions and the npm lockfile
   - Rebased onto main and resolved package-lock.json/types.ts conflicts
+  - Fixed stray merge artifact in shared types to restore successful TypeScript builds
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2

@@ -307,22 +307,3 @@ export interface ScenarioSummary {
   thumbnailUrl: string; // URL to representative thumbnail (e.g., aerial view)
   promptVersion?: string;
 }
-  | 'settings.updated'
-  | 'user.login'
-  | 'user.logout';
-
-/**
- * Audit log entry.
- */
-export interface AuditLogEntry {
-  id: string;
-  timestamp: string; // ISO 8601
-  userId: string;
-  userEmail: string;
-  authMethod: string;
-  action: AuditAction;
-  resourceId?: string; // e.g., scenarioId
-  details?: Record<string, unknown>;
-  result: 'success' | 'failure';
-  errorMessage?: string;
-}
