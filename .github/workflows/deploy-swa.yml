@@ -49,8 +49,8 @@ jobs:
           app_location: apps/web
           api_location: apps/api
           output_location: dist
-          app_build_command: npm run build --workspace=apps/web
-          api_build_command: npm run build --workspace=apps/api
+          app_build_command: npm run build
+          api_build_command: npm run build
           production_branch: main
         env:
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
