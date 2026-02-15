@@ -11,9 +11,10 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 env:
-  AZURE_FUNCTIONAPP_NAME: firesim-dev-api   # Change to your Functions app name
+  AZURE_FUNCTIONAPP_NAME: firesim-dev-api
   NODE_VERSION: '22.x'
 
 jobs:
@@ -31,7 +32,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      # Install everything at workspace root so npm workspaces resolve correctly
       - name: Install dependencies
         run: npm ci
 
@@ -41,20 +41,14 @@ jobs:
       - name: Build API
         run: npm run build --workspace=apps/api
 
-      # Assemble a self-contained API directory.
-      # npm workspace symlinks break when zipped, so we copy real files only.
       - name: Assemble deployment package
         run: |
           set -e
           mkdir -p .deploy/api
 
-          # Azure Functions runtime config
           cp apps/api/host.json .deploy/api/
-
-          # Compiled TypeScript output
           cp -R apps/api/dist .deploy/api/dist
 
-          # Minimal package.json (no workspace refs, no devDeps)
           node -e "
             const pkg = JSON.parse(require('fs').readFileSync('apps/api/package.json', 'utf8'));
             delete pkg.dependencies['@fire-sim/shared'];
@@ -63,11 +57,9 @@ jobs:
             require('fs').writeFileSync('.deploy/api/package.json', JSON.stringify(pkg, null, 2));
           "
 
-          # Install production deps (no workspace links)
           cd .deploy/api
           npm install --omit=dev
 
-          # Place built @fire-sim/shared directly (real copy, no symlinks)
           mkdir -p node_modules/@fire-sim/shared
           cp -R ../../packages/shared/dist   node_modules/@fire-sim/shared/dist
           cp    ../../packages/shared/package.json node_modules/@fire-sim/shared/package.json
@@ -92,3 +84,97 @@ jobs:
         with:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
           package: .deploy/api
+
+      # Stamp the commit SHA as an app setting so /api/health reports it
+      - name: Set DEPLOY_COMMIT_SHA app setting
+        run: |
+          az functionapp config appsettings set \
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group firesim-rg-dev \
+            --settings "DEPLOY_COMMIT_SHA=${{ github.sha }}" \
+            -o none
+
+      # Wait for the app to restart and verify the new version is live
+      - name: Verify deployment
+        id: verify
+        run: |
+          EXPECTED="${{ github.sha }}"
+          URL="https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health"
+          MAX_ATTEMPTS=18       # 18 × 10s = 3 minutes
+          ATTEMPT=0
+
+          echo "Waiting for $URL to report commitSha=$EXPECTED ..."
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            sleep 10
+
+            RESPONSE=$(curl -s -m 10 "$URL" 2>/dev/null || echo '{}')
+            LIVE_SHA=$(echo "$RESPONSE" | jq -r '.commitSha // empty' 2>/dev/null || echo '')
+            STATUS=$(echo "$RESPONSE" | jq -r '.status // empty' 2>/dev/null || echo '')
+
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS — commitSha=$LIVE_SHA status=$STATUS"
+
+            if [ "$LIVE_SHA" = "$EXPECTED" ]; then
+              echo "✅ Deployment verified — correct commit is live"
+              echo "deploy_verified=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "❌ Deployment verification failed after $MAX_ATTEMPTS attempts"
+          echo "Expected: $EXPECTED"
+          echo "Got:      $LIVE_SHA"
+          echo "deploy_verified=false" >> "$GITHUB_OUTPUT"
+          exit 1
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.sha.substring(0, 7);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const apiUrl = `https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 API deployment failed (${sha})`,
+              labels: ['infrastructure', 'bug'],
+              assignees: ['copilot'],
+              body: [
+                `## API Deployment Failure`,
+                ``,
+                `**Commit:** \`${context.sha}\``,
+                `**Branch:** \`${context.ref}\``,
+                `**Workflow run:** ${runUrl}`,
+                `**Timestamp:** ${new Date().toISOString()}`,
+                ``,
+                `### What happened`,
+                `The API deployment to \`${{ env.AZURE_FUNCTIONAPP_NAME }}\` either failed to deploy or did not come up with the expected commit SHA within the timeout window (3 minutes).`,
+                ``,
+                `### Investigation steps`,
+                `1. Check the [workflow run logs](${runUrl}) for build or deployment errors`,
+                `2. Check the Functions app health endpoint: \`curl ${apiUrl}\``,
+                `3. Check Azure Functions runtime logs:`,
+                `   \`\`\`bash`,
+                `   az webapp log tail --name ${{ env.AZURE_FUNCTIONAPP_NAME }} --resource-group firesim-rg-dev`,
+                `   \`\`\``,
+                `4. Verify the app setting was written:`,
+                `   \`\`\`bash`,
+                `   az functionapp config appsettings list --name ${{ env.AZURE_FUNCTIONAPP_NAME }} --resource-group firesim-rg-dev --query "[?name=='DEPLOY_COMMIT_SHA'].value" -o tsv`,
+                `   \`\`\``,
+                `5. Check if the app is in a crash loop:`,
+                `   \`\`\`bash`,
+                `   az functionapp show --name ${{ env.AZURE_FUNCTIONAPP_NAME }} --resource-group firesim-rg-dev --query state -o tsv`,
+                `   \`\`\``,
+                `6. Check deployment history:`,
+                `   \`\`\`bash`,
+                `   az functionapp log deployment list --name ${{ env.AZURE_FUNCTIONAPP_NAME }} --resource-group firesim-rg-dev -o table`,
+                `   \`\`\``,
+                ``,
+                `### Expected vs Actual`,
+                `- **Expected commitSha:** \`${context.sha}\``,
+                `- **Health endpoint:** ${apiUrl}`,
+              ].join('\n'),
+            });

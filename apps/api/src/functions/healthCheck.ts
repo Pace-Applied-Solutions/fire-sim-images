@@ -21,6 +21,7 @@ interface HealthCheckResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
   version: string;
+  commitSha: string;
   checks: HealthCheck[];
 }
 
@@ -65,6 +66,7 @@ export async function healthCheck(
     status: overallStatus,
     timestamp: new Date().toISOString(),
     version: '0.1.0',
+    commitSha: process.env.DEPLOY_COMMIT_SHA || 'unknown',
     checks,
   };
 

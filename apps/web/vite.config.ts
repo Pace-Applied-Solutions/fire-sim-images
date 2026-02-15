@@ -4,6 +4,9 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __COMMIT_SHA__: JSON.stringify(process.env.VITE_COMMIT_SHA || 'dev'),
+  },
   resolve: {
     alias: {
       '@fire-sim/shared': path.resolve(__dirname, '../../packages/shared/src'),

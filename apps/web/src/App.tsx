@@ -12,6 +12,12 @@ function App() {
   useEffect(() => {
     // Initialize Application Insights on app startup
     initializeAppInsights();
+
+    // Inject build commit SHA as a meta tag for deployment verification
+    const meta = document.createElement('meta');
+    meta.name = 'app-version';
+    meta.content = __COMMIT_SHA__;
+    document.head.appendChild(meta);
   }, []);
 
   return (
