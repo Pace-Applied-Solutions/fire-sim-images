@@ -28,6 +28,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Pack shared library for local installs
+        run: |
+          mkdir -p /tmp/firesim-pack
+          npm pack packages/shared --pack-destination /tmp/firesim-pack
+          SHARED_TGZ=$(ls /tmp/firesim-pack | head -n1)
+          cp /tmp/firesim-pack/$SHARED_TGZ apps/api/fire-sim-shared.tgz
+          cp /tmp/firesim-pack/$SHARED_TGZ apps/web/fire-sim-shared.tgz
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
