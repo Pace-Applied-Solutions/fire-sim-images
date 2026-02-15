@@ -107,9 +107,7 @@ Key architectural principles include keeping data within the target agency's Azu
 
 **Back-end API**
 
-- Azure Functions embedded in Static Web App at `/api` endpoint (Node.js 22, TypeScript).
-- Standalone Azure Functions app (Node.js 22, TypeScript) linked to SWA via BYOF.
-- SWA proxies `/api` to the linked Functions app automatically.
+- Standalone Azure Functions app (Node.js 22, TypeScript) linked to SWA via BYOF; SWA proxies `/api` traffic to the Functions app.
 - Durable Functions for long-running generation tasks.
 - Geodata lookup for vegetation, slope, elevation.
 - Prompt builder for multi-view outputs.
@@ -223,7 +221,7 @@ These are the 15 implementation issues seeded in GitHub. Each will be assigned t
 
 Update this section after each issue or change.
 
-- **Current focus:** Phase 3 - Prompt and image output (Issue 8)
+- **Current focus:** API separation quality audit (BYOF Functions) and documentation sync
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.
@@ -241,14 +239,14 @@ Update this section after each issue or change.
   - **Infrastructure as Code:** Bicep templates for Azure deployment (Issue 2)
     - Complete Bicep template structure under `infra/`
     - Main orchestrator (`main.bicep`) and modular resource templates
-    - Static Web App with embedded Azure Functions API at `/api`
+    - Static Web App (front-end only) linked to a standalone Azure Functions API via BYOF proxy at `/api`
     - Azure Blob Storage with three containers and lifecycle management
     - Azure Key Vault with managed identity access
     - Azure OpenAI with Stable Image Core model deployment
     - Dev and prod parameter files
     - Deployment script (`deploy.sh`) and GitHub Actions workflow
     - Comprehensive infrastructure documentation
-    - Updated master plan to reflect Static Web App architecture with embedded API
+    - Updated master plan to reflect Static Web App + standalone Azure Functions architecture
     - Added AI Foundry (AIServices) deployment with Stable Image Core model and project scaffolding; outputs and secrets wired to Key Vault and Static Web App app settings
   - **Issue 3 complete:** Front-End Shell, Design System & Navigation
     - Comprehensive design token system with dark theme optimized for training rooms
@@ -380,7 +378,7 @@ Update this section after each issue or change.
   - Switched API local dev to build from dist with entrypoint set to dist/index.js to fix Functions metadata discovery
   - Added SWA CLI dev scripts to run a local Static Web Apps-style proxy for integrated front-end and API
   - Added .nvmrc and Node 22 preflight check for SWA dev to avoid running with unsupported Node versions
-  - **CI/CD alignment:** Consolidated Static Web App deployment so front-end and embedded `/api` ship together via a single workflow; removed separate web/API deploy jobs and pointed the SWA module to `apps/api`
+  - **CI/CD alignment:** Split deployments: Static Web App ships front-end only, Functions deploys as a standalone app; BYOF linking handles `/api` proxying (SWA deploy no longer packages API artifacts)
   - **Workflow triggers:** Only the unified SWA deploy runs on pushes to `main`; CI now runs on pull requests or manual dispatch; infra deploy remains manual
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
@@ -539,7 +537,8 @@ Update this section after each issue or change.
     - Documents critical requirements: app export, ESM support, package configuration, function registration patterns
     - Includes troubleshooting guide and local development setup instructions
     - Fix enables Azure Functions runtime to discover all registered functions in v4 programming model during pre-built deployments
-- **Current focus:** MVP validation complete - ready for trainer feedback and Phase 2 planning
+- **Current focus:** API separation quality audit (BYOF Functions) and documentation sync
+  - **Update 2026-02-15 (PR #73):** Documented BYOF API separation, refreshed current-state docs, and aligned local tooling (SWA CLI) to proxy the standalone Functions app
   - **Architecture pivot: SWA + standalone Azure Functions (BYOF):**
     - SWA managed functions cannot support Managed Identity, Key Vault, Table Storage, Content Safety, or function-level auth — all used by the API
     - Moved to "Bring Your Own Functions" pattern: SWA hosts front-end only, API deploys as a standalone Azure Functions app linked via SWA portal
@@ -550,6 +549,7 @@ Update this section after each issue or change.
     - Fixed 4 missing function registrations in `index.ts`: `listScenarios`, `getScenario`, `deleteScenario`, `submitFeedback`
     - Fixed 3 bare ESM imports missing `.js` extension in `deleteScenario`, `getScenario`, `listScenarios`
     - All 11 functions now compile and register correctly
+    - Acceptance criteria: SWA deploy excludes API artifacts; `/api` proxy points to linked Functions resource; Functions app built on Node 22 with managed identity + Key Vault access; rollback documented via SWA unlink + redeploy of prior integrated build
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.

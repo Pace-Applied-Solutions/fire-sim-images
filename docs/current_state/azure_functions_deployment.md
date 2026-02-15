@@ -1,194 +1,53 @@
-# Azure Functions Deployment for Static Web Apps
+# Azure Functions Deployment (Bring Your Own Functions)
 
 ## Overview
 
-This project uses Azure Functions v4 with the Node.js programming model for the API backend, deployed as part of an Azure Static Web App.
+The API runs as a standalone Azure Functions app (Node.js 22, v4 programming model) and is linked to Azure Static Web Apps via the "Bring Your Own Functions" (BYOF) integration. The Static Web App hosts only the React front-end and proxies `/api/*` traffic to the linked Functions resource.
 
-## Critical Requirements for Deployment
+## Critical Requirements
 
-### 1. App Object Export
+1. **App export for discovery** — `apps/api/src/index.ts` must export the `app` object from `@azure/functions` so the runtime can discover registered functions.
+2. **BYOF link** — In the Static Web App portal, set the linked API to the Functions app. This creates the `/api` proxy without bundling the API into the SWA artifact. Rollback: unlink the Functions app in SWA, then redeploy the previous integrated build if needed.
+3. **Package configuration** — `apps/api/package.json` uses `"type": "module"` and `"main": "dist/index.js"`; keep Node 22 across local dev and CI.
+4. **Function registration** — Each function registers with the shared `app` instance; all function files must be imported by `apps/api/src/index.ts`.
 
-**CRITICAL**: Azure Functions v4 programming model requires the `app` object to be exported from the main entry point (`index.js`) for the runtime to discover registered functions during deployment.
+## Deployment Structure
 
-```typescript
-// apps/api/src/index.ts
-import { app } from '@azure/functions';
+The CI workflow assembles `.deploy/api` for deployment:
 
-// ... function imports that register themselves ...
+- `host.json`
+- `dist/` — compiled TypeScript output
+- `package.json` — stripped to runtime dependencies
+- `node_modules/` — production dependencies (no workspace symlinks)
+- `node_modules/@fire-sim/shared` — real copy of the built shared package
 
-export default app; // REQUIRED for Azure Functions discovery
-```
+Deployment uses `Azure/functions-action@v1` targeting the Functions app name.
 
-**Without this export**, deployment will fail with:
+## Build & Release Pipeline (GitHub Actions)
 
-```
-Deployment Failed :(
-Deployment Failure Reason: Failed to deploy the Azure Functions.
-```
+1. `npm ci` (workspace root)
+2. `npm run build --workspace=packages/shared`
+3. `npm run build --workspace=apps/api`
+4. Assemble `.deploy/api` with runtime dependencies and the copied shared package (no workspaces)
+5. Verify module resolution with `node -e "require.resolve('@fire-sim/shared')"`
+6. Deploy with `Azure/functions-action@v1` using the `.deploy/api` package
 
-### 2. Package Configuration
+## Static Web Apps Integration
 
-The `apps/api/package.json` must specify:
-
-- `"type": "module"` for ESM support
-- `"main": "dist/index.js"` pointing to the compiled entry point
-
-### 3. Function Registration Pattern
-
-Each function file registers itself using the `app` object from `@azure/functions`:
-
-```typescript
-// apps/api/src/functions/healthCheck.ts
-import functions from '@azure/functions';
-const { app } = functions;
-
-export async function healthCheck(
-  request: HttpRequest,
-  context: InvocationContext
-): Promise<HttpResponseInit> {
-  // ... function logic ...
-}
-
-// Register the function
-app.http('healthCheck', {
-  methods: ['GET'],
-  authLevel: 'anonymous',
-  route: 'health',
-  handler: healthCheck,
-});
-```
-
-### 4. Deployment Structure
-
-The `.deploy/api` directory prepared during CI must contain:
-
-- `host.json` - Azure Functions configuration
-- `package.json` - Runtime dependencies with `"main": "dist/index.js"`
-- `dist/` - Compiled JavaScript output including `index.js` with app export
-- `node_modules/` - Production dependencies installed
-- `shared/` - Built shared package for local file: dependency
-
-## Build Pipeline
-
-The GitHub Actions workflow (`.github/workflows/deploy-swa.yml`) follows this process:
-
-1. **Build Phase**:
-
-   ```bash
-   npm run build --workspace=packages/shared
-   npm run build --workspace=apps/api
-   ```
-
-2. **Package Phase**:
-
-   ```bash
-   mkdir -p .deploy/api
-   cp apps/api/host.json .deploy/api/
-   cp -R apps/api/dist .deploy/api/dist
-   cp -R packages/shared .deploy/api/shared
-   # Create standalone package.json with file: dependency
-   cd .deploy/api && npm install --omit=dev
-   ```
-
-3. **Deploy Phase**:
-   ```yaml
-   - uses: Azure/static-web-apps-deploy@v1
-     with:
-       api_location: .deploy/api
-       skip_api_build: true # Pre-built artifacts
-   ```
-
-## Configuration Files
-
-### `staticwebapp.config.json`
-
-Located in `apps/web/public/staticwebapp.config.json` and deployed with the web app:
-
-```json
-{
-  "platform": {
-    "apiRuntime": "node:22"
-  },
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/api/*", "/*.{css,scss,js,png,gif,ico,jpg,svg,json}"]
-  }
-}
-```
-
-This tells Azure Static Web Apps:
-
-- The API uses Node.js 22 runtime
-- SPA routing rules for the front-end
-
-### `host.json`
-
-Located in `apps/api/host.json`:
-
-```json
-{
-  "version": "2.0",
-  "logging": {
-    "applicationInsights": {
-      "samplingSettings": {
-        "isEnabled": true,
-        "maxTelemetryItemsPerSecond": 20
-      }
-    }
-  },
-  "extensionBundle": {
-    "id": "Microsoft.Azure.Functions.ExtensionBundle",
-    "version": "[4.*, 5.0.0)"
-  }
-}
-```
-
-## Troubleshooting
-
-### "Failed to deploy the Azure Functions" Error
-
-**Root Cause**: Missing `export default app` in `apps/api/src/index.ts`
-
-**Solution**: Ensure the entry point exports the app object as shown above.
-
-### "Cannot find module '@fire-sim/shared'" Error
-
-**Root Cause**: Shared package not properly bundled with API deployment
-
-**Solution**: Verify the build pipeline copies `packages/shared` to `.deploy/api/shared` and installs with `npm install --omit=dev`
-
-### Functions Not Discovered Locally
-
-**Root Cause**: Azure Functions Core Tools not finding function registrations
-
-**Solution**:
-
-1. Ensure all function files are imported in `index.ts`
-2. Verify `host.json` is present
-3. Check that `package.json` main field points to correct entry point
+- The Static Web App deploys only the front-end (`apps/web/dist`). No `api_location` is set in the SWA workflow.
+- After deployment, link the Functions app under **Static Web App → Settings → APIs**.
+- `staticwebapp.config.json` only handles SPA fallback and MIME types; no `apiRuntime` entry is required.
+- For environments where SWA is not proxying, set `VITE_API_BASE_URL=https://<functions-app>.azurewebsites.net/api` in the web app.
 
 ## Local Development
 
-To run the API locally:
+- Run both services with `npm run dev` (starts Vite + Functions host on port 7071). Azure Functions Core Tools v4 must be installed globally.
+- SWA CLI config uses `apiDevserverUrl: "http://localhost:7071"` so `/api/*` requests are forwarded to the local Functions host.
+- To run the API only: `npm run dev --workspace=apps/api` (build + `func start`).
 
-```bash
-# From project root
-npm run build --workspace=packages/shared
-npm run build --workspace=apps/api
+## Troubleshooting
 
-# Start Azure Functions
-cd apps/api
-func start
-```
-
-**Note**: Requires Azure Functions Core Tools v4 installed globally:
-
-```bash
-npm install -g azure-functions-core-tools@4
-```
-
-## References
-
-- [Azure Functions Node.js v4 Programming Model](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-node)
-- [Azure Static Web Apps - API Support](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-functions)
-- [Migrate to v4 Node.js Model](https://learn.microsoft.com/en-us/azure/azure-functions/functions-node-upgrade-v4)
+- **Functions not discovered**: Ensure `export default app` exists in `apps/api/src/index.ts` and every function file is imported there.
+- **/api routes returning 404 via SWA**: Re-link the Functions app in the Static Web App portal; confirm the app uses Node 22 and is running.
+- **Module resolution errors**: Verify `.deploy/api/node_modules/@fire-sim/shared` contains the built `dist` output and `package.json`.
+- **Local dev errors about missing Core Tools**: Install with `npm i -g azure-functions-core-tools@4`.
