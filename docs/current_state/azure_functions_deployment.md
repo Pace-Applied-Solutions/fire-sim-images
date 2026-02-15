@@ -16,10 +16,11 @@ import { app } from '@azure/functions';
 
 // ... function imports that register themselves ...
 
-export default app;  // REQUIRED for Azure Functions discovery
+export default app; // REQUIRED for Azure Functions discovery
 ```
 
 **Without this export**, deployment will fail with:
+
 ```
 Deployment Failed :(
 Deployment Failure Reason: Failed to deploy the Azure Functions.
@@ -28,6 +29,7 @@ Deployment Failure Reason: Failed to deploy the Azure Functions.
 ### 2. Package Configuration
 
 The `apps/api/package.json` must specify:
+
 - `"type": "module"` for ESM support
 - `"main": "dist/index.js"` pointing to the compiled entry point
 
@@ -59,6 +61,7 @@ app.http('healthCheck', {
 ### 4. Deployment Structure
 
 The `.deploy/api` directory prepared during CI must contain:
+
 - `host.json` - Azure Functions configuration
 - `package.json` - Runtime dependencies with `"main": "dist/index.js"`
 - `dist/` - Compiled JavaScript output including `index.js` with app export
@@ -70,12 +73,14 @@ The `.deploy/api` directory prepared during CI must contain:
 The GitHub Actions workflow (`.github/workflows/deploy-swa.yml`) follows this process:
 
 1. **Build Phase**:
+
    ```bash
    npm run build --workspace=packages/shared
    npm run build --workspace=apps/api
    ```
 
 2. **Package Phase**:
+
    ```bash
    mkdir -p .deploy/api
    cp apps/api/host.json .deploy/api/
@@ -90,7 +95,7 @@ The GitHub Actions workflow (`.github/workflows/deploy-swa.yml`) follows this pr
    - uses: Azure/static-web-apps-deploy@v1
      with:
        api_location: .deploy/api
-       skip_api_build: true  # Pre-built artifacts
+       skip_api_build: true # Pre-built artifacts
    ```
 
 ## Configuration Files
@@ -112,6 +117,7 @@ Located in `apps/web/public/staticwebapp.config.json` and deployed with the web 
 ```
 
 This tells Azure Static Web Apps:
+
 - The API uses Node.js 20 runtime
 - SPA routing rules for the front-end
 
@@ -156,6 +162,7 @@ Located in `apps/api/host.json`:
 **Root Cause**: Azure Functions Core Tools not finding function registrations
 
 **Solution**:
+
 1. Ensure all function files are imported in `index.ts`
 2. Verify `host.json` is present
 3. Check that `package.json` main field points to correct entry point
@@ -175,6 +182,7 @@ func start
 ```
 
 **Note**: Requires Azure Functions Core Tools v4 installed globally:
+
 ```bash
 npm install -g azure-functions-core-tools@4
 ```
