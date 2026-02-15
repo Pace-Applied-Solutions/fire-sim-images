@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   deploy-swa:
-    name: Deploy Azure Static Web App (front-end + /api)
+    name: Build & Deploy to Azure Static Web Apps
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || 'dev' }}
 
@@ -34,34 +34,65 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: Install dependencies (root workspace)
+      # ── 1. Install at workspace root (resolves @fire-sim/shared via symlinks) ──
+      - name: Install dependencies
         run: npm ci
 
+      # ── 2. Build everything from workspace root ──
       - name: Build shared package
         run: npm run build --workspace=packages/shared
 
-      - name: Bundle shared package into apps
-        run: |
-          rm -rf apps/api/shared-dist apps/web/shared-dist
-          cp -R packages/shared apps/api/shared-dist
-          cp -R packages/shared apps/web/shared-dist
+      - name: Build web app
+        run: npm run build --workspace=apps/web
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+          VITE_APPINSIGHTS_CONNECTION_STRING: ${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      - name: Build and deploy Static Web App
+      - name: Build API
+        run: npm run build --workspace=apps/api
+
+      # ── 3. Prepare standalone API directory for SWA packaging ──
+      #    Oryx can't resolve npm workspace deps when it installs in isolation,
+      #    so we create a self-contained API folder with all production deps.
+      - name: Prepare API deployment package
+        run: |
+          mkdir -p .deploy/api
+
+          # Copy API build output and runtime config
+          cp apps/api/host.json .deploy/api/
+          cp -R apps/api/dist .deploy/api/dist
+
+          # Create a package.json that points @fire-sim/shared to a local copy
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('apps/api/package.json', 'utf8'));
+            pkg.dependencies['@fire-sim/shared'] = 'file:./shared';
+            delete pkg.devDependencies;
+            fs.writeFileSync('.deploy/api/package.json', JSON.stringify(pkg, null, 2));
+          "
+
+          # Copy the built shared package alongside the API
+          cp -R packages/shared .deploy/api/shared
+
+          # Install production deps in the standalone directory
+          # (not inside the workspace, so npm resolves file: deps normally)
+          cd .deploy/api
+          npm install --omit=dev --install-links
+
+      # ── 4. Deploy: skip all Oryx builds, upload pre-built artifacts only ──
+      - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: apps/web
-          api_location: apps/api
           output_location: dist
-          app_build_command: npm run build
-          api_build_command: npm run build
+          api_location: .deploy/api
+          skip_app_build: true
+          skip_api_build: true
           production_branch: main
-        env:
-          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
-          VITE_APPINSIGHTS_CONNECTION_STRING: ${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }}
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Deployment Summary
         if: always()
@@ -70,7 +101,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Environment: ${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_STEP_SUMMARY
           echo "Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "App location: apps/web" >> $GITHUB_STEP_SUMMARY
-          echo "API location: apps/api" >> $GITHUB_STEP_SUMMARY
-          echo "Build output: dist" >> $GITHUB_STEP_SUMMARY
-          echo "Action: Azure/static-web-apps-deploy@v1" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Source | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Front-end | apps/web/dist | Pre-built ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| API | .deploy/api | Standalone package ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Shared | packages/shared | Bundled into API ✅ |" >> $GITHUB_STEP_SUMMARY

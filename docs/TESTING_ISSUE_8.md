@@ -29,8 +29,8 @@ Edit `apps/api/local.settings.json`:
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "node",
-    "AZURE_STORAGE_CONNECTION_STRING": "<your-connection-string>",
-    "AZURE_STORAGE_ACCOUNT_NAME": "<your-account-name>",
+    "AZURE_STORAGE_CONNECTION_STRING": "<REPLACE_WITH_STORAGE_CONNECTION_STRING>",
+    "AZURE_STORAGE_ACCOUNT_NAME": "firesimdevstor",
     "AZURE_STORAGE_CONTAINER_NAME": "generated-images",
     "WEBSITE_HOSTNAME": "localhost:7071"
   }
