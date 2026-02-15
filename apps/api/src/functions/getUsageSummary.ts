@@ -8,6 +8,9 @@ const { app } = functions;
 /**
  * Admin endpoint to get usage summary.
  * GET /api/admin/usage-summary
+ * 
+ * Security: Requires function-level authentication.
+ * TODO: Add role-based access control in Issue 12.
  */
 export async function getUsageSummary(
   request: HttpRequest,
@@ -17,9 +20,6 @@ export async function getUsageSummary(
   logger.info('Usage summary requested');
 
   try {
-    // TODO: Add authentication check here (Issue 12)
-    // For now, we'll allow anonymous access for development
-
     // Get date from query parameter or use today
     const dateParam = request.query.get('date');
     const date = dateParam ? new Date(dateParam) : new Date();
@@ -60,10 +60,11 @@ export async function getUsageSummary(
   }
 }
 
-// Register the function
+// Register the function with function-level authentication
+// This requires an API key to access the endpoint
 app.http('getUsageSummary', {
   methods: ['GET'],
-  authLevel: 'anonymous', // TODO: Change to 'function' or add auth middleware
+  authLevel: 'function', // Requires function key for authentication
   route: 'admin/usage-summary',
   handler: getUsageSummary,
 });

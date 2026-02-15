@@ -421,10 +421,10 @@ export class GenerationOrchestrator {
         seed: request.seed,
       });
     } catch (error) {
-      logger.error('Generation pipeline failed', error instanceof Error ? error : undefined);
+      logger.error('Generation pipeline failed', error instanceof Error ? error : new Error(String(error)));
       GenerationMetrics.trackGenerationError({ scenarioId });
       progress.status = 'failed';
-      progress.error = error instanceof Error ? error.message : 'Unknown error';
+      progress.error = error instanceof Error ? error.message : String(error);
       progress.updatedAt = new Date().toISOString();
       endToEndTimer.stop();
     }

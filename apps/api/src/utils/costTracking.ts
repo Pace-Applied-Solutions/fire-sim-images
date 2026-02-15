@@ -38,8 +38,12 @@ export interface PricingConfig {
 }
 
 /**
- * Default pricing based on Azure OpenAI and Azure services (as of 2024).
- * Prices are in USD.
+ * Default pricing based on Azure OpenAI and Azure services.
+ * Prices are in USD and should be reviewed periodically.
+ * 
+ * Note: These are estimates based on public pricing as of 2024.
+ * Actual prices may vary by region and may change over time.
+ * TODO: Consider implementing dynamic pricing updates via Azure Pricing API.
  */
 const DEFAULT_PRICING: PricingConfig = {
   dalle3Standard: 0.040, // $0.040 per image (1024x1024)

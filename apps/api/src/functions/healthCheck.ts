@@ -7,6 +7,9 @@ import { createLogger } from '../utils/logger.js';
 
 const { app } = functions;
 
+// Health check timeout for external services (in milliseconds)
+const EXTERNAL_SERVICE_TIMEOUT_MS = 5000;
+
 interface HealthCheck {
   service: string;
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -238,7 +241,7 @@ async function checkExternalData(): Promise<HealthCheck> {
     // Check NSW spatial data endpoints with a HEAD request
     const response = await fetch(
       'https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/ePlanning/Planning_Portal_Hazard/MapServer',
-      { method: 'HEAD', signal: AbortSignal.timeout(5000) }
+      { method: 'HEAD', signal: AbortSignal.timeout(EXTERNAL_SERVICE_TIMEOUT_MS) }
     );
 
     if (!response.ok) {

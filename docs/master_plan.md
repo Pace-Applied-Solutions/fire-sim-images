@@ -426,7 +426,7 @@ Update this section after each issue or change.
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month + 50,000 geocoding requests/month (sufficient for development and early use; caching reduces actual API usage by ~40-60%)
-  - Application Insights free tier: 5 GB/month data ingestion (sufficient for early development; may need paid tier for production at scale)
+  - Application Insights free tier: 5 GB/month data ingestion (sufficient for early development). When exceeded, billing starts automatically at $2.30/GB for overage. Monitor usage in Azure Portal > Application Insights > Usage and estimated costs.
 - **Next milestone:** Phase 5 - End-to-End Testing & Trainer Validation (Issue 14)
 
 ## 14. Change Control Process

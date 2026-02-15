@@ -239,7 +239,7 @@ export function flushTelemetry(): Promise<void> {
   }
 
   return new Promise((resolve) => {
-    telemetryClient!.flush();
+    telemetryClient?.flush();
     // Give it a moment to flush, then resolve
     setTimeout(() => resolve(), 500);
   });
