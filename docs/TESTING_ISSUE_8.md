@@ -6,7 +6,7 @@ This document describes how to test the image generation pipeline implementation
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - Azure Functions Core Tools v4 (install with: `npm i -g azure-functions-core-tools@4`)
 - Azure Storage Emulator or Azure Storage Account
 

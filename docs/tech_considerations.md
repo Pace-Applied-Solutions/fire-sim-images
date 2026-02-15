@@ -89,7 +89,7 @@ We envision a web-based Bushfire Simulation Inject tool that lets fire service t
 
 **Back-end generation pipeline**
 
-- Azure Functions embedded at `/api` endpoint within Static Web App (Node.js 20, TypeScript).
+- Azure Functions embedded at `/api` endpoint within Static Web App (Node.js 22, TypeScript).
 - Durable Functions for orchestrating long-running generation tasks.
 - Geospatial data retrieval for vegetation, terrain, and context.
 - Prompt construction with scenario parameters and viewpoint variants.

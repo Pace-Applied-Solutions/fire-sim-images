@@ -107,7 +107,7 @@ Key architectural principles include keeping data within the target agency's Azu
 
 **Back-end API**
 
-- Azure Functions embedded in Static Web App at `/api` endpoint (Node.js 20, TypeScript).
+- Azure Functions embedded in Static Web App at `/api` endpoint (Node.js 22, TypeScript).
 - Durable Functions for long-running generation tasks.
 - Geodata lookup for vegetation, slope, elevation.
 - Prompt builder for multi-view outputs.
@@ -521,11 +521,14 @@ Update this section after each issue or change.
     - Ready for code review and security scan
   - **CI Fix: Azure Static Web Apps Function Language Configuration:**
     - Azure SWA deployment was failing with "Cannot deploy to the function app because Function language info isn't provided"
-    - Added `staticwebapp.config.json` to `apps/web/public/` with `apiRuntime: "node:20"` to specify Node.js runtime for Azure Functions
+    - Added `staticwebapp.config.json` to `apps/web/public/` with `apiRuntime: "node:22"` to specify Node.js runtime for Azure Functions
     - Included `navigationFallback` configuration for proper SPA routing
     - Updated `.github/workflows/deploy-swa.yml` with documentation explaining the function language requirement
     - Configuration file automatically deployed via Vite build process (copied from public to dist folder)
     - All builds passing, code review clean, security scan completed with no alerts
+  - **CI Fix: Node.js runtime alignment (SWA + Functions):**
+    - DeploymentId `73295b59-192b-4a1f-bf34-97ce71178224` failed because SWA reported the Functions runtime as Node 20 while the project targets Node 22
+    - Updated static web app config, CI, and deployment workflows to use Node.js 22 end-to-end and bumped the root engines field to `>=22` to keep environments consistent
   - **CI Fix: Azure Functions v4 Runtime Discovery:**
     - Azure SWA deployment was failing with "Failed to deploy the Azure Functions" after artifacts uploaded successfully
     - Root cause: Azure Functions v4 programming model requires `app` object export from main entry point for runtime function discovery
