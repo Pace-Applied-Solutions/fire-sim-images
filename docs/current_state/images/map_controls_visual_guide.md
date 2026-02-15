@@ -151,6 +151,7 @@
 The key to preventing overlap is calculating widths based on available space:
 
 **Desktop (> 1200px)**
+
 ```
 Total Width: 100%
 ├─ Left Margin: 16px
@@ -163,6 +164,7 @@ Total Width: 100%
 ```
 
 **Mobile (< 768px)**
+
 ```
 Total Width: 100%
 ├─ All controls: calc(100% - 32px)
@@ -186,13 +188,13 @@ Full Desktop     Tight Desktop    Controls Wrap    Bottom Stack     Compact Mobi
 
 ### Control Behavior at Each Breakpoint
 
-| Control | > 1200px | 900-1200px | 768-900px | 640-768px | 480-640px | < 480px |
-|---------|----------|------------|-----------|-----------|-----------|---------|
-| Address Search | Top-left, 400px max | Top-left, 400px max | Top-left, adjusted | Top-left, full width | Full width, 8px margins | Full width, tight |
-| Viewpoint Controls | Top-center, max 480px spacing | Top-center, max 280px spacing | Left-right edges | Bottom, full width | Bottom, full width | Bottom, smaller buttons |
-| Draw Controls | Top-right | Top-right | Top-right | Top-right | Top-right | Top-right, smaller |
-| Instructions | Top-right, beside draw | Top-right, beside draw | Bottom, above viewpoints | Bottom, above viewpoints | Hidden | Hidden |
-| Metadata | Bottom-left | Bottom-left | Bottom-left | Bottom, above viewpoints | Bottom, above viewpoints | Bottom, above viewpoints |
+| Control            | > 1200px                      | 900-1200px                    | 768-900px                | 640-768px                | 480-640px                | < 480px                  |
+| ------------------ | ----------------------------- | ----------------------------- | ------------------------ | ------------------------ | ------------------------ | ------------------------ |
+| Address Search     | Top-left, 400px max           | Top-left, 400px max           | Top-left, adjusted       | Top-left, full width     | Full width, 8px margins  | Full width, tight        |
+| Viewpoint Controls | Top-center, max 480px spacing | Top-center, max 280px spacing | Left-right edges         | Bottom, full width       | Bottom, full width       | Bottom, smaller buttons  |
+| Draw Controls      | Top-right                     | Top-right                     | Top-right                | Top-right                | Top-right                | Top-right, smaller       |
+| Instructions       | Top-right, beside draw        | Top-right, beside draw        | Bottom, above viewpoints | Bottom, above viewpoints | Hidden                   | Hidden                   |
+| Metadata           | Bottom-left                   | Bottom-left                   | Bottom-left              | Bottom, above viewpoints | Bottom, above viewpoints | Bottom, above viewpoints |
 
 ## Testing Checklist
 

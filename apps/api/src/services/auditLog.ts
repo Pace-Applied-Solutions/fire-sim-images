@@ -42,10 +42,12 @@ export function initializeAuditLogging(config: AuditLogConfig): void {
 
     telemetryClient = appInsights.defaultClient;
     telemetryClient.context.tags[telemetryClient.context.keys.cloudRole] = 'fire-sim-api';
-    
+
     console.log('[AuditLog] Application Insights initialized successfully');
   } else {
-    console.warn('[AuditLog] No Application Insights connection string provided, logging to console only');
+    console.warn(
+      '[AuditLog] No Application Insights connection string provided, logging to console only'
+    );
   }
 }
 
@@ -130,8 +132,10 @@ export async function queryAuditLogs(
   // In production, this would use Application Insights Query API
   // For now, we return an empty array as this requires additional setup
   console.log(`[AuditLog] Query requested: limit=${limit}, userId=${userId}, action=${action}`);
-  console.warn('[AuditLog] Audit log querying not yet implemented - requires Application Insights Query API');
-  
+  console.warn(
+    '[AuditLog] Audit log querying not yet implemented - requires Application Insights Query API'
+  );
+
   return [];
 }
 

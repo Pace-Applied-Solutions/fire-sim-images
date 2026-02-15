@@ -21,11 +21,13 @@ fire-sim-images/
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 npm test
 ```
 
 ### Run Tests by Package
+
 ```bash
 # Shared package tests
 npm test --workspace=packages/shared
@@ -38,6 +40,7 @@ npm test --workspace=apps/web
 ```
 
 ### Run Tests in Watch Mode
+
 ```bash
 # All packages
 npm run test:watch
@@ -47,6 +50,7 @@ npm test --workspace=packages/shared -- --watch
 ```
 
 ### Run Tests with Coverage
+
 ```bash
 # All packages
 npm run test:coverage
@@ -58,9 +62,11 @@ npm run test:coverage --workspace=packages/shared
 ## Test Categories
 
 ### 1. Unit Tests ✅ (Current)
+
 **Purpose:** Test individual functions and modules in isolation
 
 **Shared Package (120 tests)**
+
 - Prompt generation logic
 - Fire danger calculations
 - Intensity-to-visual mapping
@@ -68,30 +74,36 @@ npm run test:coverage --workspace=packages/shared
 - Type validation and serialization
 
 **API Package (72 tests)**
+
 - Cost estimation calculations
 - Consistency validation logic
 - Input validation and fallback behavior
 
 **Web Package (21 tests)**
+
 - State management (Zustand store)
 - Scenario state transitions
 - UI state toggles
 
 ### 2. Integration Tests ⏳ (Planned)
+
 **Purpose:** Test service interactions with mocked external dependencies
 
 **Planned Tests:**
+
 - Geodata pipeline with recorded responses
 - Prompt pipeline end-to-end
 - Image generation with mocked Azure OpenAI
 - Full orchestration workflow
 
 **To Run (when implemented):**
+
 ```bash
 npm run test:integration
 ```
 
 ### 3. End-to-End Tests ⏳ (Planned)
+
 **Purpose:** Test complete user workflows with real Azure resources
 
 **Standard Test Scenarios:**
@@ -103,6 +115,7 @@ npm run test:integration
 | E2E-004 | Night operation | -33.8, 150.1 | 5+ images, night lighting |
 
 **To Run (when implemented):**
+
 ```bash
 npm run test:e2e
 ```
@@ -110,11 +123,13 @@ npm run test:e2e
 ## Writing Tests
 
 ### Test File Naming
+
 - Unit tests: `*.test.ts` or `*.test.tsx`
 - Place tests in `__tests__` directory or alongside source files
 - Match source file name: `promptGenerator.ts` → `promptGenerator.test.ts`
 
 ### Test Structure
+
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
 
@@ -125,11 +140,13 @@ describe('Component or Module Name', () => {
 
   it('should do something specific', () => {
     // Arrange
-    const input = { /* test data */ };
-    
+    const input = {
+      /* test data */
+    };
+
     // Act
     const result = functionUnderTest(input);
-    
+
     // Assert
     expect(result).toBe(expectedValue);
   });
@@ -137,6 +154,7 @@ describe('Component or Module Name', () => {
 ```
 
 ### Best Practices
+
 1. **One assertion per test** (when possible)
 2. **Clear test names** describing what is being tested
 3. **Arrange-Act-Assert** pattern
@@ -156,6 +174,7 @@ Tests run automatically on every push via GitHub Actions:
 ```
 
 **CI Requirements:**
+
 - ✅ All unit tests must pass
 - ✅ TypeScript compilation must succeed
 - ⚠️ Linting failures are logged but don't block
@@ -170,11 +189,13 @@ npm run test:coverage
 ```
 
 **Target Coverage (Post-MVP):**
+
 - Shared: ≥70% lines
 - API: ≥70% lines
 - Web: ≥60% lines (UI components harder to test)
 
 **View Reports:**
+
 - Text summary: Terminal output
 - HTML report: `<package>/coverage/index.html`
 - JSON report: `<package>/coverage/coverage-final.json`
@@ -182,11 +203,13 @@ npm run test:coverage
 ## Test Configuration
 
 ### Vitest Config Locations
+
 - `packages/shared/vitest.config.ts`
 - `apps/api/vitest.config.ts`
 - `apps/web/vitest.config.ts`
 
 ### Key Settings
+
 ```typescript
 export default defineConfig({
   test: {
@@ -195,7 +218,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       thresholds: {
-        lines: 0,  // Non-blocking during MVP
+        lines: 0, // Non-blocking during MVP
       },
     },
   },
@@ -205,22 +228,27 @@ export default defineConfig({
 ## Debugging Tests
 
 ### Run Single Test File
+
 ```bash
 npm test -- promptGenerator.test.ts
 ```
 
 ### Run Tests Matching Pattern
+
 ```bash
 npm test -- -t "should generate prompts"
 ```
 
 ### Enable Debug Logging
+
 ```bash
 DEBUG=vitest:* npm test
 ```
 
 ### VS Code Integration
+
 Install **Vitest extension** for:
+
 - Run tests from editor
 - View results inline
 - Debug with breakpoints
@@ -228,6 +256,7 @@ Install **Vitest extension** for:
 ## Mocking Guidelines
 
 ### Mock Azure Services
+
 ```typescript
 import { vi } from 'vitest';
 
@@ -240,7 +269,9 @@ vi.mock('../services/blobStorage', () => ({
 ```
 
 ### Mock External APIs
+
 Use **Mock Service Worker (MSW)** for HTTP mocking:
+
 ```typescript
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -255,13 +286,16 @@ const server = setupServer(
 ## Quality Gates
 
 ### Unit Test Requirements (MVP)
+
 - ✅ All tests must pass
 - ✅ No console errors during tests
 - ✅ No test timeouts
 - ℹ️ Coverage informational only
 
 ### Prompt Quality Tests
+
 See `docs/prompt_quality_standards.md` for:
+
 - Required sections validation
 - RFS terminology checks
 - Blocked terms validation
@@ -270,13 +304,16 @@ See `docs/prompt_quality_standards.md` for:
 ## Troubleshooting
 
 ### Tests Failing Locally
+
 1. **Clear node_modules and reinstall**
+
    ```bash
    rm -rf node_modules package-lock.json
    npm install
    ```
 
 2. **Rebuild TypeScript**
+
    ```bash
    npm run build
    ```
@@ -287,11 +324,13 @@ See `docs/prompt_quality_standards.md` for:
    ```
 
 ### Tests Pass Locally but Fail in CI
+
 - Check for environment-specific issues
 - Verify no hardcoded paths or assumptions
 - Ensure tests are deterministic (no relying on Date.now(), Math.random())
 
 ### Slow Tests
+
 - Use `it.only()` to isolate specific tests
 - Profile with `--reporter=verbose`
 - Consider mocking expensive operations

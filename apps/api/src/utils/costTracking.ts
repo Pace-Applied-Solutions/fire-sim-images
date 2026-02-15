@@ -26,13 +26,13 @@ export interface PricingConfig {
   // Azure OpenAI DALL-E 3 pricing (USD)
   dalle3Standard: number; // per image
   dalle3HD: number; // per image
-  
+
   // Azure AI Foundry Stable Image Core pricing (USD)
   stableImageCore: number; // per image
-  
+
   // Video generation pricing (estimated, USD)
   videoGeneration: number; // per video (4-10 seconds)
-  
+
   // Storage pricing (USD)
   storagePerGB: number; // per GB per month
 }
@@ -40,18 +40,18 @@ export interface PricingConfig {
 /**
  * Default pricing based on Azure OpenAI and Azure services.
  * Prices are in USD and should be reviewed periodically.
- * 
+ *
  * Note: These are estimates based on public pricing as of 2024.
  * Actual prices may vary by region and may change over time.
  * TODO(Future): Consider implementing dynamic pricing updates via Azure Pricing API
  * when the project scales to multi-region or high-volume usage.
  */
 const DEFAULT_PRICING: PricingConfig = {
-  dalle3Standard: 0.040, // $0.040 per image (1024x1024)
-  dalle3HD: 0.080, // $0.080 per image (1024x1792 or 1792x1024)
+  dalle3Standard: 0.04, // $0.040 per image (1024x1024)
+  dalle3HD: 0.08, // $0.080 per image (1024x1792 or 1792x1024)
   stableImageCore: 0.033, // $0.033 per image (estimated)
-  videoGeneration: 0.50, // $0.50 per video (estimated for SVD or similar)
-  storagePerGB: 0.020, // $0.020 per GB per month (Blob Storage hot tier)
+  videoGeneration: 0.5, // $0.50 per video (estimated for SVD or similar)
+  storagePerGB: 0.02, // $0.020 per GB per month (Blob Storage hot tier)
 };
 
 /**
@@ -88,9 +88,7 @@ export class CostEstimator {
     // Calculate image cost
     let costPerImage = this.pricing.stableImageCore;
     if (imageProvider === 'dalle3') {
-      costPerImage = imageQuality === 'hd' 
-        ? this.pricing.dalle3HD 
-        : this.pricing.dalle3Standard;
+      costPerImage = imageQuality === 'hd' ? this.pricing.dalle3HD : this.pricing.dalle3Standard;
     }
 
     const imageCost = imageCount * costPerImage;
@@ -214,7 +212,7 @@ export class UsageTracker {
         },
         storage: {
           sizeBytes: totalStorageBytes,
-          costPerGB: 0.020,
+          costPerGB: 0.02,
           totalCost: totalStorageCost,
         },
         totalCost,

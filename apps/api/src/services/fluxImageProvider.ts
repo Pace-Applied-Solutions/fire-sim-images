@@ -1,5 +1,9 @@
 import crypto from 'node:crypto';
-import type { ImageGenerationProvider, ImageGenOptions, ImageGenResult } from './imageGenerationProvider.js';
+import type {
+  ImageGenerationProvider,
+  ImageGenOptions,
+  ImageGenResult,
+} from './imageGenerationProvider.js';
 import type { FluxConfig } from '../fluxConfig.js';
 
 export class FluxImageProvider implements ImageGenerationProvider {
@@ -38,7 +42,7 @@ export class FluxImageProvider implements ImageGenerationProvider {
       throw new Error(`Flux image generation failed (${response.status}): ${text}`);
     }
 
-    const payload = await response.json() as {
+    const payload = (await response.json()) as {
       data?: Array<{ b64_json?: string }>;
     };
 

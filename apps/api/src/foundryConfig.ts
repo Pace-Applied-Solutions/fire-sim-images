@@ -19,9 +19,7 @@ const getEnvConfig = (): FoundryConfig => ({
 const isComplete = (config: FoundryConfig): boolean =>
   Boolean(config.projectPath && config.projectRegion && config.imageModel);
 
-export const getFoundryConfig = async (
-  context: InvocationContext
-): Promise<FoundryConfig> => {
+export const getFoundryConfig = async (context: InvocationContext): Promise<FoundryConfig> => {
   if (cache.config) {
     return cache.config;
   }

@@ -35,7 +35,7 @@ let telemetryClient: appInsights.TelemetryClient | null = null;
  */
 export function initializeAppInsights(): void {
   const connectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
-  
+
   if (!connectionString) {
     console.warn('[Logger] Application Insights connection string not found. Telemetry disabled.');
     return;
@@ -48,7 +48,7 @@ export function initializeAppInsights(): void {
   try {
     appInsights.setup(connectionString);
     appInsights.start();
-    
+
     telemetryClient = appInsights.defaultClient;
     console.log('[Logger] Application Insights initialized successfully');
   } catch (error) {
@@ -96,11 +96,13 @@ export class Logger {
   error(message: string, error?: Error, context?: LogContext): void {
     const errorContext: LogContext = {
       ...context,
-      error: error ? {
-        message: error.message,
-        stack: error.stack,
-        code: (error as Error & { code?: string }).code,
-      } : undefined,
+      error: error
+        ? {
+            message: error.message,
+            stack: error.stack,
+            code: (error as Error & { code?: string }).code,
+          }
+        : undefined,
     };
     this.log('error', message, errorContext);
   }
@@ -110,7 +112,7 @@ export class Logger {
    */
   private log(level: LogLevel, message: string, context?: LogContext): void {
     const mergedContext = { ...this.defaultContext, ...context };
-    
+
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -121,7 +123,7 @@ export class Logger {
     // Log to Azure Functions context if available
     if (this.functionContext) {
       const contextMsg = this.formatMessage(entry);
-      
+
       switch (level) {
         case 'error':
           this.functionContext.error(contextMsg);
@@ -156,7 +158,7 @@ export class Logger {
         level,
         ...mergedContext,
       };
-      
+
       if (level === 'error' && mergedContext.error) {
         // Track as exception
         telemetryClient.trackException({
@@ -177,17 +179,15 @@ export class Logger {
    * Format log entry as a string for console/context output.
    */
   private formatMessage(entry: LogEntry): string {
-    const parts = [
-      `[${entry.level.toUpperCase()}]`,
-      entry.message,
-    ];
+    const parts = [`[${entry.level.toUpperCase()}]`, entry.message];
 
     if (entry.context) {
       const contextParts: string[] = [];
       if (entry.context.scenarioId) contextParts.push(`scenarioId=${entry.context.scenarioId}`);
       if (entry.context.userId) contextParts.push(`userId=${entry.context.userId}`);
-      if (entry.context.correlationId) contextParts.push(`correlationId=${entry.context.correlationId}`);
-      
+      if (entry.context.correlationId)
+        contextParts.push(`correlationId=${entry.context.correlationId}`);
+
       if (contextParts.length > 0) {
         parts.push(`| ${contextParts.join(', ')}`);
       }
@@ -197,7 +197,7 @@ export class Logger {
         .filter(([key]) => !['scenarioId', 'userId', 'correlationId', 'error'].includes(key))
         .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
         .join(', ');
-      
+
       if (otherProps) {
         parts.push(`| ${otherProps}`);
       }

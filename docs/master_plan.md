@@ -13,7 +13,7 @@ Fire service trainers need realistic, location-specific visuals to help crews an
 
 The problem we are solving is twofold: speed and fidelity. Speed means a trainer can sketch a perimeter and quickly produce multiple views that feel like real observations from the fireground. Fidelity means those outputs respect the actual vegetation type, terrain slope, and weather conditions so the visuals do not mislead trainees. The tool is not intended to replace physics-based fire simulators; instead it creates visual injects that complement existing operational planning tools and improve training immersion. By anchoring each scenario to authoritative datasets (vegetation, elevation, imagery) and structuring prompts with fire behavior parameters, the outputs remain credible and consistent with how fire agencies describe and assess fire behavior.
 
-The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as embedded Azure Functions within the Static Web App at the `/api` endpoint. This API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure OpenAI (DALL-E 3) for rapid integration, with the option to use SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management and managed identities for service-to-service authentication.
+The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as embedded Azure Functions within the Static Web App at the `/api` endpoint. This API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure AI Foundry with Stable Image Core (from Stability AI) for rapid integration and regional availability, with Flux as an optional fallback provider. Future enhancements will add SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management, Microsoft Entra External ID (CIAM) for authentication, and managed identities for service-to-service authentication.
 
 Key architectural principles include keeping data within the target agency's Azure environment, favoring regional and national datasets for geographic accuracy, and maintaining model modularity so newer AI services can be swapped in as they mature. This allows the system to start small and reliable, then evolve toward higher fidelity and longer-duration outputs without reworking the entire stack. The end result is a practical training tool that can quickly generate credible fireground visuals, improve scenario realism, and support consistent, repeatable training outcomes.
 
@@ -111,7 +111,7 @@ Key architectural principles include keeping data within the target agency's Azu
 - Durable Functions for long-running generation tasks.
 - Geodata lookup for vegetation, slope, elevation.
 - Prompt builder for multi-view outputs.
-- Image generation via Azure OpenAI (DALL-E 3) or SDXL (ControlNet optional).
+- Image generation via Azure AI Foundry (Stable Image Core) or SDXL (ControlNet optional).
 - Video generation via SVD or external service.
 
 **Storage and Security**
@@ -183,23 +183,23 @@ Key architectural principles include keeping data within the target agency's Azu
 
 These are the 15 implementation issues seeded in GitHub. Each will be assigned to the coding agent in sequence.
 
-| # | Issue Title | Phase | GitHub |
-|---|---|---|---|
-| 1 | Project Scaffolding & Repository Structure | Phase 0 | [#1](https://github.com/richardthorek/fire-sim-images/issues/1) |
-| 2 | Azure Infrastructure as Code (Bicep) | Phase 0 | [#2](https://github.com/richardthorek/fire-sim-images/issues/2) |
-| 3 | Front-End Shell, Design System & Navigation | Phase 1 | [#3](https://github.com/richardthorek/fire-sim-images/issues/3) |
-| 4 | 3D Map Integration & Fire Perimeter Drawing | Phase 1 | [#4](https://github.com/richardthorek/fire-sim-images/issues/4) |
-| 5 | Scenario Input Panel & Parameter Controls | Phase 1 | [#6](https://github.com/richardthorek/fire-sim-images/issues/6) |
-| 6 | Geospatial Data Integration (Azure Functions) | Phase 2 | [#7](https://github.com/richardthorek/fire-sim-images/issues/7) |
-| 7 | Prompt Generation Engine | Phase 3 | [#8](https://github.com/richardthorek/fire-sim-images/issues/8) |
-| 8 | AI Image Generation Pipeline | Phase 3 | [#9](https://github.com/richardthorek/fire-sim-images/issues/9) |
-| 9 | Multi-Perspective Rendering & Consistency | Phase 3 | [#10](https://github.com/richardthorek/fire-sim-images/issues/10) |
-| 10 | Results Gallery & Scenario History | Phase 3 | [#11](https://github.com/richardthorek/fire-sim-images/issues/11) |
-| 11 | Video Generation Pipeline | Phase 4 | [#12](https://github.com/richardthorek/fire-sim-images/issues/12) |
-| 12 | Authentication, Authorization & Content Safety | Phase 5 | [#13](https://github.com/richardthorek/fire-sim-images/issues/13) |
-| 13 | Observability, Monitoring & Structured Logging | Phase 5 | [#14](https://github.com/richardthorek/fire-sim-images/issues/14) |
-| 14 | End-to-End Testing & Trainer Validation | Phase 5 | [#15](https://github.com/richardthorek/fire-sim-images/issues/15) |
-| 15 | CI/CD Pipeline, Documentation & Future Roadmap | Phase 5 | [#16](https://github.com/richardthorek/fire-sim-images/issues/16) |
+| #   | Issue Title                                    | Phase   | GitHub                                                            |
+| --- | ---------------------------------------------- | ------- | ----------------------------------------------------------------- |
+| 1   | Project Scaffolding & Repository Structure     | Phase 0 | [#1](https://github.com/richardthorek/fire-sim-images/issues/1)   |
+| 2   | Azure Infrastructure as Code (Bicep)           | Phase 0 | [#2](https://github.com/richardthorek/fire-sim-images/issues/2)   |
+| 3   | Front-End Shell, Design System & Navigation    | Phase 1 | [#3](https://github.com/richardthorek/fire-sim-images/issues/3)   |
+| 4   | 3D Map Integration & Fire Perimeter Drawing    | Phase 1 | [#4](https://github.com/richardthorek/fire-sim-images/issues/4)   |
+| 5   | Scenario Input Panel & Parameter Controls      | Phase 1 | [#6](https://github.com/richardthorek/fire-sim-images/issues/6)   |
+| 6   | Geospatial Data Integration (Azure Functions)  | Phase 2 | [#7](https://github.com/richardthorek/fire-sim-images/issues/7)   |
+| 7   | Prompt Generation Engine                       | Phase 3 | [#8](https://github.com/richardthorek/fire-sim-images/issues/8)   |
+| 8   | AI Image Generation Pipeline                   | Phase 3 | [#9](https://github.com/richardthorek/fire-sim-images/issues/9)   |
+| 9   | Multi-Perspective Rendering & Consistency      | Phase 3 | [#10](https://github.com/richardthorek/fire-sim-images/issues/10) |
+| 10  | Results Gallery & Scenario History             | Phase 3 | [#11](https://github.com/richardthorek/fire-sim-images/issues/11) |
+| 11  | Video Generation Pipeline                      | Phase 4 | [#12](https://github.com/richardthorek/fire-sim-images/issues/12) |
+| 12  | Authentication, Authorization & Content Safety | Phase 5 | [#13](https://github.com/richardthorek/fire-sim-images/issues/13) |
+| 13  | Observability, Monitoring & Structured Logging | Phase 5 | [#14](https://github.com/richardthorek/fire-sim-images/issues/14) |
+| 14  | End-to-End Testing & Trainer Validation        | Phase 5 | [#15](https://github.com/richardthorek/fire-sim-images/issues/15) |
+| 15  | CI/CD Pipeline, Documentation & Future Roadmap | Phase 5 | [#16](https://github.com/richardthorek/fire-sim-images/issues/16) |
 
 ## 11. Deliverables
 
@@ -242,7 +242,7 @@ Update this section after each issue or change.
     - Static Web App with embedded Azure Functions API at `/api`
     - Azure Blob Storage with three containers and lifecycle management
     - Azure Key Vault with managed identity access
-    - Azure OpenAI with DALL-E 3 model deployment
+    - Azure OpenAI with Stable Image Core model deployment
     - Dev and prod parameter files
     - Deployment script (`deploy.sh`) and GitHub Actions workflow
     - Comprehensive infrastructure documentation
@@ -428,17 +428,17 @@ Update this section after each issue or change.
     - 213 unit tests passing (120 shared, 72 API, 21 web)
     - Prompt quality test suite validates RFS terminology, blocked terms, viewpoint uniqueness
     - Consistency validator tests fire size, lighting, smoke direction, color palette
-    - Cost estimation tests for all pricing models (DALL-E 3, Stable Image Core)
+    - Cost estimation tests for all pricing models (Stable Image Core, Stable Image Core)
     - State management tests for React store (Zustand)
     - CI workflow configured with GitHub Actions for automated testing
     - Trainer feedback workflow implemented:
-      * ImageFeedback and FeedbackSummary types defined
-      * submitFeedback Azure Function endpoint (POST /api/scenarios/{id}/feedback)
-      * FeedbackForm React component with 3 rating dimensions (realism, accuracy, usefulness)
-      * Feedback storage in Blob Storage
+      - ImageFeedback and FeedbackSummary types defined
+      - submitFeedback Azure Function endpoint (POST /api/scenarios/{id}/feedback)
+      - FeedbackForm React component with 3 rating dimensions (realism, accuracy, usefulness)
+      - Feedback storage in Blob Storage
     - Quality gates documentation:
-      * docs/prompt_quality_standards.md - Prompt quality requirements
-      * docs/quality_gates.md - Acceptance criteria and benchmarks
+      - docs/prompt_quality_standards.md - Prompt quality requirements
+      - docs/quality_gates.md - Acceptance criteria and benchmarks
     - Non-blocking coverage thresholds configured as per agent instructions
     - 4 standard E2E test scenarios defined (Blue Mountains, Western Plains, South Coast, Night operation)
   - **What remains:**
@@ -452,7 +452,102 @@ Update this section after each issue or change.
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month + 50,000 geocoding requests/month (sufficient for development and early use; caching reduces actual API usage by ~40-60%)
   - Application Insights free tier: 5 GB/month data ingestion (sufficient for early development). When exceeded, billing starts automatically at $2.30/GB for overage. Monitor usage in Azure Portal > Application Insights > Usage and estimated costs.
-- **Next milestone:** Integration of feedback form into UI, E2E testing (post-MVP)
+- **Issue 15 complete:** CI/CD Pipeline, Documentation & Future Roadmap (Phase 5) ✅
+  - **CI/CD Pipeline:**
+    - Created comprehensive ci.yml workflow integrating existing test.yml functionality
+    - Sequential pipeline: install deps → build → format check → lint → typecheck → unit tests → coverage
+    - Integration tests run separately on manual workflow_dispatch trigger
+    - Created deploy-web.yml for Azure Static Web Apps deployment with environment variables
+    - Created deploy-api.yml for Azure Functions deployment with smoke tests
+    - Completed deploy-infra.yml with environment protection rules and summary reporting
+    - All workflows include summary reporting for GitHub Actions UI
+  - **Documentation:**
+    - Created docs/trainer-guide.md - Complete step-by-step scenario creation guide (11,667 chars)
+      - Getting started and signing in
+      - Interface overview
+      - 8-step scenario creation workflow
+      - Tips for better results (location, perimeter, weather, training value)
+      - FAQ covering common issues and questions
+    - Created docs/admin-guide.md - System administration guide (17,890 chars)
+      - User management (add/remove users, role definitions)
+      - Usage quotas and cost management ($0.65-1.25 per scenario estimate)
+      - Monitoring system health (Application Insights, health checks, log analysis)
+      - Deployment and updates (workflows, hotfixes, rollbacks)
+      - Configuration management (environment variables, Key Vault secrets)
+      - Troubleshooting common issues
+      - Security and compliance best practices
+    - Created docs/api-reference.md - Complete API documentation (17,080 chars)
+      - All 10 API endpoints with request/response examples
+      - Authentication, rate limits, error codes
+      - SDK examples for JavaScript/TypeScript, Python, cURL
+    - Created docs/roadmap.md - Future enhancements roadmap (11,704 chars)
+      - Phase 2: Enhanced spatial control (SDXL + ControlNet, depth maps, inpainting)
+      - Phase 3: Fire spread simulation (progressive injects, time-stepped scenarios)
+      - Phase 4: Longer and higher-quality video (30-60 second clips, 1080p+)
+      - Phase 5: Advanced features (custom cameras, AR overlay, integrations)
+      - Long-term vision (2+ years) with priority ranking
+  - **Architecture Decision Records (ADRs):**
+    - Created docs/adr/ directory structure
+    - ADR-001: Choice of GPT-Image (Stable Image Core) as default model
+      - Rationale: Fast integration, Azure native, reliability, security
+      - Trade-offs: Less spatial control, higher cost, resolution limits
+      - Future: SDXL integration in Phase 2
+    - ADR-002: Monorepo structure with shared types package
+      - Rationale: Type safety, single source of truth, simplified development
+      - Structure: packages/shared consumed by apps/web and apps/api
+      - Trade-offs: Build order matters, coupling between apps
+    - ADR-003: Azure Durable Functions for orchestration
+      - Rationale: Built-in state management, automatic retries, scalability
+      - Patterns: Fan-out/fan-in for parallel image generation
+      - Trade-offs: Complexity, learning curve, Azure-specific
+    - ADR-004: Mapbox GL JS over Azure Maps or CesiumJS
+      - Rationale: 3D terrain, performance, drawing tools, free tier
+      - Comparison: Evaluated Azure Maps, CesiumJS, Leaflet, Google Maps
+      - Trade-offs: Not part of Azure ecosystem, free tier limits
+    - ADR-005: Prompt template versioning strategy
+      - Rationale: Reproducibility, A/B testing, evolution tracking
+      - Versioning: Semantic versioning (major.minor.patch)
+      - Implementation: Multiple concurrent versions, metadata tracking
+  - **Environment Configuration:**
+    - Updated README with complete CI/CD and environment setup
+    - Documented required GitHub secrets for deployment
+    - Documented environment-specific configuration (dev, staging, production)
+    - Environment protection rules for production deployments
+  - **Code Quality:**
+    - Fixed all code formatting issues with Prettier across 95 files
+    - All builds passing, TypeScript strict mode compliant
+    - Ready for code review and security scan
+- **Current focus:** MVP validation complete - ready for trainer feedback and Phase 2 planning
+- **Completed milestones:**
+  - Master plan created as single source of truth.
+  - Background research and technical considerations documented.
+  - Copilot instructions file created.
+  - 15 comprehensive GitHub issues designed and seeded.
+  - Mapbox token environment variable recorded as `VITE_MAPBOX_TOKEN` (local + GitHub secrets).
+  - Local web environment file created with `VITE_MAPBOX_TOKEN` for Mapbox access.
+  - **Phase 0 complete:** Project scaffolding and repository structure (Issue 1)
+  - **Infrastructure as Code complete:** Bicep templates for Azure deployment (Issue 2)
+  - **Issue 3 complete:** Front-End Shell, Design System & Navigation
+  - **Issue 4 complete:** 3D Map Integration & Fire Perimeter Drawing
+  - **Phase 1 complete:** Issue 5 - Scenario Input Panel & Parameter Controls
+  - **Issue 6 complete:** Geodata Integration & Geospatial Enrichment (Phase 2)
+  - **Issue 7 complete:** Prompt Generation Engine (Phase 3)
+  - **Issue 9 complete:** Multi-Perspective Rendering & Consistency (Phase 3)
+  - **Issue 13 complete:** Observability, Monitoring & Structured Logging (Phase 5)
+  - **Issue 14 complete:** End-to-End Testing & Trainer Validation (Phase 5)
+  - **Issue 15 complete:** CI/CD Pipeline, Documentation & Future Roadmap (Phase 5) ✅
+  - **MVP COMPLETE:** All 15 issues delivered, system ready for trainer validation
+- **Lessons learned:**
+  - Sequential CI pipeline more reliable than parallel for catching early failures
+  - Comprehensive documentation critical for adoption (trainer guide, admin guide)
+  - ADRs provide valuable context for future developers and decision-making
+  - Roadmap helps stakeholders understand future potential
+  - Environment configuration and deployment automation essential for reliability
+- **Next milestone:** Phase 2 planning and trainer feedback collection
+  - Gather trainer feedback on MVP features
+  - Prioritize Phase 2 enhancements based on real-world usage
+  - Begin SDXL + ControlNet integration for enhanced spatial control
+  - Plan fire spread simulation architecture
 
 ## 14. Change Control Process
 

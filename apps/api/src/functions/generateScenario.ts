@@ -23,7 +23,9 @@ export async function generateScenario(
     if (!body.perimeter || !body.inputs || !body.geoContext || !body.requestedViews) {
       return {
         status: 400,
-        jsonBody: { error: 'Missing required fields: perimeter, inputs, geoContext, or requestedViews' },
+        jsonBody: {
+          error: 'Missing required fields: perimeter, inputs, geoContext, or requestedViews',
+        },
       };
     }
 
@@ -63,9 +65,9 @@ export async function generateScenario(
     };
   } catch (error) {
     context.error('Error processing generation request:', error);
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     return {
       status: 500,
       jsonBody: {

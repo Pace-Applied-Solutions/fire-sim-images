@@ -1,0 +1,83 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy (staging or production)'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-api:
+    name: Deploy API to Azure Functions
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
+
+      - name: Build API
+        run: npm run build --workspace=apps/api
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ secrets.AZURE_FUNCTION_APP_NAME }}
+          package: apps/api
+          respect-funcignore: true
+
+      - name: Run smoke test
+        run: |
+          echo "Waiting 30 seconds for deployment to complete..."
+          sleep 30
+          
+          HEALTH_URL="${{ secrets.AZURE_FUNCTION_APP_URL }}/api/health"
+          echo "Testing health endpoint: $HEALTH_URL"
+          
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+          
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Health check passed (HTTP $RESPONSE)"
+          else
+            echo "❌ Health check failed (HTTP $RESPONSE)"
+            exit 1
+          fi
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## Deployment Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ API deployed to Azure Functions" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Smoke test completed" >> $GITHUB_STEP_SUMMARY

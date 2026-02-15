@@ -241,6 +241,7 @@ throw new Error('Test error boundary');
 ```
 
 You should see:
+
 - Error boundary fallback UI
 - "Try Again" button
 - Error details in console (dev mode only)
@@ -266,7 +267,7 @@ import { trackEvent, trackMetric } from './utils/appInsights';
 // Track an event
 trackEvent('scenario_generated', {
   viewCount: 5,
-  fireIntensity: 'high'
+  fireIntensity: 'high',
 });
 
 // Track a metric

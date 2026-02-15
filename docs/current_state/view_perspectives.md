@@ -1,6 +1,7 @@
 # View Perspectives Reference
 
 ## Overview
+
 The bushfire simulation inject tool provides two distinct sets of viewpoints for generating imagery: **helicopter views** and **ground-level views**. Each perspective serves a different training purpose and simulates different observer positions on the fireground.
 
 ## Perspective Types
@@ -10,6 +11,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 **Purpose:** Wide-area situational awareness from elevated positions, suitable for incident management and strategic planning exercises.
 
 **Characteristics:**
+
 - Elevated camera position (helicopter altitude)
 - Wide-angle view showing terrain context
 - Moderate pitch angle (~60°) for good terrain visibility
@@ -17,6 +19,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 - Suitable for understanding fire spread patterns, terrain relationships, and strategic positioning
 
 **Available Views:**
+
 - `helicopter_north` - View from north looking south
 - `helicopter_south` - View from south looking north
 - `helicopter_east` - View from east looking west
@@ -24,6 +27,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 - `helicopter_above` - Elevated overhead view (30° pitch)
 
 **Use Cases:**
+
 - Incident management team briefings
 - Strategic fire behavior assessment
 - Terrain and fuel distribution visualization
@@ -34,6 +38,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 **Purpose:** Realistic ground-level perspective simulating what fire crews and ground vehicles (trucks, tankers) would observe on scene.
 
 **Characteristics:**
+
 - Camera at ground level (minimal elevation)
 - Nearly horizontal viewing angle (85° pitch)
 - Tight zoom (camera positioned closer, ~0.35x bounding box distance)
@@ -41,6 +46,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 - Suitable for tactical decision-making and crew safety training
 
 **Available Views:**
+
 - `ground_north` - Ground view from north looking south
 - `ground_south` - Ground view from south looking north
 - `ground_east` - Ground view from east looking west
@@ -48,6 +54,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 - `ground_above` - Low-altitude overhead view (directly above, zoomed in)
 
 **Use Cases:**
+
 - Crew safety and situational awareness training
 - Vehicle positioning exercises
 - Tactical fire attack scenarios
@@ -57,6 +64,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 ## View Selection Guidance
 
 ### When to Use Helicopter Views
+
 - Training incident management teams (IMT)
 - Teaching fire behavior over large areas
 - Demonstrating fire spread and terrain interaction
@@ -64,6 +72,7 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 - Understanding fire perimeter development over time
 
 ### When to Use Ground-Level Views
+
 - Training crew leaders and sector commanders
 - Demonstrating direct attack tactics
 - Teaching situational awareness for ground crews
@@ -75,13 +84,13 @@ The bushfire simulation inject tool provides two distinct sets of viewpoints for
 
 ### Camera Parameters Comparison
 
-| Parameter | Helicopter Views | Ground-Level Views |
-|-----------|------------------|-------------------|
-| Pitch Angle | 60° (elevated) | 85° (nearly horizontal) |
-| Distance Multiplier | 0.8x bbox | 0.35x bbox |
-| Zoom Adjustment | baseZoom - 1 | baseZoom + 1.5 |
-| Perspective | Wide-area awareness | Realistic ground view |
-| Above View Pitch | 30° (angled down) | 0° (top-down, close) |
+| Parameter           | Helicopter Views    | Ground-Level Views      |
+| ------------------- | ------------------- | ----------------------- |
+| Pitch Angle         | 60° (elevated)      | 85° (nearly horizontal) |
+| Distance Multiplier | 0.8x bbox           | 0.35x bbox              |
+| Zoom Adjustment     | baseZoom - 1        | baseZoom + 1.5          |
+| Perspective         | Wide-area awareness | Realistic ground view   |
+| Above View Pitch    | 30° (angled down)   | 0° (top-down, close)    |
 
 ### ViewPoint Type Definition
 
@@ -89,18 +98,18 @@ Both perspective types are defined in `packages/shared/src/types.ts`:
 
 ```typescript
 export type ViewPoint =
-  | 'aerial'                    // Legacy wide view
-  | 'helicopter_north'          // Elevated NSEW views
+  | 'aerial' // Legacy wide view
+  | 'helicopter_north' // Elevated NSEW views
   | 'helicopter_south'
   | 'helicopter_east'
   | 'helicopter_west'
   | 'helicopter_above'
-  | 'ground_north'              // Ground-level NSEW views
+  | 'ground_north' // Ground-level NSEW views
   | 'ground_south'
   | 'ground_east'
   | 'ground_west'
   | 'ground_above'
-  | 'ridge';                    // Terrain-specific view
+  | 'ridge'; // Terrain-specific view
 ```
 
 ## Prompt Generation Considerations
@@ -126,20 +135,24 @@ When generating AI prompts for images, the perspective type should influence:
 ## Example Scenarios
 
 ### Scenario 1: Grass Fire Training
+
 - **Helicopter views:** Show full fire perimeter, rate of spread, wind-driven head fire
 - **Ground views:** Show flame height at ground level, visibility through smoke, escape routes
 
 ### Scenario 2: Forest Fire Structure Protection
+
 - **Helicopter views:** Show fire approaching structures, defensive space, access routes
 - **Ground views:** Show immediate threat to structures, ember attack, crew positioning
 
 ### Scenario 3: Night Operations
+
 - **Helicopter views:** Show fire glow, spot fire distribution, perimeter lighting
 - **Ground views:** Show working lights, immediate fire front, limited visibility
 
 ## Future Enhancements
 
 Potential improvements to view perspectives:
+
 - Dynamic pitch adjustment based on terrain slope
 - Automatic view selection based on scenario type
 - View interpolation for continuous perspective shifts
@@ -148,6 +161,6 @@ Potential improvements to view perspectives:
 
 ---
 
-*Document Version: 1.0*  
-*Created: 2026-02-14*  
-*Related Issue: Add ground-level NSEW and Above views for realistic 'truck' perspective*
+_Document Version: 1.0_  
+_Created: 2026-02-14_  
+_Related Issue: Add ground-level NSEW and Above views for realistic 'truck' perspective_

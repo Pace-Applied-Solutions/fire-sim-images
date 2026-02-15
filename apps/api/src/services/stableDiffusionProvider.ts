@@ -5,7 +5,11 @@
  */
 
 import crypto from 'node:crypto';
-import type { ImageGenerationProvider, ImageGenOptions, ImageGenResult } from './imageGenerationProvider.js';
+import type {
+  ImageGenerationProvider,
+  ImageGenOptions,
+  ImageGenResult,
+} from './imageGenerationProvider.js';
 
 export class StableDiffusionProvider implements ImageGenerationProvider {
   readonly modelId = 'stable-diffusion-xl-1.0';
@@ -60,7 +64,11 @@ export class StableDiffusionProvider implements ImageGenerationProvider {
    * Generate a mock PNG image for development testing.
    * Creates a simple colored rectangle based on prompt hash.
    */
-  private async generateMockImage(_width: number, _height: number, _prompt: string): Promise<Buffer> {
+  private async generateMockImage(
+    _width: number,
+    _height: number,
+    _prompt: string
+  ): Promise<Buffer> {
     // Create a minimal valid PNG (1x1 pixel)
     // In production, this would use the prompt hash to generate varied colors
 
@@ -70,20 +78,41 @@ export class StableDiffusionProvider implements ImageGenerationProvider {
       // PNG signature
       Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
       // IHDR chunk (13 bytes data)
-      this.createChunk('IHDR', Buffer.from([
-        0x00, 0x00, 0x00, 0x01, // width: 1
-        0x00, 0x00, 0x00, 0x01, // height: 1
-        0x08, // bit depth: 8
-        0x02, // color type: 2 (RGB)
-        0x00, // compression: 0
-        0x00, // filter: 0
-        0x00, // interlace: 0
-      ])),
+      this.createChunk(
+        'IHDR',
+        Buffer.from([
+          0x00,
+          0x00,
+          0x00,
+          0x01, // width: 1
+          0x00,
+          0x00,
+          0x00,
+          0x01, // height: 1
+          0x08, // bit depth: 8
+          0x02, // color type: 2 (RGB)
+          0x00, // compression: 0
+          0x00, // filter: 0
+          0x00, // interlace: 0
+        ])
+      ),
       // IDAT chunk (pixel data)
-      this.createChunk('IDAT', Buffer.from([
-        0x78, 0x9c, // zlib header
-        0x62, 0x62, 0x62, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01, // compressed RGB data
-      ])),
+      this.createChunk(
+        'IDAT',
+        Buffer.from([
+          0x78,
+          0x9c, // zlib header
+          0x62,
+          0x62,
+          0x62,
+          0x00,
+          0x00,
+          0x00,
+          0x04,
+          0x00,
+          0x01, // compressed RGB data
+        ])
+      ),
       // IEND chunk
       this.createChunk('IEND', Buffer.alloc(0)),
     ]);

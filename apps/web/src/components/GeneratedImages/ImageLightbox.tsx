@@ -13,11 +13,7 @@ interface ImageLightboxProps {
   onClose: () => void;
 }
 
-export const ImageLightbox: React.FC<ImageLightboxProps> = ({
-  images,
-  initialIndex,
-  onClose,
-}) => {
+export const ImageLightbox: React.FC<ImageLightboxProps> = ({ images, initialIndex, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -60,21 +56,27 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
   }, []);
 
   // Pan handlers
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (zoom > 1) {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    }
-  }, [zoom, pan]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (zoom > 1) {
+        setIsDragging(true);
+        setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      }
+    },
+    [zoom, pan]
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging) {
-      setPan({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  }, [isDragging, dragStart]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isDragging) {
+        setPan({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      }
+    },
+    [isDragging, dragStart]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -112,14 +114,17 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
   }, [onClose, goToPrevious, goToNext, zoomIn, zoomOut, resetZoom]);
 
   // Wheel zoom
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    if (e.deltaY < 0) {
-      zoomIn();
-    } else {
-      zoomOut();
-    }
-  }, [zoomIn, zoomOut]);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        zoomIn();
+      } else {
+        zoomOut();
+      }
+    },
+    [zoomIn, zoomOut]
+  );
 
   // Download handler
   const handleDownload = useCallback(() => {
@@ -142,14 +147,14 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
         {/* Navigation buttons */}
         {images.length > 1 && (
           <>
-            <button 
+            <button
               className={`${styles.navButton} ${styles.navButtonPrev}`}
               onClick={goToPrevious}
               title="Previous (←)"
             >
               ‹
             </button>
-            <button 
+            <button
               className={`${styles.navButton} ${styles.navButtonNext}`}
               onClick={goToNext}
               title="Next (→)"
@@ -201,7 +206,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           <div className={styles.imageInfo}>
             <h3>{formatViewpoint(currentImage.viewPoint)}</h3>
             <p>
-              {currentImage.metadata.width} × {currentImage.metadata.height} • {currentImage.metadata.model}
+              {currentImage.metadata.width} × {currentImage.metadata.height} •{' '}
+              {currentImage.metadata.model}
             </p>
           </div>
           <div className={styles.actions}>

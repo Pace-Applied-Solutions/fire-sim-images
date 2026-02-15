@@ -15,12 +15,14 @@ The system generates 5-12 images per scenario, each representing the same fire f
 The generation pipeline uses a two-pass approach:
 
 **Pass 1: Anchor Image**
+
 - The aerial view (or first requested viewpoint) is generated first
 - This becomes the "anchor" or reference image for the scenario
 - Captured and stored in blob storage
 - Marked with `isAnchor: true` in metadata
 
 **Pass 2: Derived Views**
+
 - All remaining viewpoints are generated using the anchor image as a reference
 - The anchor image is passed to the AI model via `referenceImage` parameter
 - Reference strength set to 0.5 (50% adherence to anchor while maintaining perspective)
@@ -38,6 +40,7 @@ Before generation, the system captures 3D map screenshots from each viewpoint:
 - Screenshots are passed to AI model to ground generated imagery in real terrain
 
 **Benefits:**
+
 - AI model sees the actual terrain geometry, vegetation color, and elevation
 - Generated fire overlays match the real landscape appearance
 - Reduces terrain inconsistencies between views
@@ -54,6 +57,7 @@ All images in a scenario use the same random seed:
 - Each image metadata tracks which seed was used
 
 **Benefits:**
+
 - AI models with seed support produce more consistent outputs
 - Enables exact reproduction of results
 - Debugging and quality control
@@ -65,26 +69,31 @@ All images in a scenario use the same random seed:
 After generation, the system validates consistency across 4 dimensions:
 
 #### Smoke Direction Consistency (30% weight)
+
 - Validates smoke direction aligns with wind parameter
 - Checks if prompts correctly specify wind direction
 - Threshold: 80% of images must mention wind direction
 
 #### Fire Size Proportionality (20% weight)
+
 - Checks if multiple viewpoint types are present
 - Verifies anchor image exists
 - Ensures different perspectives show fire at appropriate scales
 
 #### Lighting Consistency (25% weight)
+
 - Validates lighting matches time-of-day parameter
 - Checks prompts mention correct lighting conditions
 - Threshold: 80% of images must reference time of day
 
 #### Color Palette Similarity (25% weight)
+
 - Verifies all images use the same AI model
 - Confirms same seed across all images
 - Higher consistency with uniform generation settings
 
 **Overall Score:**
+
 - Weighted average of 4 checks (0-100 scale)
 - Passing threshold: 70/100
 - Validation report logged to Azure Functions console
@@ -97,15 +106,18 @@ After generation, the system validates consistency across 4 dimensions:
 Ready for production enhancement with real image processing:
 
 **Color Grading:**
+
 - Normalize white balance across image set
 - Adjust brightness, contrast, saturation uniformly
 - Match color characteristics of anchor image
 
 **Smoke Overlay:**
+
 - Optionally composite semi-transparent smoke layer programmatically
 - Ensures consistent atmospheric haze across views
 
 **Metadata Watermark:**
+
 - Add viewpoint name, scenario ID, timestamp to corner
 - Toggleable via configuration
 - Position: top-left, top-right, bottom-left, bottom-right
@@ -119,22 +131,26 @@ Ready for production enhancement with real image processing:
 Interactive UI for comparing generated images:
 
 **Grid View:**
+
 - All images displayed in responsive grid
 - Anchor image highlighted with yellow border and "Anchor" badge
 - Reference usage indicated with 🔗 icon
 - Consistency seed shown in header
 
 **Side-by-Side View:**
+
 - Select any two images for detailed comparison
 - Dropdowns to choose left and right images
 - Large side-by-side display with viewpoint labels
 
 **Carousel View:**
+
 - Swipe through all viewpoints sequentially
 - Prev/Next navigation buttons
 - Viewpoint name, metadata, and progress indicator overlay
 
 **Responsive:**
+
 - Mobile-friendly layouts
 - Stacks views vertically on small screens
 - Touch-friendly controls
@@ -150,6 +166,7 @@ Each image card includes a regenerate button (🔄):
 - Callback structure in place: `onRegenerateImage(viewpoint)`
 
 **Planned Behavior:**
+
 - Reuse same anchor image and prompt
 - Allow optional seed variation
 - Show regeneration progress inline
@@ -230,7 +247,7 @@ interface ImageGenOptions {
 ```typescript
 // Frontend: Capture map screenshots
 const screenshots = await captureAllViewpointScreenshots(
-  map, 
+  map,
   ['aerial', 'helicopter_north', 'ground_north'],
   [150.5, -33.8] // Centroid
 );

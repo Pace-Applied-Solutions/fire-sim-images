@@ -65,7 +65,8 @@ export const TIME_OF_DAY_LIGHTING: Record<ScenarioInputs['timeOfDay'], string> =
   midday: 'Harsh overhead sun, short shadows, washed-out pale sky above the smoke',
   afternoon: 'Warm afternoon light from the west, golden-orange tones, lengthening shadows',
   dusk: 'Deep orange and red sunset sky, fire glow visible against fading light, dramatic contrast',
-  night: 'Dark scene lit primarily by the fire itself, intense orange glow reflecting off smoke, stars or dark sky above',
+  night:
+    'Dark scene lit primarily by the fire itself, intense orange glow reflecting off smoke, stars or dark sky above',
 };
 
 /**
@@ -73,18 +74,30 @@ export const TIME_OF_DAY_LIGHTING: Record<ScenarioInputs['timeOfDay'], string> =
  * Defines camera position and angle for each viewpoint type.
  */
 export const VIEWPOINT_PERSPECTIVES: Record<ViewPoint, string> = {
-  aerial: 'Aerial photograph taken from a helicopter or drone at 300 metres altitude, looking straight down at the fire',
-  helicopter_north: 'Elevated wide-angle photograph from a helicopter north of the fire at 150 metres altitude, looking south at the fire front from an oblique angle',
-  helicopter_south: 'Elevated wide-angle photograph from a helicopter south of the fire at 150 metres altitude, looking north across the burned area and active fire',
-  helicopter_east: 'Elevated wide-angle photograph from a helicopter east of the fire at 150 metres altitude, looking west at the flank of the fire',
-  helicopter_west: 'Elevated wide-angle photograph from a helicopter west of the fire at 150 metres altitude, looking east at the flank of the fire',
-  helicopter_above: 'Elevated aerial photograph from directly above the fire at 200 metres altitude, capturing the full extent of the fire perimeter and smoke plume',
-  ground_north: 'Ground-level photograph taken from the north side of the fire, approximately 500 metres away, looking south towards the flame front at eye level',
-  ground_south: 'Ground-level photograph taken from the south side looking north, showing the burned area with fire visible in the distance',
-  ground_east: 'Ground-level photograph taken from the east looking west towards the fire, capturing the flank of the fire at eye level',
-  ground_west: 'Ground-level photograph taken from the west looking east towards the fire, capturing the flank of the fire at eye level',
-  ground_above: 'Ground-level photograph from slightly elevated terrain looking across the fire area, showing the full fire perimeter and smoke column',
-  ridge: 'Wide-angle photograph from a ridgeline or elevated position overlooking the fire area, approximately 300 metres above the fire, capturing the broader landscape context',
+  aerial:
+    'Aerial photograph taken from a helicopter or drone at 300 metres altitude, looking straight down at the fire',
+  helicopter_north:
+    'Elevated wide-angle photograph from a helicopter north of the fire at 150 metres altitude, looking south at the fire front from an oblique angle',
+  helicopter_south:
+    'Elevated wide-angle photograph from a helicopter south of the fire at 150 metres altitude, looking north across the burned area and active fire',
+  helicopter_east:
+    'Elevated wide-angle photograph from a helicopter east of the fire at 150 metres altitude, looking west at the flank of the fire',
+  helicopter_west:
+    'Elevated wide-angle photograph from a helicopter west of the fire at 150 metres altitude, looking east at the flank of the fire',
+  helicopter_above:
+    'Elevated aerial photograph from directly above the fire at 200 metres altitude, capturing the full extent of the fire perimeter and smoke plume',
+  ground_north:
+    'Ground-level photograph taken from the north side of the fire, approximately 500 metres away, looking south towards the flame front at eye level',
+  ground_south:
+    'Ground-level photograph taken from the south side looking north, showing the burned area with fire visible in the distance',
+  ground_east:
+    'Ground-level photograph taken from the east looking west towards the fire, capturing the flank of the fire at eye level',
+  ground_west:
+    'Ground-level photograph taken from the west looking east towards the fire, capturing the flank of the fire at eye level',
+  ground_above:
+    'Ground-level photograph from slightly elevated terrain looking across the fire area, showing the full fire perimeter and smoke column',
+  ridge:
+    'Wide-angle photograph from a ridgeline or elevated position overlooking the fire area, approximately 300 metres above the fire, capturing the broader landscape context',
 };
 
 /**

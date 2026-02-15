@@ -121,10 +121,7 @@ export const ScenarioInputPanel: React.FC = () => {
     return newErrors;
   };
 
-  const updateInput = <K extends keyof ScenarioInputs>(
-    key: K,
-    value: ScenarioInputs[K]
-  ) => {
+  const updateInput = <K extends keyof ScenarioInputs>(key: K, value: ScenarioInputs[K]) => {
     const newInputs = { ...inputs, [key]: value };
     setInputs(newInputs);
     const newErrors = validateInputs(newInputs);
@@ -229,13 +226,10 @@ export const ScenarioInputPanel: React.FC = () => {
       console.log('Generation started:', startResponse);
 
       // Poll for completion
-      const result = await generationApi.pollForCompletion(
-        startResponse.scenarioId,
-        (status) => {
-          setGenerationProgress(status.progress);
-          console.log('Generation progress:', status.progress);
-        }
-      );
+      const result = await generationApi.pollForCompletion(startResponse.scenarioId, (status) => {
+        setGenerationProgress(status.progress);
+        console.log('Generation progress:', status.progress);
+      });
 
       // Handle completion
       setGenerationResult(result);
@@ -243,7 +237,10 @@ export const ScenarioInputPanel: React.FC = () => {
       setGenerationProgress(null);
 
       if (result.status === 'completed') {
-        addToast({ type: 'success', message: `Generated ${result.images.length} images successfully` });
+        addToast({
+          type: 'success',
+          message: `Generated ${result.images.length} images successfully`,
+        });
       } else if (result.status === 'failed') {
         addToast({ type: 'error', message: result.error || 'Generation failed' });
         setError(result.error || 'Generation failed');
@@ -319,26 +316,27 @@ export const ScenarioInputPanel: React.FC = () => {
         </div>
 
         <div className={styles.sectionContent}>
-            {/* Fire Danger Rating Selector */}
-            <div className={styles.field}>
-              <label className={styles.label}>Select fire danger rating</label>
-              <select
-                className={`${styles.ratingSelect} ${RATING_CLASS_MAP[inputs.fireDangerRating]}`}
-                value={inputs.fireDangerRating}
-                onChange={(e) => handleRatingChange(e.target.value as FireDangerRating)}
-              >
-                <option value="noRating">No Rating</option>
-                <option value="moderate">Moderate</option>
-                <option value="high">High</option>
-                <option value="extreme">Extreme</option>
-                <option value="catastrophic">Catastrophic</option>
-              </select>
-            </div>
-
-            <p className={styles.ratingHint}>
-              Selecting a rating sets typical weather conditions. You can adjust individual weather parameters below.
-            </p>
+          {/* Fire Danger Rating Selector */}
+          <div className={styles.field}>
+            <label className={styles.label}>Select fire danger rating</label>
+            <select
+              className={`${styles.ratingSelect} ${RATING_CLASS_MAP[inputs.fireDangerRating]}`}
+              value={inputs.fireDangerRating}
+              onChange={(e) => handleRatingChange(e.target.value as FireDangerRating)}
+            >
+              <option value="noRating">No Rating</option>
+              <option value="moderate">Moderate</option>
+              <option value="high">High</option>
+              <option value="extreme">Extreme</option>
+              <option value="catastrophic">Catastrophic</option>
+            </select>
           </div>
+
+          <p className={styles.ratingHint}>
+            Selecting a rating sets typical weather conditions. You can adjust individual weather
+            parameters below.
+          </p>
+        </div>
       </section>
 
       {/* Weather Section */}
@@ -348,126 +346,123 @@ export const ScenarioInputPanel: React.FC = () => {
         </div>
 
         <div className={styles.sectionContent}>
-            {/* Wind Speed */}
-            <div className={styles.field}>
-              <label htmlFor="wind-speed" className={styles.label}>
-                Wind speed (km/h)
-              </label>
-              <div className={styles.sliderGroup}>
-                <input
-                  id="wind-speed"
-                  type="range"
-                  min="0"
-                  max="120"
-                  value={inputs.windSpeed}
-                  onChange={(e) => updateInput('windSpeed', Number(e.target.value))}
-                  className={styles.slider}
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max="120"
-                  value={inputs.windSpeed}
-                  onChange={(e) => updateInput('windSpeed', Number(e.target.value))}
-                  className={styles.numberInput}
-                  aria-label="Wind speed number input"
-                />
-              </div>
-              {errors.windSpeed && <span className={styles.error}>{errors.windSpeed}</span>}
+          {/* Wind Speed */}
+          <div className={styles.field}>
+            <label htmlFor="wind-speed" className={styles.label}>
+              Wind speed (km/h)
+            </label>
+            <div className={styles.sliderGroup}>
+              <input
+                id="wind-speed"
+                type="range"
+                min="0"
+                max="120"
+                value={inputs.windSpeed}
+                onChange={(e) => updateInput('windSpeed', Number(e.target.value))}
+                className={styles.slider}
+              />
+              <input
+                type="number"
+                min="0"
+                max="120"
+                value={inputs.windSpeed}
+                onChange={(e) => updateInput('windSpeed', Number(e.target.value))}
+                className={styles.numberInput}
+                aria-label="Wind speed number input"
+              />
             </div>
-
-            {/* Wind Direction */}
-            <div className={styles.field}>
-              <label htmlFor="wind-direction" className={styles.label}>
-                Wind direction
-              </label>
-              <select
-                id="wind-direction"
-                value={inputs.windDirection}
-                onChange={(e) =>
-                  updateInput(
-                    'windDirection',
-                    e.target.value as ScenarioInputs['windDirection']
-                  )
-                }
-                className={styles.select}
-              >
-                <option value="N">N (North)</option>
-                <option value="NE">NE (North-East)</option>
-                <option value="E">E (East)</option>
-                <option value="SE">SE (South-East)</option>
-                <option value="S">S (South)</option>
-                <option value="SW">SW (South-West)</option>
-                <option value="W">W (West)</option>
-                <option value="NW">NW (North-West)</option>
-              </select>
-            </div>
-
-            {/* Temperature */}
-            <div className={styles.field}>
-              <label htmlFor="temperature" className={styles.label}>
-                Temperature (°C)
-              </label>
-              <div className={styles.sliderGroup}>
-                <input
-                  id="temperature"
-                  type="range"
-                  min="5"
-                  max="50"
-                  value={inputs.temperature}
-                  onChange={(e) => updateInput('temperature', Number(e.target.value))}
-                  className={`${styles.slider} ${styles.sliderHeat}`}
-                />
-                <input
-                  type="number"
-                  min="5"
-                  max="50"
-                  value={inputs.temperature}
-                  onChange={(e) => updateInput('temperature', Number(e.target.value))}
-                  className={styles.numberInput}
-                  aria-label="Temperature number input"
-                />
-              </div>
-              {errors.temperature && <span className={styles.error}>{errors.temperature}</span>}
-            </div>
-
-            {/* Humidity */}
-            <div className={styles.field}>
-              <label htmlFor="humidity" className={styles.label}>
-                Relative humidity (%)
-              </label>
-              <div className={styles.sliderGroup}>
-                <input
-                  id="humidity"
-                  type="range"
-                  min="5"
-                  max="100"
-                  value={inputs.humidity}
-                  onChange={(e) => updateInput('humidity', Number(e.target.value))}
-                  className={styles.slider}
-                />
-                <input
-                  type="number"
-                  min="5"
-                  max="100"
-                  value={inputs.humidity}
-                  onChange={(e) => updateInput('humidity', Number(e.target.value))}
-                  className={styles.numberInput}
-                  aria-label="Humidity number input"
-                />
-              </div>
-              {errors.humidity && <span className={styles.error}>{errors.humidity}</span>}
-            </div>
-
-            {/* Warnings */}
-            {warnings.length > 0 && (
-              <div className={styles.warning}>
-                {warnings.map((warning, idx) => (
-                  <div key={idx}>⚠️ {warning}</div>
-                ))}
-              </div>
-            )}
+            {errors.windSpeed && <span className={styles.error}>{errors.windSpeed}</span>}
           </div>
+
+          {/* Wind Direction */}
+          <div className={styles.field}>
+            <label htmlFor="wind-direction" className={styles.label}>
+              Wind direction
+            </label>
+            <select
+              id="wind-direction"
+              value={inputs.windDirection}
+              onChange={(e) =>
+                updateInput('windDirection', e.target.value as ScenarioInputs['windDirection'])
+              }
+              className={styles.select}
+            >
+              <option value="N">N (North)</option>
+              <option value="NE">NE (North-East)</option>
+              <option value="E">E (East)</option>
+              <option value="SE">SE (South-East)</option>
+              <option value="S">S (South)</option>
+              <option value="SW">SW (South-West)</option>
+              <option value="W">W (West)</option>
+              <option value="NW">NW (North-West)</option>
+            </select>
+          </div>
+
+          {/* Temperature */}
+          <div className={styles.field}>
+            <label htmlFor="temperature" className={styles.label}>
+              Temperature (°C)
+            </label>
+            <div className={styles.sliderGroup}>
+              <input
+                id="temperature"
+                type="range"
+                min="5"
+                max="50"
+                value={inputs.temperature}
+                onChange={(e) => updateInput('temperature', Number(e.target.value))}
+                className={`${styles.slider} ${styles.sliderHeat}`}
+              />
+              <input
+                type="number"
+                min="5"
+                max="50"
+                value={inputs.temperature}
+                onChange={(e) => updateInput('temperature', Number(e.target.value))}
+                className={styles.numberInput}
+                aria-label="Temperature number input"
+              />
+            </div>
+            {errors.temperature && <span className={styles.error}>{errors.temperature}</span>}
+          </div>
+
+          {/* Humidity */}
+          <div className={styles.field}>
+            <label htmlFor="humidity" className={styles.label}>
+              Relative humidity (%)
+            </label>
+            <div className={styles.sliderGroup}>
+              <input
+                id="humidity"
+                type="range"
+                min="5"
+                max="100"
+                value={inputs.humidity}
+                onChange={(e) => updateInput('humidity', Number(e.target.value))}
+                className={styles.slider}
+              />
+              <input
+                type="number"
+                min="5"
+                max="100"
+                value={inputs.humidity}
+                onChange={(e) => updateInput('humidity', Number(e.target.value))}
+                className={styles.numberInput}
+                aria-label="Humidity number input"
+              />
+            </div>
+            {errors.humidity && <span className={styles.error}>{errors.humidity}</span>}
+          </div>
+
+          {/* Warnings */}
+          {warnings.length > 0 && (
+            <div className={styles.warning}>
+              {warnings.map((warning, idx) => (
+                <div key={idx}>⚠️ {warning}</div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Fire Section */}
@@ -477,26 +472,26 @@ export const ScenarioInputPanel: React.FC = () => {
         </div>
 
         <div className={styles.sectionContent}>
-            {/* Fire Stage */}
-            <div className={styles.field}>
-              <label htmlFor="fire-stage" className={styles.label}>
-                Fire stage
-              </label>
-              <select
-                id="fire-stage"
-                value={inputs.fireStage}
-                onChange={(e) =>
-                  updateInput('fireStage', e.target.value as ScenarioInputs['fireStage'])
-                }
-                className={styles.select}
-              >
-                <option value="spotFire">Spot fire</option>
-                <option value="developing">Developing</option>
-                <option value="established">Established</option>
-                <option value="major">Major</option>
-              </select>
-            </div>
+          {/* Fire Stage */}
+          <div className={styles.field}>
+            <label htmlFor="fire-stage" className={styles.label}>
+              Fire stage
+            </label>
+            <select
+              id="fire-stage"
+              value={inputs.fireStage}
+              onChange={(e) =>
+                updateInput('fireStage', e.target.value as ScenarioInputs['fireStage'])
+              }
+              className={styles.select}
+            >
+              <option value="spotFire">Spot fire</option>
+              <option value="developing">Developing</option>
+              <option value="established">Established</option>
+              <option value="major">Major</option>
+            </select>
           </div>
+        </div>
       </section>
 
       {/* Timing Section */}
@@ -506,28 +501,28 @@ export const ScenarioInputPanel: React.FC = () => {
         </div>
 
         <div className={styles.sectionContent}>
-            {/* Time of Day */}
-            <div className={styles.field}>
-              <label htmlFor="time-of-day" className={styles.label}>
-                Time of day
-              </label>
-              <select
-                id="time-of-day"
-                value={inputs.timeOfDay}
-                onChange={(e) =>
-                  updateInput('timeOfDay', e.target.value as ScenarioInputs['timeOfDay'])
-                }
-                className={styles.select}
-              >
-                <option value="dawn">Dawn</option>
-                <option value="morning">Morning</option>
-                <option value="midday">Midday</option>
-                <option value="afternoon">Afternoon</option>
-                <option value="dusk">Dusk</option>
-                <option value="night">Night</option>
-              </select>
-            </div>
+          {/* Time of Day */}
+          <div className={styles.field}>
+            <label htmlFor="time-of-day" className={styles.label}>
+              Time of day
+            </label>
+            <select
+              id="time-of-day"
+              value={inputs.timeOfDay}
+              onChange={(e) =>
+                updateInput('timeOfDay', e.target.value as ScenarioInputs['timeOfDay'])
+              }
+              className={styles.select}
+            >
+              <option value="dawn">Dawn</option>
+              <option value="morning">Morning</option>
+              <option value="midday">Midday</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="dusk">Dusk</option>
+              <option value="night">Night</option>
+            </select>
           </div>
+        </div>
       </section>
 
       {/* Summary Card */}
@@ -545,8 +540,8 @@ export const ScenarioInputPanel: React.FC = () => {
           !perimeter
             ? 'Draw a fire perimeter on the map first'
             : !isValid
-            ? 'Fix validation errors first'
-            : 'Generate scenario'
+              ? 'Fix validation errors first'
+              : 'Generate scenario'
         }
       >
         Generate Scenario

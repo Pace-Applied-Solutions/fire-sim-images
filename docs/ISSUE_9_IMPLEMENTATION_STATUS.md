@@ -9,35 +9,32 @@ This document summarizes the implementation of external authentication, role-bas
 ### 1. Core Types & Infrastructure (✅ COMPLETE)
 
 #### Shared Types Package
+
 - **User & Authentication Types** (`packages/shared/src/types.ts`):
   - `UserRole`: 'trainer' | 'admin'
   - `User`: User identity with roles and auth method
   - `AuthState`: Authentication state and token info
-  
 - **Quota Types**:
   - `QuotaConfig`: Daily limits per role
   - `UsageTracking`: Current usage counters
   - `QuotaStatus`: Limits, usage, and remaining quota
-  
 - **Content Safety Types**:
   - `ContentSafetyResult`: Safety check results with category scores
   - `ContentSafetyConfig`: Configurable safety thresholds
-  
 - **Audit Logging Types**:
   - `AuditAction`: All logged action types
   - `AuditLogEntry`: Structured log entry with user identity
 
 #### Infrastructure (Bicep)
+
 - **Application Insights Module** (`infra/modules/applicationInsights.bicep`):
   - Log Analytics workspace
   - Application Insights resource
   - 90-day retention (dev) / 365-day retention (prod)
-  
 - **Content Safety Module** (`infra/modules/contentSafety.bicep`):
   - Azure AI Content Safety resource
   - S0 (standard) SKU
   - Endpoint and API key outputs
-  
 - **Main Template Updates** (`infra/main.bicep`):
   - Integrated Application Insights and Content Safety modules
   - Stored credentials in Key Vault
@@ -47,6 +44,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 2. API Services (✅ COMPLETE)
 
 #### Audit Logging Service (`apps/api/src/services/auditLog.ts`)
+
 - Application Insights telemetry integration
 - Structured event logging with custom properties
 - User identity tracking (userId, email, auth method)
@@ -59,6 +57,7 @@ This document summarizes the implementation of external authentication, role-bas
   - `shutdownAuditLogging()`: Flush and close connection
 
 #### Quota Service (`apps/api/src/services/quotaService.ts`)
+
 - Azure Table Storage integration for usage tracking
 - Per-user, per-day quota tracking (AEST timezone)
 - Default quotas by role:
@@ -72,6 +71,7 @@ This document summarizes the implementation of external authentication, role-bas
   - `checkQuotaExceeded()`: Check if user has exceeded limits
 
 #### Content Safety Service (`apps/api/src/services/contentSafety.ts`)
+
 - Azure AI Content Safety client integration
 - Text and image safety checking
 - Tuned thresholds for fire scenarios:
@@ -88,6 +88,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 3. Authentication & Authorization Middleware (✅ COMPLETE)
 
 #### Auth Middleware (`apps/api/src/middleware/auth.ts`)
+
 - JWT bearer token validation
 - Azure Static Web Apps Easy Auth integration
 - X-MS-CLIENT-PRINCIPAL header parsing
@@ -100,6 +101,7 @@ This document summarizes the implementation of external authentication, role-bas
   - `createUnauthorizedResponse()`: Generate 401 response
 
 #### RBAC Middleware (`apps/api/src/middleware/rbac.ts`)
+
 - Role-based permission checks
 - Pre-defined permission functions
 - Functions:
@@ -113,6 +115,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 4. Documentation (✅ COMPLETE)
 
 #### Authentication Setup Guide (`docs/AUTHENTICATION_SETUP.md`)
+
 - Step-by-step CIAM tenant setup
 - App registration configuration
 - Role assignment procedures
@@ -129,6 +132,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 1. API Function Updates (⏳ IN PROGRESS)
 
 #### Apply Auth Middleware to Existing Functions
+
 - [ ] `generateScenario.ts`: Add auth, RBAC, quota check, audit log
 - [ ] `getGenerationStatus.ts`: Add auth and audit log
 - [ ] `getGenerationResults.ts`: Add auth and audit log
@@ -137,6 +141,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] `healthCheck.ts`: Keep anonymous (monitoring)
 
 #### New Admin Endpoints
+
 - [ ] `GET /api/settings/quotas`: Get quota configuration (admin only)
 - [ ] `POST /api/settings/quotas`: Update quota limits (admin only)
 - [ ] `GET /api/settings/content-safety`: Get content safety config (admin only)
@@ -148,17 +153,20 @@ This document summarizes the implementation of external authentication, role-bas
 ### 2. Content Safety Integration (⏳ IN PROGRESS)
 
 #### Prompt Safety
+
 - [ ] Check prompts before sending to AI model
 - [ ] Log flagged prompts with user info
 - [ ] Return error if prompt fails safety check
 
 #### Image Safety
+
 - [ ] Check generated images before storage/display
 - [ ] Replace flagged images with placeholder
 - [ ] Log flagged images (hash, categories, user)
 - [ ] Allow regeneration of flagged viewpoints
 
 #### Configuration
+
 - [ ] Admin UI for adjusting thresholds
 - [ ] Per-category enable/disable toggles
 - [ ] Strictness level presets (low/medium/high)
@@ -166,6 +174,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 3. Frontend Authentication (🔜 NOT STARTED)
 
 #### MSAL Integration
+
 - [ ] Install `@azure/msal-browser` package
 - [ ] Create MSAL configuration
 - [ ] Create auth context provider
@@ -174,12 +183,14 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] Handle login/logout flows
 
 #### App Store Updates
+
 - [ ] Add user state to Zustand store
 - [ ] Add quota state to store
 - [ ] Create actions for updating auth state
 - [ ] Persist auth state to session storage
 
 #### API Client Updates
+
 - [ ] Add bearer token to all API requests
 - [ ] Handle 401 (redirect to login)
 - [ ] Handle 403 (show permission error)
@@ -188,6 +199,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 4. Frontend UI Updates (🔜 NOT STARTED)
 
 #### Header Component
+
 - [ ] Display user name and email
 - [ ] Display authentication method (email/SSO)
 - [ ] Display user role (admin/trainer)
@@ -196,6 +208,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] Show remaining quota on hover
 
 #### Settings Page (Admin Only)
+
 - [ ] Create `/settings` route
 - [ ] Quota configuration panel
 - [ ] Content safety configuration panel
@@ -204,6 +217,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] User role-based rendering (hide from trainers)
 
 #### Quota Display
+
 - [ ] Add quota status bar to header or sidebar
 - [ ] Show scenarios/images/videos remaining
 - [ ] Show reset time (midnight AEST)
@@ -211,6 +225,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] Show quota exceeded modal with reset info
 
 #### Error Handling
+
 - [ ] 401: Redirect to login
 - [ ] 403: Show "Permission denied" modal
 - [ ] 429: Show "Quota exceeded" modal with reset time
@@ -219,6 +234,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 5. Static Web App Configuration (🔜 NOT STARTED)
 
 #### staticwebapp.config.json
+
 - [ ] Create or update configuration file
 - [ ] Configure Azure AD as identity provider
 - [ ] Set route authentication rules
@@ -226,6 +242,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] Add navigation fallback for SPA routing
 
 #### Deployment Updates
+
 - [ ] Update deployment workflow with auth settings
 - [ ] Store client ID and secret in GitHub secrets
 - [ ] Configure Key Vault references in Static Web App
@@ -233,6 +250,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 6. Service Initialization (⏳ IN PROGRESS)
 
 #### API Index File
+
 - [ ] Initialize audit logging on startup
 - [ ] Initialize quota service on startup
 - [ ] Initialize content safety on startup
@@ -243,6 +261,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### 7. Testing (🔜 NOT STARTED)
 
 #### Unit Tests
+
 - [ ] Auth middleware tests (mock tokens)
 - [ ] RBAC middleware tests (permission checks)
 - [ ] Quota service tests (usage tracking)
@@ -250,6 +269,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] Audit logging tests (event structure)
 
 #### Integration Tests
+
 - [ ] End-to-end auth flow
 - [ ] Quota enforcement (create scenarios until limit)
 - [ ] Content safety (flagged prompts/images)
@@ -257,6 +277,7 @@ This document summarizes the implementation of external authentication, role-bas
 - [ ] Admin vs trainer permission differences
 
 #### Manual Testing
+
 - [ ] Login with external user
 - [ ] Create scenarios (track quota)
 - [ ] Generate images (check content safety)
@@ -302,6 +323,7 @@ This document summarizes the implementation of external authentication, role-bas
 ### RBAC Rules
 
 **Trainer Role:**
+
 - Create scenarios
 - Generate images/videos
 - View own scenarios in gallery
@@ -309,6 +331,7 @@ This document summarizes the implementation of external authentication, role-bas
 - View remaining quota
 
 **Admin Role:**
+
 - All trainer permissions
 - View all users' scenarios
 - Delete any scenario

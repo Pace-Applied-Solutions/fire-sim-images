@@ -19,8 +19,8 @@ interface GeneratedImagesProps {
   onRegenerateImage?: (viewpoint: string) => void;
 }
 
-export const GeneratedImages: React.FC<GeneratedImagesProps> = ({ 
-  result, 
+export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
+  result,
   perimeter,
   inputs,
   geoContext,
@@ -115,10 +115,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
     return (
       <div className={styles.container}>
         <div className={styles.comparisonHeader}>
-          <button
-            className={styles.backButton}
-            onClick={() => setShowComparison(false)}
-          >
+          <button className={styles.backButton} onClick={() => setShowComparison(false)}>
             ← Back to Grid
           </button>
         </div>
@@ -158,10 +155,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           )}
         </div>
         <div className={styles.headerActions}>
-          <button
-            className={styles.compareButton}
-            onClick={() => setShowComparison(true)}
-          >
+          <button className={styles.compareButton} onClick={() => setShowComparison(true)}>
             Compare Views
           </button>
           <button
@@ -189,7 +183,8 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             <div className={styles.imageInfo}>
               <h4 className={styles.viewpoint}>{formatViewpoint(result.anchorImage.viewPoint)}</h4>
               <p className={styles.metadata}>
-                {result.anchorImage.metadata.width} × {result.anchorImage.metadata.height} • {result.anchorImage.metadata.model}
+                {result.anchorImage.metadata.width} × {result.anchorImage.metadata.height} •{' '}
+                {result.anchorImage.metadata.model}
               </p>
             </div>
             <div className={styles.actions}>
@@ -206,7 +201,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
         )}
         {result.images.map((image, index) => (
           <div key={image.viewPoint} className={styles.imageCard}>
-            <div 
+            <div
               className={styles.imageWrapper}
               onClick={() => openLightbox(index)}
               role="button"

@@ -8,7 +8,7 @@ import type { GeneratedImage, ScenarioInputs } from '@fire-sim/shared';
 
 describe('ConsistencyValidator', () => {
   let validator: ConsistencyValidator;
-  
+
   const mockInputs: ScenarioInputs = {
     fireDangerRating: 'extreme',
     windSpeed: 50,
@@ -41,8 +41,16 @@ describe('ConsistencyValidator', () => {
     it('should pass validation for consistent image set', () => {
       const images = [
         createMockImage('aerial', 'Aerial photograph with NW winds and afternoon lighting', 12345),
-        createMockImage('helicopter_north', 'Helicopter view with NW winds and afternoon lighting', 12345),
-        createMockImage('ground_south', 'Ground-level view with NW winds and afternoon lighting', 12345),
+        createMockImage(
+          'helicopter_north',
+          'Helicopter view with NW winds and afternoon lighting',
+          12345
+        ),
+        createMockImage(
+          'ground_south',
+          'Ground-level view with NW winds and afternoon lighting',
+          12345
+        ),
       ];
 
       const result = validator.validateImageSet(images, mockInputs);
@@ -81,8 +89,20 @@ describe('ConsistencyValidator', () => {
 
     it('should detect different models', () => {
       const images = [
-        { ...createMockImage('aerial', 'Aerial view', 12345), metadata: { ...createMockImage('aerial', 'Aerial view', 12345).metadata, model: 'dall-e-3' } },
-        { ...createMockImage('helicopter_north', 'Helicopter view', 12345), metadata: { ...createMockImage('helicopter_north', 'Helicopter view', 12345).metadata, model: 'stable-diffusion' } },
+        {
+          ...createMockImage('aerial', 'Aerial view', 12345),
+          metadata: {
+            ...createMockImage('aerial', 'Aerial view', 12345).metadata,
+            model: 'dall-e-3',
+          },
+        },
+        {
+          ...createMockImage('helicopter_north', 'Helicopter view', 12345),
+          metadata: {
+            ...createMockImage('helicopter_north', 'Helicopter view', 12345).metadata,
+            model: 'stable-diffusion',
+          },
+        },
       ];
 
       const result = validator.validateImageSet(images, mockInputs);
@@ -94,7 +114,11 @@ describe('ConsistencyValidator', () => {
     it('should detect different seeds', () => {
       const images = [
         createMockImage('aerial', 'Aerial view with NW winds and afternoon lighting', 12345),
-        createMockImage('helicopter_north', 'Helicopter view with NW winds and afternoon lighting', 67890),
+        createMockImage(
+          'helicopter_north',
+          'Helicopter view with NW winds and afternoon lighting',
+          67890
+        ),
       ];
 
       const result = validator.validateImageSet(images, mockInputs);
@@ -104,9 +128,7 @@ describe('ConsistencyValidator', () => {
     });
 
     it('should include warnings for failed checks', () => {
-      const images = [
-        createMockImage('aerial', 'Some image without wind info', 12345),
-      ];
+      const images = [createMockImage('aerial', 'Some image without wind info', 12345)];
 
       const result = validator.validateImageSet(images, mockInputs);
 
@@ -127,9 +149,17 @@ describe('ConsistencyValidator', () => {
     });
 
     it('should validate with anchor image', () => {
-      const anchorImage = createMockImage('aerial', 'Aerial anchor view with NW winds and afternoon lighting', 12345);
+      const anchorImage = createMockImage(
+        'aerial',
+        'Aerial anchor view with NW winds and afternoon lighting',
+        12345
+      );
       const images = [
-        createMockImage('helicopter_north', 'Helicopter view with NW winds and afternoon lighting', 12345),
+        createMockImage(
+          'helicopter_north',
+          'Helicopter view with NW winds and afternoon lighting',
+          12345
+        ),
         createMockImage('ground_south', 'Ground view with NW winds and afternoon lighting', 12345),
       ];
 
@@ -236,8 +266,20 @@ describe('ConsistencyValidator', () => {
 
     it('should score lower with different models', () => {
       const images = [
-        { ...createMockImage('aerial', 'Aerial view', 12345), metadata: { ...createMockImage('aerial', 'Aerial view', 12345).metadata, model: 'dall-e-3' } },
-        { ...createMockImage('helicopter_north', 'Helicopter view', 12345), metadata: { ...createMockImage('helicopter_north', 'Helicopter view', 12345).metadata, model: 'stable-diffusion' } },
+        {
+          ...createMockImage('aerial', 'Aerial view', 12345),
+          metadata: {
+            ...createMockImage('aerial', 'Aerial view', 12345).metadata,
+            model: 'dall-e-3',
+          },
+        },
+        {
+          ...createMockImage('helicopter_north', 'Helicopter view', 12345),
+          metadata: {
+            ...createMockImage('helicopter_north', 'Helicopter view', 12345).metadata,
+            model: 'stable-diffusion',
+          },
+        },
       ];
 
       const result = validator.validateImageSet(images, mockInputs);
@@ -251,7 +293,11 @@ describe('ConsistencyValidator', () => {
     it('should generate a human-readable report', () => {
       const images = [
         createMockImage('aerial', 'Aerial view with NW winds and afternoon lighting', 12345),
-        createMockImage('helicopter_north', 'Helicopter view with NW winds and afternoon lighting', 12345),
+        createMockImage(
+          'helicopter_north',
+          'Helicopter view with NW winds and afternoon lighting',
+          12345
+        ),
       ];
 
       const result = validator.validateImageSet(images, mockInputs);
@@ -264,9 +310,7 @@ describe('ConsistencyValidator', () => {
     });
 
     it('should include warnings in report', () => {
-      const images = [
-        createMockImage('aerial', 'Random image without metadata', 12345),
-      ];
+      const images = [createMockImage('aerial', 'Random image without metadata', 12345)];
 
       const result = validator.validateImageSet(images, mockInputs);
       const report = validator.generateReport(result);
@@ -277,9 +321,7 @@ describe('ConsistencyValidator', () => {
     });
 
     it('should include recommendations in report', () => {
-      const images = [
-        createMockImage('aerial', 'Random image', 12345),
-      ];
+      const images = [createMockImage('aerial', 'Random image', 12345)];
 
       const result = validator.validateImageSet(images, mockInputs);
       const report = validator.generateReport(result);
@@ -294,7 +336,11 @@ describe('ConsistencyValidator', () => {
     it('should calculate weighted average correctly', () => {
       const images = [
         createMockImage('aerial', 'Perfect image with NW winds, afternoon lighting', 12345),
-        createMockImage('helicopter_north', 'Perfect image with NW winds, afternoon lighting', 12345),
+        createMockImage(
+          'helicopter_north',
+          'Perfect image with NW winds, afternoon lighting',
+          12345
+        ),
         createMockImage('ground_south', 'Perfect image with NW winds, afternoon lighting', 12345),
       ];
 
@@ -305,9 +351,7 @@ describe('ConsistencyValidator', () => {
     });
 
     it('should weight checks appropriately', () => {
-      const images = [
-        createMockImage('aerial', 'Image with correct winds', 12345),
-      ];
+      const images = [createMockImage('aerial', 'Image with correct winds', 12345)];
 
       const result = validator.validateImageSet(images, mockInputs);
 

@@ -28,7 +28,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Azure Login
         uses: azure/login@v2
@@ -66,3 +66,19 @@ jobs:
             --name firesim-${{ github.event.inputs.environment }}-${{ github.run_number }} \
             --query properties.outputs \
             -o json
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## Infrastructure Deployment Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "Validate Only: ${{ github.event.inputs.validateOnly }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.validateOnly }}" = "true" ]; then
+            echo "✅ Bicep template validation completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Infrastructure deployed successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Production deployments require manual approval as per environment protection rules" >> $GITHUB_STEP_SUMMARY

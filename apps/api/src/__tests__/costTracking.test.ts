@@ -37,8 +37,8 @@ describe('Cost Tracking', () => {
       });
 
       expect(breakdown.images.count).toBe(5);
-      expect(breakdown.images.costPerImage).toBe(0.040); // DALL-E 3 standard price
-      expect(breakdown.images.totalCost).toBe(5 * 0.040);
+      expect(breakdown.images.costPerImage).toBe(0.04); // DALL-E 3 standard price
+      expect(breakdown.images.totalCost).toBe(5 * 0.04);
     });
 
     it('should estimate cost for DALL-E 3 HD images', () => {
@@ -50,8 +50,8 @@ describe('Cost Tracking', () => {
       });
 
       expect(breakdown.images.count).toBe(5);
-      expect(breakdown.images.costPerImage).toBe(0.080); // DALL-E 3 HD price
-      expect(breakdown.images.totalCost).toBe(5 * 0.080);
+      expect(breakdown.images.costPerImage).toBe(0.08); // DALL-E 3 HD price
+      expect(breakdown.images.totalCost).toBe(5 * 0.08);
     });
 
     it('should estimate cost for videos', () => {
@@ -61,8 +61,8 @@ describe('Cost Tracking', () => {
       });
 
       expect(breakdown.videos.count).toBe(3);
-      expect(breakdown.videos.costPerVideo).toBe(0.50); // Default video price
-      expect(breakdown.videos.totalCost).toBe(3 * 0.50);
+      expect(breakdown.videos.costPerVideo).toBe(0.5); // Default video price
+      expect(breakdown.videos.totalCost).toBe(3 * 0.5);
     });
 
     it('should estimate storage cost', () => {
@@ -73,8 +73,8 @@ describe('Cost Tracking', () => {
       });
 
       expect(breakdown.storage.sizeBytes).toBe(20 * 1024 * 1024);
-      expect(breakdown.storage.costPerGB).toBe(0.020); // Default storage price
-      const expectedStorageCost = (20 / 1024) * 0.020;
+      expect(breakdown.storage.costPerGB).toBe(0.02); // Default storage price
+      const expectedStorageCost = (20 / 1024) * 0.02;
       expect(breakdown.storage.totalCost).toBeCloseTo(expectedStorageCost, 6);
     });
 
@@ -87,9 +87,9 @@ describe('Cost Tracking', () => {
         estimatedStorageMB: 10,
       });
 
-      const expectedImageCost = 5 * 0.040;
-      const expectedVideoCost = 2 * 0.50;
-      const expectedStorageCost = (10 / 1024) * 0.020;
+      const expectedImageCost = 5 * 0.04;
+      const expectedVideoCost = 2 * 0.5;
+      const expectedStorageCost = (10 / 1024) * 0.02;
       const expectedTotal = expectedImageCost + expectedVideoCost + expectedStorageCost;
 
       expect(breakdown.totalCost).toBeCloseTo(expectedTotal, 6);
@@ -107,7 +107,7 @@ describe('Cost Tracking', () => {
 
     it('should support custom pricing', () => {
       const customEstimator = new CostEstimator({
-        dalle3Standard: 0.050,
+        dalle3Standard: 0.05,
         videoGeneration: 0.75,
       });
 
@@ -118,7 +118,7 @@ describe('Cost Tracking', () => {
         imageQuality: 'standard',
       });
 
-      expect(breakdown.images.costPerImage).toBe(0.050);
+      expect(breakdown.images.costPerImage).toBe(0.05);
       expect(breakdown.videos.costPerVideo).toBe(0.75);
     });
 
@@ -192,7 +192,7 @@ describe('Cost Tracking', () => {
 
       const today = new Date();
       const summary = tracker.getDailySummary(today);
-      
+
       expect(summary.date).toBe(today.toISOString().split('T')[0]);
     });
 

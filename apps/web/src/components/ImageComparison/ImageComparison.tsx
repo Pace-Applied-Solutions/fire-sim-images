@@ -15,11 +15,7 @@ interface ImageComparisonProps {
 
 type ViewMode = 'grid' | 'sideBySide' | 'carousel';
 
-export const ImageComparison: React.FC<ImageComparisonProps> = ({
-  images,
-  anchorImage,
-  seed,
-}) => {
+export const ImageComparison: React.FC<ImageComparisonProps> = ({ images, anchorImage, seed }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedImages, setSelectedImages] = useState<[number, number]>([0, 1]);
   const [carouselIndex, setCarouselIndex] = useState(0);

@@ -132,17 +132,96 @@ Import shared types in any workspace:
 import { ScenarioInputs, ViewPoint, VIEWPOINTS } from '@fire-sim/shared';
 ```
 
+## Testing
+
+Run tests across all packages:
+
+```bash
+npm run test          # Run all tests
+npm run test:unit     # Unit tests only
+npm run test:coverage # With coverage report
+```
+
+For more details, see [docs/TESTING.md](docs/TESTING.md).
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+- **CI Pipeline** (`.github/workflows/ci.yml`): Runs on every push/PR
+  - Installs dependencies
+  - Formats check with Prettier
+  - Lints with ESLint
+  - Type-checks with TypeScript
+  - Runs unit tests
+  - Generates coverage reports
+
+- **Deploy Web** (`.github/workflows/deploy-web.yml`): Deploys front-end to Azure Static Web Apps on merge to main
+- **Deploy API** (`.github/workflows/deploy-api.yml`): Deploys Azure Functions API on merge to main
+- **Deploy Infrastructure** (`.github/workflows/deploy-infra.yml`): Manual deployment of Azure resources
+
+### Environment Configuration
+
+The application requires the following environment variables:
+
+#### Development (Local)
+
+Create `.env.local` in `apps/web/`:
+
+```bash
+VITE_MAPBOX_TOKEN=pk.eyJ...
+VITE_API_BASE_URL=http://localhost:7071/api
+VITE_APPINSIGHTS_CONNECTION_STRING=InstrumentationKey=...
+```
+
+#### GitHub Secrets (for CI/CD)
+
+Configure these secrets in **GitHub repository Settings → Secrets and variables → Actions**:
+
+| Secret Name                          | Description                      | Required For                   |
+| ------------------------------------ | -------------------------------- | ------------------------------ |
+| `AZURE_CREDENTIALS`                  | Service principal JSON           | Infrastructure, API deployment |
+| `AZURE_RESOURCE_GROUP`               | Resource group name              | Infrastructure deployment      |
+| `AZURE_SUBSCRIPTION_ID`              | Azure subscription ID            | Infrastructure deployment      |
+| `VITE_MAPBOX_TOKEN`                  | Mapbox API token                 | Web deployment                 |
+| `VITE_API_BASE_URL`                  | API base URL                     | Web deployment                 |
+| `VITE_APPINSIGHTS_CONNECTION_STRING` | Application Insights connection  | Web deployment                 |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN`    | Static Web Apps deployment token | Web deployment                 |
+| `AZURE_FUNCTION_APP_NAME`            | Function app name                | API deployment                 |
+| `AZURE_FUNCTION_APP_URL`             | Function app URL                 | API smoke tests                |
+
+#### GitHub Environments
+
+Set up environments for staging and production:
+
+1. Go to **Settings → Environments**
+2. Create `staging` and `production` environments
+3. For `production`, enable **Required reviewers** for manual approval
+4. Add environment-specific secrets (same names as above, different values)
+
+For complete deployment setup, see [docs/admin-guide.md](docs/admin-guide.md).
+
+## Documentation
+
+- **[Trainer Guide](docs/trainer-guide.md)** — End-user guide for creating scenarios
+- **[Admin Guide](docs/admin-guide.md)** — System administration and troubleshooting
+- **[API Reference](docs/api-reference.md)** — Complete API endpoint documentation
+- **[Master Plan](docs/master_plan.md)** — Project architecture and roadmap
+- **[Background Research](docs/background.md)** — Problem context and research
+- **[Technical Considerations](docs/tech_considerations.md)** — Technical decisions
+- **[Roadmap](docs/roadmap.md)** — Future enhancements (Phase 2-5)
+- **[Architecture Decision Records](docs/adr/)** — Key architectural decisions
+
 ## Next Steps
 
-This is Phase 0 (Project Setup) of the master plan. Next phases include:
+**MVP Complete!** The system is ready for trainer validation. Next phases:
 
-1. **Phase 1:** Map interface and scenario inputs
-2. **Phase 2:** Geospatial data integration
-3. **Phase 3:** Prompt generation and image output
-4. **Phase 4:** Video generation
-5. **Phase 5:** Validation and hardening
+1. **Phase 2:** Enhanced spatial control (SDXL + ControlNet, depth maps, inpainting)
+2. **Phase 3:** Fire spread simulation (progressive injects, time-stepped scenarios)
+3. **Phase 4:** Longer and higher-quality video (30-60 second clips, 1080p+)
+4. **Phase 5:** Advanced features (custom camera positions, AR overlay, integrations)
 
-See [docs/master_plan.md](docs/master_plan.md) for the full roadmap.
+See [docs/roadmap.md](docs/roadmap.md) for the complete future roadmap.
 
 ## Contributing
 

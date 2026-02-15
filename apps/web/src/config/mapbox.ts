@@ -11,9 +11,7 @@
  * Supports VITE_MAPBOX_TOKEN for consistent naming with the master plan.
  * Returns undefined if no token is configured.
  */
-export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as
-	| string
-	| undefined;
+export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
 
 /**
  * Default map center coordinates for NSW, Australia.

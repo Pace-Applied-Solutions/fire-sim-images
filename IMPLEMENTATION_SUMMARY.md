@@ -3,6 +3,7 @@
 ## What Was Built
 
 ### Backend Services (7 new files)
+
 1. **Image Generation Provider Abstraction** (`imageGenerationProvider.ts`)
    - Interface defining contract for any AI image generation service
    - `ImageGenOptions`, `ImageGenResult`, `ImageGenerationProvider` interfaces
@@ -37,6 +38,7 @@
    - Error handling: catches and logs failures, continues with remaining images
 
 ### API Endpoints (3 functions)
+
 1. **POST /api/generate** - Start generation request
    - Accepts `GenerationRequest` with perimeter, inputs, geoContext, requestedViews
    - Returns `{ scenarioId, statusUrl }` (HTTP 202 Accepted)
@@ -51,6 +53,7 @@
    - HTTP 202 if still in progress, 200 when complete
 
 ### Frontend Integration (5 files)
+
 1. **Generation API Client** (`generationApi.ts`)
    - Type-safe API wrapper with fetch-based HTTP client
    - `pollForCompletion()` helper with configurable interval and timeout
@@ -79,6 +82,7 @@
    - Auto-opens results panel on completion
 
 ### Documentation & Testing
+
 - **TESTING_ISSUE_8.md**: Comprehensive testing guide
   - Setup instructions
   - API endpoint examples with curl commands
@@ -105,10 +109,12 @@
 8. **Cost Tracking**: Logs estimated cost per scenario for monitoring
 
 ## Dependencies Added
+
 - `@azure/storage-blob@^13.28.0` - Azure Blob Storage SDK
 - `uuid@^11.0.5` - Scenario ID generation
 
 ## Security Summary
+
 - ✅ CodeQL analysis: 0 vulnerabilities found
 - ✅ Code review: All feedback addressed
 - ✅ Type safety: Proper TypeScript types throughout
@@ -132,6 +138,7 @@
 ✅ Cost per scenario is logged
 
 ## What's NOT Included (Out of Scope)
+
 - Actual Stable Diffusion or DALL-E API integration (mock provider only)
 - Azure Durable Functions orchestration (using in-memory Map)
 - Viewpoint selection UI (hardcoded to 5 default viewpoints)
@@ -141,6 +148,7 @@
 - Azure Functions deployment (Bicep exists from Issue 2)
 
 ## Next Steps for Production
+
 1. Replace `StableDiffusionProvider` with real API integration
 2. Migrate from in-memory Map to Azure Durable Functions for scale
 3. Deploy to Azure Static Web App + Functions
@@ -151,7 +159,9 @@
 8. Implement video generation (Issue 9)
 
 ## Files Changed
+
 **New Files (20):**
+
 - `apps/api/src/services/imageGenerationProvider.ts`
 - `apps/api/src/services/stableDiffusionProvider.ts`
 - `apps/api/src/services/imageGenerator.ts`
@@ -167,6 +177,7 @@
 - `TESTING_ISSUE_8.md`
 
 **Modified Files (7):**
+
 - `apps/api/src/functions/generateScenario.ts` - Wired to orchestrator
 - `apps/api/src/index.ts` - Export new functions
 - `apps/api/package.json` - Added blob storage dependency
@@ -177,11 +188,13 @@
 - `package-lock.json` - Dependency lock updates
 
 ## Lines of Code
+
 - **Backend**: ~1,200 LOC
 - **Frontend**: ~800 LOC
 - **Total**: ~2,000 LOC (excluding tests, which don't exist yet per minimal change instructions)
 
 ## Performance Characteristics
+
 - **Geodata Lookup**: < 100ms (cached)
 - **Prompt Generation**: < 50ms
 - **Image Generation**: ~10-30s per image (mock mode)

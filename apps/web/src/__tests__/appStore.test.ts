@@ -27,36 +27,36 @@ describe('App Store', () => {
     it('should transition to drawing state', () => {
       const { setScenarioState } = useAppStore.getState();
       setScenarioState('drawing');
-      
+
       const state = useAppStore.getState();
       expect(state.scenarioState).toBe('drawing');
     });
 
     it('should transition through all valid states', () => {
       const { setScenarioState } = useAppStore.getState();
-      
+
       setScenarioState('idle');
       expect(useAppStore.getState().scenarioState).toBe('idle');
-      
+
       setScenarioState('drawing');
       expect(useAppStore.getState().scenarioState).toBe('drawing');
-      
+
       setScenarioState('configuring');
       expect(useAppStore.getState().scenarioState).toBe('configuring');
-      
+
       setScenarioState('generating');
       expect(useAppStore.getState().scenarioState).toBe('generating');
-      
+
       setScenarioState('complete');
       expect(useAppStore.getState().scenarioState).toBe('complete');
     });
 
     it('should handle error state', () => {
       const { setScenarioState, setError } = useAppStore.getState();
-      
+
       setScenarioState('error');
       setError('Something went wrong');
-      
+
       const state = useAppStore.getState();
       expect(state.scenarioState).toBe('error');
       expect(state.error).toBe('Something went wrong');
@@ -65,7 +65,7 @@ describe('App Store', () => {
     it('should support setState alias', () => {
       const { setState } = useAppStore.getState();
       setState('drawing');
-      
+
       const state = useAppStore.getState();
       expect(state.scenarioState).toBe('drawing');
     });
@@ -77,7 +77,15 @@ describe('App Store', () => {
         type: 'Feature',
         geometry: {
           type: 'Polygon',
-          coordinates: [[[150.31, -33.72], [150.32, -33.72], [150.32, -33.71], [150.31, -33.71], [150.31, -33.72]]],
+          coordinates: [
+            [
+              [150.31, -33.72],
+              [150.32, -33.72],
+              [150.32, -33.71],
+              [150.31, -33.71],
+              [150.31, -33.72],
+            ],
+          ],
         },
         properties: {
           drawn: true,
@@ -97,7 +105,15 @@ describe('App Store', () => {
         type: 'Feature',
         geometry: {
           type: 'Polygon',
-          coordinates: [[[150.31, -33.72], [150.32, -33.72], [150.32, -33.71], [150.31, -33.71], [150.31, -33.72]]],
+          coordinates: [
+            [
+              [150.31, -33.72],
+              [150.32, -33.72],
+              [150.32, -33.71],
+              [150.31, -33.71],
+              [150.31, -33.72],
+            ],
+          ],
         },
         properties: {
           drawn: true,
@@ -210,40 +226,40 @@ describe('App Store', () => {
 
     it('should toggle sidebar', () => {
       const { toggleSidebar } = useAppStore.getState();
-      
+
       toggleSidebar();
       expect(useAppStore.getState().isSidebarOpen).toBe(false);
-      
+
       toggleSidebar();
       expect(useAppStore.getState().isSidebarOpen).toBe(true);
     });
 
     it('should toggle results panel', () => {
       const { toggleResultsPanel } = useAppStore.getState();
-      
+
       toggleResultsPanel();
       expect(useAppStore.getState().isResultsPanelOpen).toBe(true);
-      
+
       toggleResultsPanel();
       expect(useAppStore.getState().isResultsPanelOpen).toBe(false);
     });
 
     it('should set sidebar state directly', () => {
       const { setSidebarOpen } = useAppStore.getState();
-      
+
       setSidebarOpen(false);
       expect(useAppStore.getState().isSidebarOpen).toBe(false);
-      
+
       setSidebarOpen(true);
       expect(useAppStore.getState().isSidebarOpen).toBe(true);
     });
 
     it('should set results panel state directly', () => {
       const { setResultsPanelOpen } = useAppStore.getState();
-      
+
       setResultsPanelOpen(true);
       expect(useAppStore.getState().isResultsPanelOpen).toBe(true);
-      
+
       setResultsPanelOpen(false);
       expect(useAppStore.getState().isResultsPanelOpen).toBe(false);
     });
@@ -281,7 +297,15 @@ describe('App Store', () => {
         type: 'Feature',
         geometry: {
           type: 'Polygon',
-          coordinates: [[[150.31, -33.72], [150.32, -33.72], [150.32, -33.71], [150.31, -33.71], [150.31, -33.72]]],
+          coordinates: [
+            [
+              [150.31, -33.72],
+              [150.32, -33.72],
+              [150.32, -33.71],
+              [150.31, -33.71],
+              [150.31, -33.72],
+            ],
+          ],
         },
         properties: {
           drawn: true,

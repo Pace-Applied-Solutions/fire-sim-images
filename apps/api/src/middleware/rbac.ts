@@ -17,14 +17,14 @@ export function hasRole(user: User, role: UserRole): boolean {
  * Check if user has any of the specified roles.
  */
 export function hasAnyRole(user: User, roles: UserRole[]): boolean {
-  return roles.some(role => user.roles.includes(role));
+  return roles.some((role) => user.roles.includes(role));
 }
 
 /**
  * Check if user has all of the specified roles.
  */
 export function hasAllRoles(user: User, roles: UserRole[]): boolean {
-  return roles.every(role => user.roles.includes(role));
+  return roles.every((role) => user.roles.includes(role));
 }
 
 /**
@@ -44,7 +44,9 @@ export function isTrainer(user: User): boolean {
 /**
  * Create a 403 Forbidden response.
  */
-export function createForbiddenResponse(message: string = 'Insufficient permissions'): HttpResponseInit {
+export function createForbiddenResponse(
+  message: string = 'Insufficient permissions'
+): HttpResponseInit {
   return {
     status: 403,
     jsonBody: {
@@ -71,7 +73,9 @@ export function requireRole(user: User, role: UserRole): HttpResponseInit | null
  */
 export function requireAnyRole(user: User, roles: UserRole[]): HttpResponseInit | null {
   if (!hasAnyRole(user, roles)) {
-    return createForbiddenResponse(`This action requires one of the following roles: ${roles.join(', ')}`);
+    return createForbiddenResponse(
+      `This action requires one of the following roles: ${roles.join(', ')}`
+    );
   }
   return null;
 }
@@ -82,7 +86,9 @@ export function requireAnyRole(user: User, roles: UserRole[]): HttpResponseInit 
  */
 export function requireAllRoles(user: User, roles: UserRole[]): HttpResponseInit | null {
   if (!hasAllRoles(user, roles)) {
-    return createForbiddenResponse(`This action requires all of the following roles: ${roles.join(', ')}`);
+    return createForbiddenResponse(
+      `This action requires all of the following roles: ${roles.join(', ')}`
+    );
   }
   return null;
 }

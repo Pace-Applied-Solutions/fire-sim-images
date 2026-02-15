@@ -52,13 +52,14 @@ export async function healthCheck(
   checks.push(await checkExternalData());
 
   // Determine overall status
-  const hasUnhealthy = checks.some(c => c.status === 'unhealthy');
-  const hasDegraded = checks.some(c => c.status === 'degraded');
-  
-  const overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 
-    hasUnhealthy ? 'unhealthy' : 
-    hasDegraded ? 'degraded' : 
-    'healthy';
+  const hasUnhealthy = checks.some((c) => c.status === 'unhealthy');
+  const hasDegraded = checks.some((c) => c.status === 'degraded');
+
+  const overallStatus: 'healthy' | 'degraded' | 'unhealthy' = hasUnhealthy
+    ? 'unhealthy'
+    : hasDegraded
+      ? 'degraded'
+      : 'healthy';
 
   const response: HealthCheckResponse = {
     status: overallStatus,
@@ -67,7 +68,7 @@ export async function healthCheck(
     checks,
   };
 
-  logger.info('Health check completed', { 
+  logger.info('Health check completed', {
     status: overallStatus,
     checksCount: checks.length,
   });
@@ -83,10 +84,10 @@ export async function healthCheck(
  */
 async function checkApplicationInsights(): Promise<HealthCheck> {
   const startTime = Date.now();
-  
+
   try {
     const connectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
-    
+
     if (!connectionString) {
       return {
         service: 'Application Insights',
@@ -117,10 +118,10 @@ async function checkApplicationInsights(): Promise<HealthCheck> {
  */
 async function checkBlobStorage(): Promise<HealthCheck> {
   const startTime = Date.now();
-  
+
   try {
     const connectionString = process.env.STORAGE_CONNECTION_STRING;
-    
+
     if (!connectionString) {
       return {
         service: 'Blob Storage',
@@ -131,7 +132,7 @@ async function checkBlobStorage(): Promise<HealthCheck> {
     }
 
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-    
+
     // Try to list containers (lightweight operation)
     const iterator = blobServiceClient.listContainers();
     await iterator.next();
@@ -157,10 +158,10 @@ async function checkBlobStorage(): Promise<HealthCheck> {
  */
 async function checkKeyVault(): Promise<HealthCheck> {
   const startTime = Date.now();
-  
+
   try {
     const vaultUrl = process.env.KEY_VAULT_URL;
-    
+
     if (!vaultUrl) {
       return {
         service: 'Key Vault',
@@ -172,7 +173,7 @@ async function checkKeyVault(): Promise<HealthCheck> {
 
     const credential = new DefaultAzureCredential();
     const client = new SecretClient(vaultUrl, credential);
-    
+
     // Try to list secrets (just get the first page)
     const iterator = client.listPropertiesOfSecrets();
     await iterator.next();
@@ -198,12 +199,12 @@ async function checkKeyVault(): Promise<HealthCheck> {
  */
 async function checkAIServices(): Promise<HealthCheck> {
   const startTime = Date.now();
-  
+
   try {
     // Check if we have Foundry or OpenAI configuration
     const foundryEndpoint = process.env.AI_FOUNDRY_ENDPOINT;
     const openaiEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    
+
     if (!foundryEndpoint && !openaiEndpoint) {
       return {
         service: 'AI Services',
@@ -236,7 +237,7 @@ async function checkAIServices(): Promise<HealthCheck> {
  */
 async function checkExternalData(): Promise<HealthCheck> {
   const startTime = Date.now();
-  
+
   try {
     // Check NSW spatial data endpoints with a HEAD request
     // Note: AbortSignal.timeout() requires Node.js >=17.3.0 (Azure Functions v4 uses Node 20)

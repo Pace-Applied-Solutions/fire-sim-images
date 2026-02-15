@@ -175,7 +175,10 @@ const resolveProfile = (centroid: { lat: number; lng: number }): GeoContext | un
       centroid.lng <= region.bounds.lng[1]
   )?.context;
 
-export async function geodata(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+export async function geodata(
+  request: HttpRequest,
+  context: InvocationContext
+): Promise<HttpResponseInit> {
   let coordinates: PolygonCoordinates | undefined;
   let polygonHash = '';
 
@@ -215,7 +218,11 @@ export async function geodata(request: HttpRequest, context: InvocationContext):
     };
 
     cache.set(polygonHash, response);
-    context.log('geodata.cached', { polygonHash, dataSource: response.dataSource, confidence: response.confidence });
+    context.log('geodata.cached', {
+      polygonHash,
+      dataSource: response.dataSource,
+      confidence: response.confidence,
+    });
 
     return {
       status: 200,

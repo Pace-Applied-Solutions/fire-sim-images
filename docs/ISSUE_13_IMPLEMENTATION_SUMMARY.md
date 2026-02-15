@@ -12,7 +12,7 @@ This implementation provides comprehensive observability, monitoring, and struct
 
 - **Logger class** with debug, info, warn, error levels
 - **Context tracking:** scenarioId, userId, correlationId automatically included
-- **Multiple outputs:** 
+- **Multiple outputs:**
   - Azure Functions context logging
   - Console (for local development)
   - Application Insights (for production monitoring)
@@ -20,6 +20,7 @@ This implementation provides comprehensive observability, monitoring, and struct
 - **Type-safe** error property access
 
 **Usage Example:**
+
 ```typescript
 const logger = createLogger(context, { scenarioId: 'abc-123' });
 logger.info('Generation started', { viewCount: 5 });
@@ -39,6 +40,7 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
   - `trackMetric()` - Track custom metrics
 
 **Generation-Specific Metrics:**
+
 - `generation.duration_ms` - End-to-end generation time
 - `generation.images_count` - Number of images generated
 - `generation.errors_count` - Generation failures
@@ -56,6 +58,7 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
 - **Daily summaries** for reporting
 
 **Pricing (USD):**
+
 - DALL-E 3 Standard: $0.040 per image
 - DALL-E 3 HD: $0.080 per image
 - Stable Image Core: $0.033 per image
@@ -68,6 +71,7 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
 **Endpoint:** `GET /api/health`
 
 **Service Checks:**
+
 - Application Insights connectivity
 - Blob Storage (list containers test)
 - Key Vault (list secrets test)
@@ -75,6 +79,7 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
 - External Data (NSW spatial services HEAD request)
 
 **Response Format:**
+
 ```json
 {
   "status": "healthy|degraded|unhealthy",
@@ -98,6 +103,7 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
 **Authentication:** Function-level (requires API key)
 
 **Response:**
+
 ```json
 {
   "date": "2024-02-15",
@@ -137,6 +143,7 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
 **File:** `apps/api/src/services/generationOrchestrator.ts`
 
 **Logged Events:**
+
 - Generation request received (scenarioId, viewCount)
 - Prompts generated (count, templateVersion)
 - Anchor image generation start/complete (viewpoint, duration, model)
@@ -147,11 +154,13 @@ logger.error('Generation failed', error, { viewpoint: 'aerial' });
 - Generation completion (status, completedImages, failedImages, totalDuration)
 
 **Performance Tracking:**
+
 - End-to-end generation timer
 - Per-step timers (prompt, anchor image, uploads)
 - All durations sent as custom metrics
 
 **Cost Tracking:**
+
 - Automatic cost estimation after generation
 - Cost breakdown stored with scenario
 - Usage recorded in global tracker
@@ -237,11 +246,13 @@ traces
 ## Cost Management
 
 **Application Insights Free Tier:**
+
 - 5 GB/month data ingestion included
 - Overage: $2.30/GB
 - Monitor usage: Azure Portal > Application Insights > Usage and estimated costs
 
 **Typical Usage (estimate):**
+
 - Log entry: ~1-2 KB
 - Metric: ~0.5 KB
 - Exception: ~2-4 KB

@@ -13,11 +13,7 @@ interface ScenarioCardProps {
   onDelete: (scenarioId: string) => void;
 }
 
-export const ScenarioCard: React.FC<ScenarioCardProps> = ({
-  scenario,
-  onClick,
-  onDelete,
-}) => {
+export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onClick, onDelete }) => {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Are you sure you want to delete this scenario? This action cannot be undone.')) {
@@ -42,11 +38,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
               minute: '2-digit',
             })}
           </div>
-          <button
-            className={styles.deleteButton}
-            onClick={handleDelete}
-            title="Delete scenario"
-          >
+          <button className={styles.deleteButton} onClick={handleDelete} title="Delete scenario">
             🗑️
           </button>
         </div>

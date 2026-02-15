@@ -1,11 +1,16 @@
 /**
  * Azure Function: List Scenarios
  * GET /api/scenarios
- * 
+ *
  * Returns a paginated list of past scenarios with metadata.
  */
 
-import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from '@azure/functions';
+import {
+  app,
+  type HttpRequest,
+  type HttpResponseInit,
+  type InvocationContext,
+} from '@azure/functions';
 import { BlobStorageService } from '../services/blobStorage';
 import type { ScenarioMetadata, ScenarioSummary } from '@fire-sim/shared';
 
@@ -79,10 +84,7 @@ export async function listScenarios(
 /**
  * Create a scenario summary from full metadata.
  */
-function createScenarioSummary(
-  scenarioId: string,
-  metadata: ScenarioMetadata
-): ScenarioSummary {
+function createScenarioSummary(scenarioId: string, metadata: ScenarioMetadata): ScenarioSummary {
   // Calculate centroid from perimeter
   const coordinates = metadata.perimeter.geometry.coordinates[0];
   const centroid = calculateCentroid(coordinates);
