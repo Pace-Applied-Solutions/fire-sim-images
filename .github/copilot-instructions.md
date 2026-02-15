@@ -42,4 +42,3 @@ Purpose: Keep all work aligned to the master plan and the project vision.
 - Monitor latency, cost per scenario, and error rates from the start.
 - Provide sensible defaults and guardrails so trainers can generate credible outputs quickly.
 - Use managed identities over connection strings for Azure service authentication.
-

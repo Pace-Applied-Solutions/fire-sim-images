@@ -1,11 +1,16 @@
 /**
  * Azure Function: Delete Scenario
  * DELETE /api/scenarios/{scenarioId}
- * 
+ *
  * Deletes a scenario and all its associated images and metadata.
  */
 
-import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from '@azure/functions';
+import {
+  app,
+  type HttpRequest,
+  type HttpResponseInit,
+  type InvocationContext,
+} from '@azure/functions';
 import { BlobStorageService } from '../services/blobStorage';
 
 export async function deleteScenario(
@@ -26,7 +31,7 @@ export async function deleteScenario(
 
   try {
     const blobService = new BlobStorageService(context);
-    
+
     // Check if scenario exists by trying to get its metadata
     try {
       await blobService.getMetadata(scenarioId);

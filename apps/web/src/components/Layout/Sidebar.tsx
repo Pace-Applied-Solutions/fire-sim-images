@@ -27,11 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ children }) => {
 
       {/* Mobile backdrop */}
       {isSidebarOpen && (
-        <div
-          className={styles.backdrop}
-          onClick={toggleSidebar}
-          aria-hidden="true"
-        />
+        <div className={styles.backdrop} onClick={toggleSidebar} aria-hidden="true" />
       )}
     </>
   );

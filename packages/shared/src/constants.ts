@@ -90,7 +90,8 @@ export const VEGETATION_DESCRIPTORS: Record<string, string> = {
   'Grassy Woodland': 'open woodland with scattered eucalypts over native grasses',
   'Cumberland Plain Woodland': 'dry woodland on shale with sparse canopy and grassy groundlayer',
   'Riverine Forest': 'eucalypt forest along waterways with moist understorey',
-  'Swamp Sclerophyll Forest': 'wet sclerophyll forest on poorly drained soils with paperbark and swamp mahogany',
+  'Swamp Sclerophyll Forest':
+    'wet sclerophyll forest on poorly drained soils with paperbark and swamp mahogany',
   'Coastal Sand Heath': 'wind-shaped coastal heath on sandy ridges with banksia and tea-tree',
   'Alpine Complex': 'alpine heath and grass mosaic with stunted shrubs and herbfields',
   'Plantation Forest': 'structured plantation rows with dense fuel between tree lines',

@@ -35,10 +35,11 @@ infra/
 Before deploying, ensure you have:
 
 1. **Azure CLI** installed and configured
+
    ```bash
    # Install Azure CLI
    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-   
+
    # Or on macOS
    brew install azure-cli
    ```
@@ -48,6 +49,7 @@ Before deploying, ensure you have:
    - Permission to create role assignments for managed identities
 
 3. **Azure login**
+
    ```bash
    az login
    ```
@@ -64,21 +66,25 @@ Before deploying, ensure you have:
 The `deploy.sh` script provides a simple way to validate and deploy the infrastructure.
 
 **Development environment:**
+
 ```bash
 ./deploy.sh -g firesim-rg-dev -e dev
 ```
 
 **Production environment:**
+
 ```bash
 ./deploy.sh -g firesim-rg-prod -e prod
 ```
 
 **Validate only (no deployment):**
+
 ```bash
 ./deploy.sh -g firesim-rg-dev -e dev -v
 ```
 
 **Options:**
+
 - `-e, --environment` — Environment name (dev or prod). Default: dev
 - `-g, --group` — Resource group name (required)
 - `-l, --location` — Azure region. Default: australiaeast
@@ -88,6 +94,7 @@ The `deploy.sh` script provides a simple way to validate and deploy the infrastr
 ### Using Azure CLI directly
 
 **Create resource group:**
+
 ```bash
 az group create \
   --name firesim-rg-dev \
@@ -95,6 +102,7 @@ az group create \
 ```
 
 **Validate deployment:**
+
 ```bash
 az deployment group validate \
   --resource-group firesim-rg-dev \
@@ -103,6 +111,7 @@ az deployment group validate \
 ```
 
 **Deploy infrastructure:**
+
 ```bash
 az deployment group create \
   --resource-group firesim-rg-dev \
@@ -112,6 +121,7 @@ az deployment group create \
 ```
 
 **View deployment outputs:**
+
 ```bash
 az deployment group show \
   --resource-group firesim-rg-dev \
@@ -130,6 +140,7 @@ A workflow stub is provided at `.github/workflows/deploy-infra.yml` for automate
    - `AZURE_RESOURCE_GROUP` — Target resource group name
 
 2. Create service principal:
+
    ```bash
    az ad sp create-for-rbac \
      --name "firesim-github-deploy" \
@@ -141,6 +152,7 @@ A workflow stub is provided at `.github/workflows/deploy-infra.yml` for automate
 3. Copy the JSON output and add it as the `AZURE_CREDENTIALS` secret in GitHub
 
 **Trigger deployment:**
+
 - Navigate to Actions → Deploy Infrastructure → Run workflow
 - Select environment (dev or prod)
 - Choose whether to validate only or deploy
@@ -150,6 +162,7 @@ A workflow stub is provided at `.github/workflows/deploy-infra.yml` for automate
 ### Development (`dev.bicepparam`)
 
 Optimized for cost and development speed:
+
 - Static Web App: Free tier
 - Storage: Locally redundant (LRS)
 - Key Vault: Standard tier
@@ -159,6 +172,7 @@ Optimized for cost and development speed:
 ### Production (`prod.bicepparam`)
 
 Optimized for reliability and performance:
+
 - Static Web App: Standard tier (with staging environments)
 - Storage: Read-access geo-redundant (RAGRS)
 - Key Vault: Premium tier (HSM-backed keys)
@@ -170,6 +184,7 @@ Optimized for reliability and performance:
 ### Static Web App
 
 The Static Web App is configured with:
+
 - System-assigned managed identity for secure access to other Azure services
 - Embedded Azure Functions API at `/api` (Node.js 20, TypeScript)
 - Build configuration:
@@ -180,11 +195,13 @@ The Static Web App is configured with:
 ### Storage Account
 
 Three blob containers are created:
+
 - `generated-images` — Stores generated bushfire images
 - `generated-videos` — Stores generated video clips
 - `scenario-data` — Stores scenario metadata and configurations
 
 **Features:**
+
 - CORS enabled for Static Web App origin
 - Lifecycle management: Moves blobs to cool tier after 30 days
 - TLS 1.2+ required
@@ -193,6 +210,7 @@ Three blob containers are created:
 ### Key Vault
 
 Configured for secure secrets management:
+
 - Soft delete enabled (90-day retention)
 - Purge protection enabled
 - Access granted to Static Web App managed identity (Get and List secrets)
@@ -204,12 +222,14 @@ Configured for secure secrets management:
 ### Azure OpenAI
 
 Deployed with DALL-E 3 model for image generation:
+
 - Model: `dall-e-3`
 - Version: `3.0`
 - Capacity: 1 unit (dev), 2 units (prod)
 - Content filtering: Default policy
 
 **Note:** If you are supplying an existing Cognitive Services deployment (e.g., FLUX.1-Kontext-pro), skip the AI deployment modules and populate these secrets manually in Key Vault for the Functions app to read:
+
 - `Flux--Endpoint` — e.g., https://your-resource.cognitiveservices.azure.com
 - `Flux--ApiKey` — the key from the deployment
 - `Flux--Deployment` — the deployment name (e.g., FLUX.1-Kontext-pro)
@@ -220,13 +240,14 @@ Deployed with DALL-E 3 model for image generation:
 After deployment, you'll need to:
 
 1. **Add secrets to Key Vault:**
+
    ```bash
    # Azure OpenAI API key
    az keyvault secret set \
      --vault-name <key-vault-name> \
      --name "AzureOpenAI--ApiKey" \
      --value "<api-key>"
-   
+
    # Mapbox access token (if using Mapbox)
    az keyvault secret set \
      --vault-name <key-vault-name> \
@@ -298,6 +319,7 @@ az cognitiveservices account deployment show \
 ### Deployment fails with "Resource not available in region"
 
 Azure OpenAI is not available in all regions. If deployment fails:
+
 1. Check Azure OpenAI region availability: https://aka.ms/oai/models
 2. Update the `location` parameter to a supported region (e.g., `eastus2`)
 3. Redeploy
@@ -305,6 +327,7 @@ Azure OpenAI is not available in all regions. If deployment fails:
 ### Key Vault access denied
 
 If the Static Web App cannot access Key Vault:
+
 1. Verify the managed identity is enabled: `az staticwebapp show --name <name> --query identity`
 2. Check access policies: `az keyvault show --name <name> --query properties.accessPolicies`
 3. Manually grant access: `az keyvault set-policy --name <kv-name> --object-id <principal-id> --secret-permissions get list`
@@ -312,6 +335,7 @@ If the Static Web App cannot access Key Vault:
 ### Storage CORS errors
 
 If CORS errors occur:
+
 1. Verify the Static Web App URL is in the allowed origins
 2. Update CORS rules: `az storage cors add --services b --methods GET POST PUT --origins <url> --account-name <name>`
 
@@ -338,12 +362,14 @@ az group delete --name firesim-rg-dev --yes
 ## Cost Management
 
 **Development environment (approximate monthly costs):**
+
 - Static Web App (Free): $0
 - Storage Account (LRS, 10GB): ~$0.25
 - Key Vault (Standard): ~$0.03 per 10K operations
 - Azure OpenAI (DALL-E 3): Pay-per-use (~$0.04 per image)
 
 **Production environment:**
+
 - Static Web App (Standard): ~$9/month
 - Storage Account (RAGRS, 100GB): ~$5
 - Key Vault (Premium): ~$0.03 per 10K operations + HSM costs

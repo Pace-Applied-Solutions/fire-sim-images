@@ -31,13 +31,9 @@ export function getTelemetryClient(): appInsights.TelemetryClient | null {
 /**
  * Track a custom metric value.
  */
-export function trackMetric(
-  name: string,
-  value: number,
-  context?: MetricContext
-): void {
+export function trackMetric(name: string, value: number, context?: MetricContext): void {
   const client = getTelemetryClient();
-  
+
   if (!client) {
     console.debug(`[Metrics] ${name}: ${value}`, context);
     return;
@@ -64,10 +60,7 @@ export function trackDuration(
 /**
  * Track a counter (increment by 1).
  */
-export function trackCount(
-  name: string,
-  context?: MetricContext
-): void {
+export function trackCount(name: string, context?: MetricContext): void {
   trackMetric(name, 1, context);
 }
 
@@ -105,10 +98,7 @@ export class PerformanceTimer {
 /**
  * Start a performance timer for an operation.
  */
-export function startTimer(
-  operation: string,
-  context?: MetricContext
-): PerformanceTimer {
+export function startTimer(operation: string, context?: MetricContext): PerformanceTimer {
   return new PerformanceTimer(operation, context);
 }
 
@@ -134,11 +124,7 @@ export async function measureAsync<T>(
 /**
  * Measure the duration of a synchronous operation.
  */
-export function measureSync<T>(
-  operation: string,
-  fn: () => T,
-  context?: MetricContext
-): T {
+export function measureSync<T>(operation: string, fn: () => T, context?: MetricContext): T {
   const timer = startTimer(operation, context);
   try {
     const result = fn();

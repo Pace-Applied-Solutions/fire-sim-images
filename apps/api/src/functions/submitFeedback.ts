@@ -1,7 +1,7 @@
 /**
  * Azure Function: Submit Feedback
  * POST /api/scenarios/{scenarioId}/feedback
- * 
+ *
  * Allows trainers to provide feedback on generated images for quality assessment.
  */
 
@@ -96,7 +96,7 @@ export async function submitFeedback(
     // Store feedback in blob storage
     const blobStorage = new BlobStorageService(context);
     const feedbackKey = `${scenarioId}/feedback/${body.viewpoint}-${Date.now()}`;
-    
+
     await blobStorage.uploadMetadata(feedbackKey, feedback);
 
     logger.info('Feedback submitted', {
@@ -115,7 +115,7 @@ export async function submitFeedback(
     };
   } catch (error) {
     logger.error('Failed to submit feedback', error instanceof Error ? error : undefined);
-    
+
     return {
       status: 500,
       jsonBody: { error: 'Failed to submit feedback' },

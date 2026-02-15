@@ -7,12 +7,8 @@ interface ResultsPanelProps {
 }
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
-  const {
-    isResultsPanelOpen,
-    toggleResultsPanel,
-    scenarioState,
-    setResultsPanelOpen,
-  } = useAppStore();
+  const { isResultsPanelOpen, toggleResultsPanel, scenarioState, setResultsPanelOpen } =
+    useAppStore();
 
   useEffect(() => {
     setResultsPanelOpen(scenarioState === 'complete');

@@ -7,31 +7,37 @@ This document defines the quality standards for AI-generated prompts in the fire
 All prompts MUST contain the following sections:
 
 ### 1. Style/Photography Type
+
 - Must specify the type of photograph (aerial, helicopter, ground-level)
 - Must indicate the medium (photograph, realistic image)
 
 ### 2. Scene Context
+
 - Must describe the vegetation type
 - Must include terrain characteristics (slope, elevation)
 - Should mention nearby features when relevant
 
 ### 3. Fire Characteristics
+
 - Must describe fire intensity
 - Must specify flame height ranges
 - Must describe smoke characteristics
 - Should mention fire behavior (spotting, crown involvement)
 
 ### 4. Weather Conditions
+
 - Must include wind direction and strength
 - Should mention temperature and humidity context
 - Must specify time of day and lighting conditions
 
 ### 5. Perspective Details
+
 - Must describe the camera position and angle
 - Must specify the distance from the fire
 - Should indicate what should be visible in the frame
 
 ### 6. Safety/Negative Prompts
+
 - Must include safety constraints (no people, no animals unless explicitly needed)
 - Must exclude blocked terms
 
@@ -40,6 +46,7 @@ All prompts MUST contain the following sections:
 Prompts must use appropriate Rural Fire Service (RFS) and Australian fire service terminology:
 
 ### Required Terms (use at least 3)
+
 - bushfire
 - eucalypt/eucalyptus
 - sclerophyll
@@ -52,6 +59,7 @@ Prompts must use appropriate Rural Fire Service (RFS) and Australian fire servic
 - pyrocumulus
 
 ### Fire Behavior Terms (use when appropriate)
+
 - torching
 - crowning
 - fire run
@@ -61,6 +69,7 @@ Prompts must use appropriate Rural Fire Service (RFS) and Australian fire servic
 - fire break
 
 ### Vegetation Terms
+
 - dry sclerophyll forest
 - wet sclerophyll forest
 - heathland
@@ -126,12 +135,14 @@ Maximum score: 110 points (normalized to 100)
 ## Quality Gates
 
 ### Minimum Requirements (MVP)
+
 - ✅ Prompt completeness score: **100%** (all required sections present)
 - ✅ No blocked terms in descriptive sections: **0 violations**
 - ✅ RFS terminology: **At least 3 terms** per prompt
 - ✅ Viewpoint descriptions differ: **Each viewpoint unique**
 
 ### Target Requirements (Post-MVP)
+
 - 🎯 Prompt completeness score: **100%** with bonus points
 - 🎯 RFS terminology: **5+ terms** per prompt
 - 🎯 Viewpoint consistency score: **≥80%** across all images
@@ -141,12 +152,12 @@ Maximum score: 110 points (normalized to 100)
 
 The following standard scenarios are used for prompt quality validation:
 
-| Scenario ID | Name | Location | Type | Intensity | Time | Expected Keywords |
-|-------------|------|----------|------|-----------|------|-------------------|
-| TEST-001 | Blue Mountains forest fire | -33.72, 150.31 | Forest | Very High | Afternoon | eucalypt, sclerophyll, crown fire, spotting |
-| TEST-002 | Western Plains grassfire | -32.5, 148.0 | Grassland | Moderate | Midday | grassfire, ember, fast-moving |
-| TEST-003 | South Coast interface fire | -35.7, 150.2 | Forest/Urban | High | Dusk | interface, spotting, ember attack |
-| TEST-004 | Night operation | -33.8, 150.1 | Forest | Moderate | Night | night, glow, illuminated |
+| Scenario ID | Name                       | Location       | Type         | Intensity | Time      | Expected Keywords                           |
+| ----------- | -------------------------- | -------------- | ------------ | --------- | --------- | ------------------------------------------- |
+| TEST-001    | Blue Mountains forest fire | -33.72, 150.31 | Forest       | Very High | Afternoon | eucalypt, sclerophyll, crown fire, spotting |
+| TEST-002    | Western Plains grassfire   | -32.5, 148.0   | Grassland    | Moderate  | Midday    | grassfire, ember, fast-moving               |
+| TEST-003    | South Coast interface fire | -35.7, 150.2   | Forest/Urban | High      | Dusk      | interface, spotting, ember attack           |
+| TEST-004    | Night operation            | -33.8, 150.1   | Forest       | Moderate  | Night     | night, glow, illuminated                    |
 
 ## Automated Checks
 
@@ -176,19 +187,20 @@ The following checks are performed automatically on all generated prompts:
 ## Example: High-Quality Prompt
 
 ```
-Professional aerial photograph taken from a helicopter at 300 metres altitude, 
-looking straight down at an active bushfire. Scene shows Dry Sclerophyll Forest 
-with dense eucalypt canopy on moderate slopes. Very high intensity fire with 
-10 to 20 metre flames consuming the forest canopy. Active crown fire with 
-sustained crowning through the treetops. Massive dark smoke column forming 
-pyrocumulus cloud. Strong northwesterly winds pushing smoke to the southeast. 
-Fire spreading rapidly with medium-range spotting ahead of the head fire. 
-Warm afternoon light from the west, golden-orange tones. Temperature 40°C, 
-humidity 10%. Photorealistic detail with visible individual trees, ember showers, 
+Professional aerial photograph taken from a helicopter at 300 metres altitude,
+looking straight down at an active bushfire. Scene shows Dry Sclerophyll Forest
+with dense eucalypt canopy on moderate slopes. Very high intensity fire with
+10 to 20 metre flames consuming the forest canopy. Active crown fire with
+sustained crowning through the treetops. Massive dark smoke column forming
+pyrocumulus cloud. Strong northwesterly winds pushing smoke to the southeast.
+Fire spreading rapidly with medium-range spotting ahead of the head fire.
+Warm afternoon light from the west, golden-orange tones. Temperature 40°C,
+humidity 10%. Photorealistic detail with visible individual trees, ember showers,
 and fire front. No people, no animals, no vehicles, no text, no watermarks.
 ```
 
 **Completeness Score:** 100%
+
 - ✅ Style: aerial photograph, helicopter, 300 metres
 - ✅ Scene: Dry Sclerophyll Forest, eucalypt, moderate slopes
 - ✅ Fire: very high intensity, 10-20m flames, crown fire, spotting

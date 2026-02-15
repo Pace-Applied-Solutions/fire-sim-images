@@ -3,7 +3,11 @@
  */
 
 import type { InvocationContext } from '@azure/functions';
-import type { ImageGenerationProvider, ImageGenOptions, ImageGenResult } from './imageGenerationProvider.js';
+import type {
+  ImageGenerationProvider,
+  ImageGenOptions,
+  ImageGenResult,
+} from './imageGenerationProvider.js';
 import { StableDiffusionProvider } from './stableDiffusionProvider.js';
 import { FluxImageProvider } from './fluxImageProvider.js';
 import { getFluxConfig } from '../fluxConfig.js';
@@ -39,10 +43,7 @@ export class ImageGeneratorService {
   /**
    * Generate an image from a prompt with retry logic.
    */
-  async generateImage(
-    prompt: string,
-    options?: ImageGenOptions
-  ): Promise<ImageGenResult> {
+  async generateImage(prompt: string, options?: ImageGenOptions): Promise<ImageGenResult> {
     // Attempt to switch to Flux provider if configured and available
     if (this.provider instanceof StableDiffusionProvider) {
       const fluxConfig = await getFluxConfig(this.context);

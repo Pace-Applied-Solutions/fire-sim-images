@@ -74,7 +74,14 @@ describe('Type Definitions', () => {
 
     it('should accept all valid wind directions', () => {
       const directions: ScenarioInputs['windDirection'][] = [
-        'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW',
+        'N',
+        'NE',
+        'E',
+        'SE',
+        'S',
+        'SW',
+        'W',
+        'NW',
       ];
 
       directions.forEach((direction) => {
@@ -95,7 +102,12 @@ describe('Type Definitions', () => {
 
     it('should accept all valid times of day', () => {
       const times: ScenarioInputs['timeOfDay'][] = [
-        'dawn', 'morning', 'midday', 'afternoon', 'dusk', 'night',
+        'dawn',
+        'morning',
+        'midday',
+        'afternoon',
+        'dusk',
+        'night',
       ];
 
       times.forEach((time) => {
@@ -116,7 +128,12 @@ describe('Type Definitions', () => {
 
     it('should accept all valid intensities', () => {
       const intensities: ScenarioInputs['intensity'][] = [
-        'low', 'moderate', 'high', 'veryHigh', 'extreme', 'catastrophic',
+        'low',
+        'moderate',
+        'high',
+        'veryHigh',
+        'extreme',
+        'catastrophic',
       ];
 
       intensities.forEach((intensity) => {
@@ -137,7 +154,10 @@ describe('Type Definitions', () => {
 
     it('should accept all valid fire stages', () => {
       const stages: ScenarioInputs['fireStage'][] = [
-        'spotFire', 'developing', 'established', 'major',
+        'spotFire',
+        'developing',
+        'established',
+        'major',
       ];
 
       stages.forEach((stage) => {

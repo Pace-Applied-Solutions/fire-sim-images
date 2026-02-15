@@ -7,6 +7,7 @@ This document shows the updated viewpoint controls that appear when a fire perim
 The viewpoint controls now display TWO separate sets of views:
 
 ### 1. Helicopter Views (Wide Area)
+
 ```
 ┌─────────────────────────────────────────┐
 │  Helicopter Views (Wide Area)           │
@@ -16,6 +17,7 @@ The viewpoint controls now display TWO separate sets of views:
 ```
 
 **Button Titles:**
+
 - N = "Helicopter View from North"
 - S = "Helicopter View from South"
 - E = "Helicopter View from East"
@@ -23,6 +25,7 @@ The viewpoint controls now display TWO separate sets of views:
 - ⬆ = "Helicopter View Above"
 
 **Characteristics:**
+
 - Elevated position (helicopter altitude)
 - 60° pitch angle for elevated perspective
 - Wide-angle view showing terrain context
@@ -31,6 +34,7 @@ The viewpoint controls now display TWO separate sets of views:
 ---
 
 ### 2. Ground Views (Truck Perspective)
+
 ```
 ┌─────────────────────────────────────────┐
 │  Ground Views (Truck Perspective)       │
@@ -40,6 +44,7 @@ The viewpoint controls now display TWO separate sets of views:
 ```
 
 **Button Titles:**
+
 - N = "Ground-Level View from North"
 - S = "Ground-Level View from South"
 - E = "Ground-Level View from East"
@@ -47,6 +52,7 @@ The viewpoint controls now display TWO separate sets of views:
 - ⬆ = "Ground-Level View Above (Low Altitude)"
 
 **Characteristics:**
+
 - Ground-level position (truck/vehicle height)
 - 85° pitch angle for nearly horizontal perspective
 - Zoomed-in view (<2km from terrain edge)
@@ -86,14 +92,14 @@ When a fire perimeter is drawn on the map, the complete viewpoint control panel 
 
 ## View Comparison
 
-| Aspect | Helicopter Views | Ground Views |
-|--------|------------------|--------------|
-| **Altitude** | High (helicopter) | Low (ground level) |
-| **Pitch** | 60° (elevated) | 85° (horizontal) |
-| **Zoom** | Wide angle | Tight/zoomed in |
-| **Distance** | Far from fire (0.8x) | Close to fire (0.35x) |
-| **Purpose** | Situational awareness | Tactical realism |
-| **Training Use** | IMT, strategy | Crew, vehicle ops |
+| Aspect           | Helicopter Views      | Ground Views          |
+| ---------------- | --------------------- | --------------------- |
+| **Altitude**     | High (helicopter)     | Low (ground level)    |
+| **Pitch**        | 60° (elevated)        | 85° (horizontal)      |
+| **Zoom**         | Wide angle            | Tight/zoomed in       |
+| **Distance**     | Far from fire (0.8x)  | Close to fire (0.35x) |
+| **Purpose**      | Situational awareness | Tactical realism      |
+| **Training Use** | IMT, strategy         | Crew, vehicle ops     |
 
 ## Benefits
 
@@ -101,9 +107,9 @@ When a fire perimeter is drawn on the map, the complete viewpoint control panel 
 ✅ **Clear Distinction**: Separate labeled sections prevent confusion  
 ✅ **Complete Coverage**: 5 views per perspective type (N, S, E, W, Above)  
 ✅ **Intuitive Layout**: Stacked vertically with descriptive headers  
-✅ **Realistic Training**: Ground views simulate actual fire truck perspective (<2km)  
+✅ **Realistic Training**: Ground views simulate actual fire truck perspective (<2km)
 
 ---
 
-*Last Updated: 2026-02-14*  
-*Related Files: `apps/web/src/components/Map/MapContainer.tsx`*
+_Last Updated: 2026-02-14_  
+_Related Files: `apps/web/src/components/Map/MapContainer.tsx`_

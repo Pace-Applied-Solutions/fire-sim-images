@@ -1,11 +1,13 @@
 # Address Search & Location Navigation
 
 ## Overview
+
 The address search feature provides fast, responsive location search and navigation capabilities for the bushfire simulation tool. Users can search for addresses and locations, with results appearing as they type. The feature also supports browser-based geolocation to automatically center the map on the user's current position.
 
 ## Features
 
 ### 1. Fast Address Autocomplete
+
 - **Real-time search**: Results appear as you type (debounced by 300ms)
 - **Mapbox Geocoding API**: Leverages Mapbox's comprehensive global address database
 - **Intelligent caching**: Recent queries are cached to reduce API calls and improve performance
@@ -17,12 +19,14 @@ The address search feature provides fast, responsive location search and navigat
   - Neighborhoods
 
 ### 2. User Geolocation
+
 - **Browser-based geolocation**: Uses the browser's Geolocation API
 - **Automatic centering**: Centers map on user's location when granted permission
 - **Fallback behavior**: Gracefully falls back to default location (NSW) if geolocation is unavailable or denied
 - **One-click access**: Dedicated button in search bar for quick location access
 
 ### 3. Keyboard Navigation & Accessibility
+
 - **Full keyboard support**:
   - `Arrow Up/Down`: Navigate through search results
   - `Enter`: Select highlighted result
@@ -35,6 +39,7 @@ The address search feature provides fast, responsive location search and navigat
 - **Focus management**: Clear visual focus indicators
 
 ### 4. Performance Optimizations
+
 - **Debounced API calls**: 300ms delay prevents excessive API requests while typing
 - **Request cancellation**: Previous requests are cancelled when a new search is initiated
 - **In-memory caching**: Up to 20 recent queries cached to avoid redundant API calls
@@ -43,6 +48,7 @@ The address search feature provides fast, responsive location search and navigat
 ## User Interface
 
 ### Search Bar
+
 - **Location**: Top-left corner of map (mobile-responsive)
 - **Design**: Subtle, elevated dark theme that doesn't obstruct the map
 - **Components**:
@@ -51,6 +57,7 @@ The address search feature provides fast, responsive location search and navigat
   - Geolocation button (📍) for quick access to user's location
 
 ### Dropdown Results
+
 - **Appearance**: Appears below search bar when results are available
 - **Result format**:
   - Primary text: Location name or street address
@@ -61,6 +68,7 @@ The address search feature provides fast, responsive location search and navigat
   - Smooth transitions
 
 ### Behavior
+
 1. User types address or location name
 2. After 300ms, API request is sent to Mapbox Geocoding
 3. Results appear in dropdown (up to 5 results)
@@ -71,6 +79,7 @@ The address search feature provides fast, responsive location search and navigat
 ## Technical Implementation
 
 ### Component Structure
+
 ```
 AddressSearch.tsx - Main search component with autocomplete logic
 AddressSearch.module.css - Component-specific styles
@@ -78,6 +87,7 @@ MapContainer.tsx - Integration point, handles map interactions
 ```
 
 ### API Integration
+
 - **Endpoint**: Mapbox Geocoding API v5 (forward geocoding)
 - **Authentication**: Uses `VITE_MAPBOX_TOKEN` environment variable
 - **Query parameters**:
@@ -86,6 +96,7 @@ MapContainer.tsx - Integration point, handles map interactions
   - `autocomplete`: true (enables partial matching)
 
 ### Geolocation
+
 - **API**: Browser Geolocation API (`navigator.geolocation`)
 - **Options**:
   - `timeout`: 10 seconds (5 seconds on initial load)
@@ -97,6 +108,7 @@ MapContainer.tsx - Integration point, handles map interactions
 - **User feedback**: Toast notifications for all outcomes
 
 ### Map Navigation
+
 - **Method**: `map.flyTo()` with smooth animation
 - **Parameters**:
   - Duration: 2000ms (2 seconds)
@@ -108,16 +120,19 @@ MapContainer.tsx - Integration point, handles map interactions
 The component architecture is designed to support future enhancements:
 
 ### Coordinate Input (Planned)
+
 - Detect lat/long patterns in input (e.g., "-33.8688, 151.2093")
 - Parse and validate coordinate formats
 - Directly navigate to coordinates without API call
 
 ### MGRS Grid Input (Planned)
+
 - Detect MGRS format patterns (e.g., "55HFA1234567890")
 - Convert MGRS to lat/long using conversion library
 - Support for military/emergency services coordinate systems
 
 ### Implementation Approach
+
 1. Add pattern matching to `handleInputChange`
 2. Detect input type (address vs coordinates vs MGRS)
 3. Route to appropriate handler:
@@ -128,18 +143,21 @@ The component architecture is designed to support future enhancements:
 ## Usage Examples
 
 ### Basic Address Search
+
 1. Click in search bar at top-left
 2. Type "Sydney Opera House"
 3. Select from dropdown results
 4. Map pans to location with smooth animation
 
 ### Using Geolocation
+
 1. Click location pin button (📍) in search bar
 2. Grant browser location permission if prompted
 3. Map centers on your current location
 4. Toast notification confirms success
 
 ### Keyboard Navigation
+
 1. Type search query
 2. Press `Arrow Down` to highlight first result
 3. Press `Arrow Down` again to move to next result
@@ -149,11 +167,13 @@ The component architecture is designed to support future enhancements:
 ## Error Handling
 
 ### API Errors
+
 - Network failures: "Search failed. Please try again."
 - Invalid token: "Mapbox token not configured"
 - Displayed as inline error message below search bar
 
 ### Geolocation Errors
+
 - Permission denied: "Location permission denied"
 - Position unavailable: "Location information unavailable"
 - Timeout: "Location request timed out"
@@ -162,12 +182,14 @@ The component architecture is designed to support future enhancements:
 ## Performance Characteristics
 
 ### API Call Optimization
+
 - **Debounce delay**: 300ms (configurable)
 - **Cache hit rate**: ~40-60% for typical usage patterns
 - **Cache size**: 20 most recent queries (LRU eviction)
 - **Request cancellation**: Immediate cancellation of superseded requests
 
 ### User Experience
+
 - **Time to first result**: ~400-600ms (300ms debounce + network latency)
 - **Cached result display**: <10ms (instant from memory)
 - **Map navigation duration**: 2000ms smooth animation
@@ -175,11 +197,13 @@ The component architecture is designed to support future enhancements:
 ## Browser Compatibility
 
 ### Geolocation API
+
 - ✅ Chrome, Firefox, Safari, Edge (all modern versions)
 - ✅ Mobile browsers (iOS Safari, Chrome Android)
 - ⚠️ Requires HTTPS (except localhost)
 
 ### JavaScript Features
+
 - ES2020+ (async/await, optional chaining)
 - React 19 hooks
 - TypeScript 5.3+
@@ -187,11 +211,13 @@ The component architecture is designed to support future enhancements:
 ## Configuration
 
 ### Environment Variables
+
 ```env
 VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ```
 
 ### Mapbox Account Requirements
+
 - Free tier: 50,000 geocoding requests/month
 - No credit card required for development
 - Get token at: https://account.mapbox.com/
@@ -199,6 +225,7 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ## Testing Recommendations
 
 ### Manual Testing Checklist
+
 - [ ] Search for known address in target region
 - [ ] Verify dropdown appears with relevant results
 - [ ] Select result with mouse click - map navigates smoothly
@@ -211,6 +238,7 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 - [ ] Test on mobile viewport - verify responsive layout
 
 ### Edge Cases
+
 - Empty query (no API call should be made)
 - Very fast typing (debounce should prevent excessive calls)
 - No results found (dropdown should not appear)
@@ -220,16 +248,19 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ## Future Improvements
 
 ### Short-term (Next Sprint)
+
 - Add recent searches dropdown (show before user types)
 - Add search history persistence (localStorage)
 - Add "Clear" button to input field
 
 ### Medium-term
+
 - Coordinate input support (lat/lng parsing)
 - Bounding box biasing (favor results near current view)
 - Custom data sources (fire stations, helipads)
 
 ### Long-term
+
 - MGRS grid coordinate support
 - Offline geocoding (cached boundary data)
 - Advanced filters (search by feature type)
@@ -238,17 +269,20 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ## Maintenance Notes
 
 ### Dependencies
+
 - `mapbox-gl`: ^3.18.1 (map library)
 - React 19 (component framework)
 - TypeScript 5.3+ (type safety)
 
 ### Code Maintenance
+
 - Search logic is isolated in `AddressSearch.tsx`
 - Integration points in `MapContainer.tsx`
 - Styles in `AddressSearch.module.css`
 - All component logic is testable in isolation
 
 ### API Rate Limits
+
 - Monitor Mapbox API usage in dashboard
 - Free tier limit: 50,000 requests/month
 - Caching reduces actual API calls by ~40-60%
@@ -259,21 +293,25 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ### Common Issues
 
 **Search not working**
+
 - Verify `VITE_MAPBOX_TOKEN` is set in `.env`
 - Check browser console for API errors
 - Verify network access to `api.mapbox.com`
 
 **Geolocation not working**
+
 - Ensure site is accessed via HTTPS (not HTTP)
 - Check browser location permission settings
 - Verify browser supports Geolocation API
 
 **Dropdown not appearing**
+
 - Verify query length > 0
 - Check browser console for JavaScript errors
 - Ensure map is loaded (`isMapLoaded` state is true)
 
 **Poor search results**
+
 - Results are global; try more specific queries
 - Include suburb/city name for better disambiguation
 - Future: Add bounding box biasing to favor nearby results

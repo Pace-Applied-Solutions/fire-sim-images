@@ -70,13 +70,19 @@ export class ConsistencyValidator {
 
     // Generate recommendations
     if (overallScore < 70) {
-      recommendations.push('Consider regenerating images with a different seed for better consistency');
+      recommendations.push(
+        'Consider regenerating images with a different seed for better consistency'
+      );
     }
     if (!smokeDirectionCheck.passed) {
-      recommendations.push('Review wind direction parameter and ensure prompts specify correct smoke direction');
+      recommendations.push(
+        'Review wind direction parameter and ensure prompts specify correct smoke direction'
+      );
     }
     if (!colorCheck.passed) {
-      recommendations.push('Apply color grading post-processing to normalize color palette across views');
+      recommendations.push(
+        'Apply color grading post-processing to normalize color palette across views'
+      );
     }
 
     return {

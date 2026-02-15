@@ -29,10 +29,10 @@ export interface FirePerimeter {
  * Reference: https://afdrs.com.au/
  */
 export type FireDangerRating =
-  | 'noRating'   // Below moderate threshold (White)
-  | 'moderate'   // Plan and prepare (Green)
-  | 'high'       // Be ready to act (Yellow)
-  | 'extreme'    // Take action now to protect life and property (Orange)
+  | 'noRating' // Below moderate threshold (White)
+  | 'moderate' // Plan and prepare (Green)
+  | 'high' // Be ready to act (Yellow)
+  | 'extreme' // Take action now to protect life and property (Orange)
   | 'catastrophic'; // For your survival, leave bushfire risk areas (Red)
 
 /**
@@ -82,7 +82,7 @@ export interface GeoContext {
 
 /**
  * Perspective for image generation.
- * 
+ *
  * Helicopter views: Elevated wide-area perspective with ~60° pitch, suitable for situational awareness
  * Ground views: Flat ground-level perspective looking horizontally, simulating truck/vehicle perspective (<2km zoom)
  */
@@ -347,21 +347,26 @@ export interface FeedbackSummary {
     accuracy: Record<number, number>;
     usefulness: Record<number, number>;
   };
-  byViewpoint?: Record<string, {
-    count: number;
-    averageRatings: {
-      realism: number;
-      accuracy: number;
-      usefulness: number;
-    };
-  }>;
-  byIntensity?: Record<string, {
-    count: number;
-    averageRatings: {
-      realism: number;
-      accuracy: number;
-      usefulness: number;
-    };
-  }>;
+  byViewpoint?: Record<
+    string,
+    {
+      count: number;
+      averageRatings: {
+        realism: number;
+        accuracy: number;
+        usefulness: number;
+      };
+    }
+  >;
+  byIntensity?: Record<
+    string,
+    {
+      count: number;
+      averageRatings: {
+        realism: number;
+        accuracy: number;
+        usefulness: number;
+      };
+    }
+  >;
 }
-

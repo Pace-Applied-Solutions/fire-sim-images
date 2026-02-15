@@ -216,6 +216,7 @@ These can be adjusted via the admin settings page.
 ### 3. Credentials
 
 Credentials are automatically stored in Key Vault during deployment:
+
 - `ContentSafety--Endpoint`
 - `ContentSafety--Key`
 
@@ -228,7 +229,7 @@ Quotas are tracked in Azure Table Storage. The table is created automatically on
 ### 2. Default Quotas
 
 | Role    | Scenarios/Day | Images/Day | Videos/Day |
-|---------|---------------|------------|------------|
+| ------- | ------------- | ---------- | ---------- |
 | Trainer | 20            | 100        | 5          |
 | Admin   | Unlimited     | Unlimited  | Unlimited  |
 
@@ -239,6 +240,7 @@ Quotas reset daily at **midnight AEST (UTC+11)**.
 ### 4. Cost Estimation
 
 Usage cost is estimated based on:
+
 - Scenario generation: $0.01
 - Image generation (DALL-E 3): $0.04 per image
 - Video generation: $0.10 per video
@@ -248,6 +250,7 @@ Usage cost is estimated based on:
 ### 1. Application Insights
 
 All user actions are logged to Application Insights with:
+
 - User ID and email
 - Authentication method
 - Action type
@@ -329,6 +332,7 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=<your-connection-string>
 To test with real authentication locally:
 
 1. Run the Static Web App CLI:
+
    ```bash
    npm install -g @azure/static-web-apps-cli
    swa start apps/web/dist --api-location apps/api
@@ -376,6 +380,7 @@ To test with real authentication locally:
    - Review quota service logs
 
 For additional support, see:
+
 - [Azure Static Web Apps Authentication](https://learn.microsoft.com/en-us/azure/static-web-apps/authentication-authorization)
 - [Microsoft Entra External ID Documentation](https://learn.microsoft.com/en-us/entra/external-id/)
 - [Azure AI Content Safety](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/)

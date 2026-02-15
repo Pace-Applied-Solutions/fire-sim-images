@@ -22,7 +22,9 @@ export async function prompts(
     if (!body.perimeter || !body.inputs || !body.geoContext || !body.requestedViews) {
       return {
         status: 400,
-        jsonBody: { error: 'Missing required fields: perimeter, inputs, geoContext, or requestedViews' },
+        jsonBody: {
+          error: 'Missing required fields: perimeter, inputs, geoContext, or requestedViews',
+        },
       };
     }
 

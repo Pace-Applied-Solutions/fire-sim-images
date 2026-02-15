@@ -183,23 +183,23 @@ Key architectural principles include keeping data within the target agency's Azu
 
 These are the 15 implementation issues seeded in GitHub. Each will be assigned to the coding agent in sequence.
 
-| # | Issue Title | Phase | GitHub |
-|---|---|---|---|
-| 1 | Project Scaffolding & Repository Structure | Phase 0 | [#1](https://github.com/richardthorek/fire-sim-images/issues/1) |
-| 2 | Azure Infrastructure as Code (Bicep) | Phase 0 | [#2](https://github.com/richardthorek/fire-sim-images/issues/2) |
-| 3 | Front-End Shell, Design System & Navigation | Phase 1 | [#3](https://github.com/richardthorek/fire-sim-images/issues/3) |
-| 4 | 3D Map Integration & Fire Perimeter Drawing | Phase 1 | [#4](https://github.com/richardthorek/fire-sim-images/issues/4) |
-| 5 | Scenario Input Panel & Parameter Controls | Phase 1 | [#6](https://github.com/richardthorek/fire-sim-images/issues/6) |
-| 6 | Geospatial Data Integration (Azure Functions) | Phase 2 | [#7](https://github.com/richardthorek/fire-sim-images/issues/7) |
-| 7 | Prompt Generation Engine | Phase 3 | [#8](https://github.com/richardthorek/fire-sim-images/issues/8) |
-| 8 | AI Image Generation Pipeline | Phase 3 | [#9](https://github.com/richardthorek/fire-sim-images/issues/9) |
-| 9 | Multi-Perspective Rendering & Consistency | Phase 3 | [#10](https://github.com/richardthorek/fire-sim-images/issues/10) |
-| 10 | Results Gallery & Scenario History | Phase 3 | [#11](https://github.com/richardthorek/fire-sim-images/issues/11) |
-| 11 | Video Generation Pipeline | Phase 4 | [#12](https://github.com/richardthorek/fire-sim-images/issues/12) |
-| 12 | Authentication, Authorization & Content Safety | Phase 5 | [#13](https://github.com/richardthorek/fire-sim-images/issues/13) |
-| 13 | Observability, Monitoring & Structured Logging | Phase 5 | [#14](https://github.com/richardthorek/fire-sim-images/issues/14) |
-| 14 | End-to-End Testing & Trainer Validation | Phase 5 | [#15](https://github.com/richardthorek/fire-sim-images/issues/15) |
-| 15 | CI/CD Pipeline, Documentation & Future Roadmap | Phase 5 | [#16](https://github.com/richardthorek/fire-sim-images/issues/16) |
+| #   | Issue Title                                    | Phase   | GitHub                                                            |
+| --- | ---------------------------------------------- | ------- | ----------------------------------------------------------------- |
+| 1   | Project Scaffolding & Repository Structure     | Phase 0 | [#1](https://github.com/richardthorek/fire-sim-images/issues/1)   |
+| 2   | Azure Infrastructure as Code (Bicep)           | Phase 0 | [#2](https://github.com/richardthorek/fire-sim-images/issues/2)   |
+| 3   | Front-End Shell, Design System & Navigation    | Phase 1 | [#3](https://github.com/richardthorek/fire-sim-images/issues/3)   |
+| 4   | 3D Map Integration & Fire Perimeter Drawing    | Phase 1 | [#4](https://github.com/richardthorek/fire-sim-images/issues/4)   |
+| 5   | Scenario Input Panel & Parameter Controls      | Phase 1 | [#6](https://github.com/richardthorek/fire-sim-images/issues/6)   |
+| 6   | Geospatial Data Integration (Azure Functions)  | Phase 2 | [#7](https://github.com/richardthorek/fire-sim-images/issues/7)   |
+| 7   | Prompt Generation Engine                       | Phase 3 | [#8](https://github.com/richardthorek/fire-sim-images/issues/8)   |
+| 8   | AI Image Generation Pipeline                   | Phase 3 | [#9](https://github.com/richardthorek/fire-sim-images/issues/9)   |
+| 9   | Multi-Perspective Rendering & Consistency      | Phase 3 | [#10](https://github.com/richardthorek/fire-sim-images/issues/10) |
+| 10  | Results Gallery & Scenario History             | Phase 3 | [#11](https://github.com/richardthorek/fire-sim-images/issues/11) |
+| 11  | Video Generation Pipeline                      | Phase 4 | [#12](https://github.com/richardthorek/fire-sim-images/issues/12) |
+| 12  | Authentication, Authorization & Content Safety | Phase 5 | [#13](https://github.com/richardthorek/fire-sim-images/issues/13) |
+| 13  | Observability, Monitoring & Structured Logging | Phase 5 | [#14](https://github.com/richardthorek/fire-sim-images/issues/14) |
+| 14  | End-to-End Testing & Trainer Validation        | Phase 5 | [#15](https://github.com/richardthorek/fire-sim-images/issues/15) |
+| 15  | CI/CD Pipeline, Documentation & Future Roadmap | Phase 5 | [#16](https://github.com/richardthorek/fire-sim-images/issues/16) |
 
 ## 11. Deliverables
 
@@ -432,13 +432,13 @@ Update this section after each issue or change.
     - State management tests for React store (Zustand)
     - CI workflow configured with GitHub Actions for automated testing
     - Trainer feedback workflow implemented:
-      * ImageFeedback and FeedbackSummary types defined
-      * submitFeedback Azure Function endpoint (POST /api/scenarios/{id}/feedback)
-      * FeedbackForm React component with 3 rating dimensions (realism, accuracy, usefulness)
-      * Feedback storage in Blob Storage
+      - ImageFeedback and FeedbackSummary types defined
+      - submitFeedback Azure Function endpoint (POST /api/scenarios/{id}/feedback)
+      - FeedbackForm React component with 3 rating dimensions (realism, accuracy, usefulness)
+      - Feedback storage in Blob Storage
     - Quality gates documentation:
-      * docs/prompt_quality_standards.md - Prompt quality requirements
-      * docs/quality_gates.md - Acceptance criteria and benchmarks
+      - docs/prompt_quality_standards.md - Prompt quality requirements
+      - docs/quality_gates.md - Acceptance criteria and benchmarks
     - Non-blocking coverage thresholds configured as per agent instructions
     - 4 standard E2E test scenarios defined (Blue Mountains, Western Plains, South Coast, Night operation)
   - **What remains:**

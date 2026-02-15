@@ -45,7 +45,9 @@ export function initializeContentSafety(config: ContentSafetyServiceConfig): voi
   }
 
   if (!config.endpoint || !config.apiKey) {
-    console.warn('[ContentSafety] Azure Content Safety credentials not provided, content safety disabled');
+    console.warn(
+      '[ContentSafety] Azure Content Safety credentials not provided, content safety disabled'
+    );
     return;
   }
 
@@ -84,10 +86,18 @@ export async function checkTextSafety(text: string): Promise<ContentSafetyResult
     const config = serviceConfig.config;
 
     // Check each category against thresholds
-    const violenceDetected = (result.categoriesAnalysis?.find(c => c.category === 'Violence')?.severity || 0) / 6 > config.violenceThreshold;
-    const hateDetected = (result.categoriesAnalysis?.find(c => c.category === 'Hate')?.severity || 0) / 6 > config.hateThreshold;
-    const selfHarmDetected = (result.categoriesAnalysis?.find(c => c.category === 'SelfHarm')?.severity || 0) / 6 > config.selfHarmThreshold;
-    const sexualDetected = (result.categoriesAnalysis?.find(c => c.category === 'Sexual')?.severity || 0) / 6 > config.sexualThreshold;
+    const violenceDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'Violence')?.severity || 0) / 6 >
+      config.violenceThreshold;
+    const hateDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'Hate')?.severity || 0) / 6 >
+      config.hateThreshold;
+    const selfHarmDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'SelfHarm')?.severity || 0) / 6 >
+      config.selfHarmThreshold;
+    const sexualDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'Sexual')?.severity || 0) / 6 >
+      config.sexualThreshold;
 
     const safe = !violenceDetected && !hateDetected && !selfHarmDetected && !sexualDetected;
 
@@ -96,19 +106,23 @@ export async function checkTextSafety(text: string): Promise<ContentSafetyResult
       categories: {
         violence: {
           detected: violenceDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'Violence')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'Violence')?.severity || 0) / 6,
         },
         hate: {
           detected: hateDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'Hate')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'Hate')?.severity || 0) / 6,
         },
         selfHarm: {
           detected: selfHarmDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'SelfHarm')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'SelfHarm')?.severity || 0) / 6,
         },
         sexual: {
           detected: sexualDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'Sexual')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'Sexual')?.severity || 0) / 6,
         },
       },
       prompt: text,
@@ -152,10 +166,18 @@ export async function checkImageSafety(imageBuffer: Buffer): Promise<ContentSafe
     const config = serviceConfig.config;
 
     // Check each category against thresholds
-    const violenceDetected = (result.categoriesAnalysis?.find(c => c.category === 'Violence')?.severity || 0) / 6 > config.violenceThreshold;
-    const hateDetected = (result.categoriesAnalysis?.find(c => c.category === 'Hate')?.severity || 0) / 6 > config.hateThreshold;
-    const selfHarmDetected = (result.categoriesAnalysis?.find(c => c.category === 'SelfHarm')?.severity || 0) / 6 > config.selfHarmThreshold;
-    const sexualDetected = (result.categoriesAnalysis?.find(c => c.category === 'Sexual')?.severity || 0) / 6 > config.sexualThreshold;
+    const violenceDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'Violence')?.severity || 0) / 6 >
+      config.violenceThreshold;
+    const hateDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'Hate')?.severity || 0) / 6 >
+      config.hateThreshold;
+    const selfHarmDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'SelfHarm')?.severity || 0) / 6 >
+      config.selfHarmThreshold;
+    const sexualDetected =
+      (result.categoriesAnalysis?.find((c) => c.category === 'Sexual')?.severity || 0) / 6 >
+      config.sexualThreshold;
 
     const safe = !violenceDetected && !hateDetected && !selfHarmDetected && !sexualDetected;
 
@@ -164,19 +186,23 @@ export async function checkImageSafety(imageBuffer: Buffer): Promise<ContentSafe
       categories: {
         violence: {
           detected: violenceDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'Violence')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'Violence')?.severity || 0) / 6,
         },
         hate: {
           detected: hateDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'Hate')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'Hate')?.severity || 0) / 6,
         },
         selfHarm: {
           detected: selfHarmDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'SelfHarm')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'SelfHarm')?.severity || 0) / 6,
         },
         sexual: {
           detected: sexualDetected,
-          severity: (result.categoriesAnalysis?.find(c => c.category === 'Sexual')?.severity || 0) / 6,
+          severity:
+            (result.categoriesAnalysis?.find((c) => c.category === 'Sexual')?.severity || 0) / 6,
         },
       },
       imageHash,

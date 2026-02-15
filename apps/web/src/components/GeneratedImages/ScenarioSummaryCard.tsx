@@ -70,15 +70,11 @@ export const ScenarioSummaryCard: React.FC<ScenarioSummaryCardProps> = ({
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Intensity:</span>
-            <span className={styles.value}>
-              {formatIntensity(inputs.intensity)}
-            </span>
+            <span className={styles.value}>{formatIntensity(inputs.intensity)}</span>
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Fire Danger:</span>
-            <span className={styles.value}>
-              {formatFireDanger(inputs.fireDangerRating)}
-            </span>
+            <span className={styles.value}>{formatFireDanger(inputs.fireDangerRating)}</span>
           </div>
         </div>
 
@@ -98,9 +94,7 @@ export const ScenarioSummaryCard: React.FC<ScenarioSummaryCardProps> = ({
           {geoContext.dominantSpecies && geoContext.dominantSpecies.length > 0 && (
             <div className={styles.field}>
               <span className={styles.label}>Species:</span>
-              <span className={styles.value}>
-                {geoContext.dominantSpecies.join(', ')}
-              </span>
+              <span className={styles.value}>{geoContext.dominantSpecies.join(', ')}</span>
             </div>
           )}
         </div>
@@ -110,9 +104,7 @@ export const ScenarioSummaryCard: React.FC<ScenarioSummaryCardProps> = ({
           <h4 className={styles.sectionTitle}>Generation</h4>
           <div className={styles.field}>
             <span className={styles.label}>Generated:</span>
-            <span className={styles.value}>
-              {new Date(timestamp).toLocaleString()}
-            </span>
+            <span className={styles.value}>{new Date(timestamp).toLocaleString()}</span>
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Images:</span>
@@ -148,7 +140,7 @@ function calculateCentroid(coordinates: number[][]): [number, number] {
 
 /**
  * Calculate approximate area in hectares using shoelace formula.
- * 
+ *
  * Note: This uses a flat-earth approximation which is suitable for small fire perimeters
  * (< 100 km²) but may produce errors of up to 1% for larger areas or those far from
  * the equator. For production use with large perimeters, consider using a proper

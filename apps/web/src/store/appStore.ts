@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import type { FirePerimeter, ScenarioInputs, GenerationResult, GeoContext } from '@fire-sim/shared';
 
-export type ScenarioState = 'idle' | 'drawing' | 'configuring' | 'generating' | 'complete' | 'error';
+export type ScenarioState =
+  | 'idle'
+  | 'drawing'
+  | 'configuring'
+  | 'generating'
+  | 'complete'
+  | 'error';
 
 interface AppState {
   // Scenario state
@@ -24,7 +30,7 @@ interface AppState {
   // Generation state
   generationProgress: string | null;
   setGenerationProgress: (progress: string | null) => void;
-  
+
   // Generation results
   generationResult: GenerationResult | null;
   setGenerationResult: (result: GenerationResult | null) => void;

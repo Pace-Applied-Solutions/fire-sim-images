@@ -8,7 +8,7 @@ const { app } = functions;
 /**
  * Admin endpoint to get usage summary.
  * GET /api/admin/usage-summary
- * 
+ *
  * Security: Requires function-level authentication.
  * TODO: Add role-based access control in Issue 12.
  */
@@ -49,7 +49,7 @@ export async function getUsageSummary(
     };
   } catch (error) {
     logger.error('Failed to retrieve usage summary', error instanceof Error ? error : undefined);
-    
+
     return {
       status: 500,
       jsonBody: {

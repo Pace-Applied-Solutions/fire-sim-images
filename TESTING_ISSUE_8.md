@@ -1,9 +1,11 @@
 # Testing the AI Image Generation Pipeline
 
 ## Overview
+
 This document describes how to test the image generation pipeline implementation for Issue 8.
 
 ## Prerequisites
+
 - Node.js 20+
 - Azure Functions Core Tools v4 (install with: `npm i -g azure-functions-core-tools@4`)
 - Azure Storage Emulator or Azure Storage Account
@@ -11,13 +13,16 @@ This document describes how to test the image generation pipeline implementation
 ## Backend Testing
 
 ### 1. Build the API
+
 ```bash
 cd apps/api
 npm run build
 ```
 
 ### 2. Configure Local Settings
+
 Edit `apps/api/local.settings.json`:
+
 ```json
 {
   "IsEncrypted": false,
@@ -33,6 +38,7 @@ Edit `apps/api/local.settings.json`:
 ```
 
 ### 3. Start the Azure Functions Runtime
+
 ```bash
 cd apps/api
 func start
@@ -43,11 +49,13 @@ The API will be available at `http://localhost:7071/api`
 ### 4. Test Endpoints
 
 #### Health Check
+
 ```bash
 curl http://localhost:7071/api/health
 ```
 
 #### Get Geodata
+
 ```bash
 curl -X POST http://localhost:7071/api/geodata \
   -H "Content-Type: application/json" \
@@ -60,6 +68,7 @@ curl -X POST http://localhost:7071/api/geodata \
 ```
 
 #### Generate Prompts
+
 ```bash
 curl -X POST http://localhost:7071/api/prompts \
   -H "Content-Type: application/json" \
@@ -67,6 +76,7 @@ curl -X POST http://localhost:7071/api/prompts \
 ```
 
 #### Start Generation
+
 ```bash
 curl -X POST http://localhost:7071/api/generate \
   -H "Content-Type: application/json" \
@@ -74,13 +84,22 @@ curl -X POST http://localhost:7071/api/generate \
 ```
 
 Example `test-request.json`:
+
 ```json
 {
   "perimeter": {
     "type": "Feature",
     "geometry": {
       "type": "Polygon",
-      "coordinates": [[[150.5, -33.7], [150.6, -33.7], [150.6, -33.8], [150.5, -33.8], [150.5, -33.7]]]
+      "coordinates": [
+        [
+          [150.5, -33.7],
+          [150.6, -33.7],
+          [150.6, -33.8],
+          [150.5, -33.8],
+          [150.5, -33.7]
+        ]
+      ]
     },
     "properties": {
       "drawn": true,
@@ -111,11 +130,13 @@ Example `test-request.json`:
 ```
 
 #### Check Generation Status
+
 ```bash
 curl http://localhost:7071/api/generate/{scenarioId}/status
 ```
 
 #### Get Generation Results
+
 ```bash
 curl http://localhost:7071/api/generate/{scenarioId}/results
 ```
@@ -123,6 +144,7 @@ curl http://localhost:7071/api/generate/{scenarioId}/results
 ## Frontend Testing
 
 ### 1. Build and Start the Frontend
+
 ```bash
 cd apps/web
 npm run dev
@@ -165,12 +187,15 @@ The web app will be available at `http://localhost:5173`
 ## Testing Error Handling
 
 ### Content Policy Violation
+
 Currently handled gracefully - the image is skipped and other viewpoints continue.
 
 ### Network Errors
+
 Test by stopping the API mid-generation. The frontend should show an error toast.
 
 ### Timeout
+
 The image generator has a 60-second timeout per image. If exceeded, it will retry up to 3 times with exponential backoff.
 
 ## Testing Edge Cases

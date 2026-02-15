@@ -32,7 +32,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate ratings
     if (ratings.realism === 0 || ratings.accuracy === 0 || ratings.usefulness === 0) {
       setError('Please provide all ratings before submitting');
@@ -87,7 +87,9 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
         <div className={styles.ratingSection}>
           <label className={styles.ratingLabel}>
             <span className={styles.ratingName}>Accuracy</span>
-            <span className={styles.ratingDescription}>Does it match the location and conditions?</span>
+            <span className={styles.ratingDescription}>
+              Does it match the location and conditions?
+            </span>
             <div className={styles.stars}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -153,11 +155,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isSubmitting}
-          >
+          <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
           </button>
         </div>

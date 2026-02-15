@@ -8,17 +8,17 @@ This document describes the layout, positioning, and responsive behavior of all 
 
 Controls are layered using the following z-index values to ensure proper stacking and user interaction:
 
-| Control | Z-Index | Purpose |
-|---------|---------|---------|
-| Address Search Dropdown | 30 | Highest - appears above all other controls |
-| Address Search Box | 20 | High priority - always visible and accessible |
-| Draw Controls | 10 | Important tools - easily accessible |
-| Viewpoint Controls | 5 | Contextual - shown when fire perimeter exists |
-| Metadata Panel | 5 | Information display - same level as viewpoints |
-| Instructions | 5 | Guidance - same level as other info panels |
-| Map Error | 100 | Critical alerts - overlay everything |
-| Navigation Control | implicit | Mapbox default |
-| Scale Control | implicit | Mapbox default |
+| Control                 | Z-Index  | Purpose                                        |
+| ----------------------- | -------- | ---------------------------------------------- |
+| Address Search Dropdown | 30       | Highest - appears above all other controls     |
+| Address Search Box      | 20       | High priority - always visible and accessible  |
+| Draw Controls           | 10       | Important tools - easily accessible            |
+| Viewpoint Controls      | 5        | Contextual - shown when fire perimeter exists  |
+| Metadata Panel          | 5        | Information display - same level as viewpoints |
+| Instructions            | 5        | Guidance - same level as other info panels     |
+| Map Error               | 100      | Critical alerts - overlay everything           |
+| Navigation Control      | implicit | Mapbox default                                 |
+| Scale Control           | implicit | Mapbox default                                 |
 
 ## Desktop Layout (> 900px)
 
@@ -50,11 +50,13 @@ Controls are layered using the following z-index values to ensure proper stackin
 ## Tablet Layout (768px - 900px)
 
 At the 900px breakpoint:
+
 - Viewpoint controls shift from centered to left/right edges
 - Search box width adjusts to calc(100% - 92px)
 - Controls begin to stack vertically on mobile
 
 At the 768px breakpoint:
+
 - Viewpoint controls move to bottom of screen
 - Instructions panel repositions to bottom above viewpoints
 - Draw controls move to bottom position
@@ -87,14 +89,14 @@ At the 768px breakpoint:
 
 ## Responsive Breakpoints
 
-| Breakpoint | Viewport Width | Key Changes |
-|------------|----------------|-------------|
-| Desktop Wide | > 1200px | Full layout, optimal spacing |
-| Desktop | 900px - 1200px | Adjusted viewpoint control width |
-| Tablet | 768px - 900px | Viewpoint controls move to edges |
-| Mobile Large | 640px - 768px | Controls stack vertically |
-| Mobile | 480px - 640px | Reduced margins, hidden instructions |
-| Mobile Small | < 480px | Smallest buttons, tightest spacing |
+| Breakpoint   | Viewport Width | Key Changes                          |
+| ------------ | -------------- | ------------------------------------ |
+| Desktop Wide | > 1200px       | Full layout, optimal spacing         |
+| Desktop      | 900px - 1200px | Adjusted viewpoint control width     |
+| Tablet       | 768px - 900px  | Viewpoint controls move to edges     |
+| Mobile Large | 640px - 768px  | Controls stack vertically            |
+| Mobile       | 480px - 640px  | Reduced margins, hidden instructions |
+| Mobile Small | < 480px        | Smallest buttons, tightest spacing   |
 
 ## Width Calculations
 

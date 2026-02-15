@@ -8,13 +8,8 @@ import styles from './GalleryPage.module.css';
 
 export const GalleryPage: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    setPerimeter,
-    setScenarioInputs,
-    setGeoContext,
-    setGenerationResult,
-    setScenarioState,
-  } = useAppStore();
+  const { setPerimeter, setScenarioInputs, setGeoContext, setGenerationResult, setScenarioState } =
+    useAppStore();
 
   const [scenarios, setScenarios] = useState<ScenarioSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +65,14 @@ export const GalleryPage: React.FC = () => {
         alert('Failed to load scenario: ' + (err instanceof Error ? err.message : 'Unknown error'));
       }
     },
-    [navigate, setPerimeter, setScenarioInputs, setGeoContext, setGenerationResult, setScenarioState]
+    [
+      navigate,
+      setPerimeter,
+      setScenarioInputs,
+      setGeoContext,
+      setGenerationResult,
+      setScenarioState,
+    ]
   );
 
   // Handle scenario deletion
@@ -88,7 +90,9 @@ export const GalleryPage: React.FC = () => {
         // Refresh the list
         fetchScenarios();
       } catch (err) {
-        alert('Failed to delete scenario: ' + (err instanceof Error ? err.message : 'Unknown error'));
+        alert(
+          'Failed to delete scenario: ' + (err instanceof Error ? err.message : 'Unknown error')
+        );
       }
     },
     [fetchScenarios]
@@ -111,9 +115,7 @@ export const GalleryPage: React.FC = () => {
           <div className={styles.header}>
             <div>
               <h1 className={styles.title}>Scenario Gallery</h1>
-              <p className={styles.description}>
-                View and manage past generated scenarios
-              </p>
+              <p className={styles.description}>View and manage past generated scenarios</p>
             </div>
 
             <div className={styles.controls}>
@@ -152,7 +154,9 @@ export const GalleryPage: React.FC = () => {
               <div className={styles.empty}>
                 <span className={styles.emptyIcon}>🖼️</span>
                 <h2>No scenarios yet</h2>
-                <p>Generated scenarios will appear here. Create your first scenario to get started.</p>
+                <p>
+                  Generated scenarios will appear here. Create your first scenario to get started.
+                </p>
               </div>
             )}
 

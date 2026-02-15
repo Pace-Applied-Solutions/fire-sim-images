@@ -18,7 +18,7 @@ export function initializeAppInsights(): ApplicationInsights | null {
 
   // Get connection string from environment variable
   const connectionString = import.meta.env.VITE_APPLICATIONINSIGHTS_CONNECTION_STRING;
-  
+
   if (!connectionString) {
     console.warn('[AppInsights] Connection string not configured. Telemetry disabled.');
     return null;
@@ -67,10 +67,7 @@ export function trackEvent(name: string, properties?: Record<string, unknown>): 
 /**
  * Track an exception.
  */
-export function trackException(
-  error: Error,
-  properties?: Record<string, unknown>
-): void {
+export function trackException(error: Error, properties?: Record<string, unknown>): void {
   if (appInsights) {
     appInsights.trackException({ exception: error }, properties as Record<string, string>);
   } else {

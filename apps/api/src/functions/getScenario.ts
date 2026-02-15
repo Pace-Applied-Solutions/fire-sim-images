@@ -1,11 +1,16 @@
 /**
  * Azure Function: Get Scenario
  * GET /api/scenarios/{scenarioId}
- * 
+ *
  * Returns complete metadata for a specific scenario.
  */
 
-import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from '@azure/functions';
+import {
+  app,
+  type HttpRequest,
+  type HttpResponseInit,
+  type InvocationContext,
+} from '@azure/functions';
 import { BlobStorageService } from '../services/blobStorage';
 
 export async function getScenario(
@@ -34,7 +39,7 @@ export async function getScenario(
     };
   } catch (error) {
     context.error('Error fetching scenario', error);
-    
+
     // Check if it's a 404 error
     if (error instanceof Error && error.message.includes('BlobNotFound')) {
       return {

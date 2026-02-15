@@ -37,7 +37,7 @@ export class ImagePostProcessor {
    * Apply post-processing to an image buffer.
    * For dev mode with mock images, this is a placeholder.
    * In production, would use sharp or similar library for actual image processing.
-   * 
+   *
    * @param imageData - Image buffer to process
    * @param _viewpoint - Viewpoint identifier (unused in current impl, reserved for future watermarking)
    * @param _scenarioId - Scenario identifier (unused in current impl, reserved for future watermarking)
@@ -137,14 +137,14 @@ export class ImagePostProcessor {
 /**
  * Note: For production use, install and use sharp library:
  * npm install sharp
- * 
+ *
  * Example production implementation with sharp:
- * 
+ *
  * import sharp from 'sharp';
- * 
+ *
  * async processImage(imageData: Buffer, options: PostProcessingOptions) {
  *   let pipeline = sharp(imageData);
- * 
+ *
  *   if (options.colorGrading?.enabled) {
  *     pipeline = pipeline.modulate({
  *       brightness: 1 + (options.colorGrading.brightness || 0) / 100,
@@ -154,7 +154,7 @@ export class ImagePostProcessor {
  *       0
  *     );
  *   }
- * 
+ *
  *   if (options.watermark?.enabled) {
  *     const text = Buffer.from(options.watermark.text || '');
  *     pipeline = pipeline.composite([{
@@ -162,7 +162,7 @@ export class ImagePostProcessor {
  *       gravity: options.watermark.position || 'southeast',
  *     }]);
  *   }
- * 
+ *
  *   const processedImageData = await pipeline.png().toBuffer();
  *   return { processedImageData, ... };
  * }

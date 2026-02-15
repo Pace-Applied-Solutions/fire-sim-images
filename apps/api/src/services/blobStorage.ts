@@ -2,7 +2,12 @@
  * Azure Blob Storage service for managing generated images and scenario metadata.
  */
 
-import { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions } from '@azure/storage-blob';
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+} from '@azure/storage-blob';
 import { DefaultAzureCredential } from '@azure/identity';
 import type { InvocationContext } from '@azure/functions';
 
@@ -35,7 +40,9 @@ export class BlobStorageService {
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     this.devMode = !connectionString && !this.accountName;
     if (this.devMode) {
-      this.context.log('[BlobStorage] Running in dev mode — images returned as data URLs, no Azure Storage required');
+      this.context.log(
+        '[BlobStorage] Running in dev mode — images returned as data URLs, no Azure Storage required'
+      );
     }
   }
 
@@ -196,11 +203,11 @@ export class BlobStorageService {
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     const downloadResponse = await blockBlobClient.download(0);
-    
+
     if (!downloadResponse.readableStreamBody) {
       throw new Error('No readable stream available for download');
     }
-    
+
     const downloaded = await this.streamToBuffer(downloadResponse.readableStreamBody);
     return JSON.parse(downloaded.toString('utf-8'));
   }

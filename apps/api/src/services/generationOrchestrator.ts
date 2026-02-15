@@ -4,7 +4,13 @@
  */
 
 import type { InvocationContext } from '@azure/functions';
-import type { GenerationRequest, GenerationResult, GeneratedImage, ViewPoint, ScenarioMetadata } from '@fire-sim/shared';
+import type {
+  GenerationRequest,
+  GenerationResult,
+  GeneratedImage,
+  ViewPoint,
+  ScenarioMetadata,
+} from '@fire-sim/shared';
 import { generatePrompts } from '@fire-sim/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageGeneratorService } from './imageGenerator.js';
@@ -109,9 +115,10 @@ export class GenerationOrchestrator {
       anchorImage: progress.anchorImage,
       seed: progress.seed,
       createdAt: progress.createdAt,
-      completedAt: progress.status === 'completed' || progress.status === 'failed' 
-        ? progress.updatedAt 
-        : undefined,
+      completedAt:
+        progress.status === 'completed' || progress.status === 'failed'
+          ? progress.updatedAt
+          : undefined,
       error: progress.error,
     };
 
@@ -123,14 +130,11 @@ export class GenerationOrchestrator {
    * Pass 1: Generate aerial view as anchor
    * Pass 2: Generate remaining views using anchor as reference
    */
-  private async executeGeneration(
-    scenarioId: string,
-    request: GenerationRequest
-  ): Promise<void> {
+  private async executeGeneration(scenarioId: string, request: GenerationRequest): Promise<void> {
     const progress = progressStore.get(scenarioId)!;
     progress.status = 'in_progress';
     progress.updatedAt = new Date().toISOString();
-    
+
     const logger = this.logger.child({ scenarioId });
     const endToEndTimer = startTimer('generation', { scenarioId });
 
@@ -167,7 +171,10 @@ export class GenerationOrchestrator {
 
       if (anchorPrompt) {
         try {
-          const imageGenTimer = startTimer('image.generation.anchor', { scenarioId, viewpoint: anchorViewpoint });
+          const imageGenTimer = startTimer('image.generation.anchor', {
+            scenarioId,
+            viewpoint: anchorViewpoint,
+          });
           const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
             seed: request.seed,
           });
@@ -221,18 +228,20 @@ export class GenerationOrchestrator {
           progress.anchorImage = anchorImage;
           progress.seed = request.seed;
         } catch (error) {
-          logger.error('Anchor image generation failed', error instanceof Error ? error : undefined, {
-            viewpoint: anchorViewpoint,
-          });
+          logger.error(
+            'Anchor image generation failed',
+            error instanceof Error ? error : undefined,
+            {
+              viewpoint: anchorViewpoint,
+            }
+          );
           GenerationMetrics.trackGenerationError({ scenarioId, viewpoint: anchorViewpoint });
           progress.failedImages++;
         }
       }
 
       // Step 4: Generate remaining viewpoints with anchor reference
-      const remainingViewpoints = viewpointsToGenerate.filter(
-        (v) => v !== anchorViewpoint
-      );
+      const remainingViewpoints = viewpointsToGenerate.filter((v) => v !== anchorViewpoint);
 
       logger.info('Starting derived views generation', {
         totalViewpoints: remainingViewpoints.length,
@@ -316,9 +325,13 @@ export class GenerationOrchestrator {
               model: metadata.model,
             });
           } catch (uploadError) {
-            logger.error('Failed to upload image', uploadError instanceof Error ? uploadError : undefined, {
-              viewpoint,
-            });
+            logger.error(
+              'Failed to upload image',
+              uploadError instanceof Error ? uploadError : undefined,
+              {
+                viewpoint,
+              }
+            );
             progress.failedImages++;
           }
         } else {
@@ -326,7 +339,10 @@ export class GenerationOrchestrator {
             viewpoint: result.reason?.viewpoint,
             error: result.reason?.error,
           });
-          GenerationMetrics.trackGenerationError({ scenarioId, viewpoint: result.reason?.viewpoint });
+          GenerationMetrics.trackGenerationError({
+            scenarioId,
+            viewpoint: result.reason?.viewpoint,
+          });
           progress.failedImages++;
         }
       }
@@ -421,7 +437,10 @@ export class GenerationOrchestrator {
         seed: request.seed,
       });
     } catch (error) {
-      logger.error('Generation pipeline failed', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'Generation pipeline failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
       GenerationMetrics.trackGenerationError({ scenarioId });
       progress.status = 'failed';
       progress.error = error instanceof Error ? error.message : String(error);
@@ -441,18 +460,22 @@ export class GenerationOrchestrator {
     seed?: number,
     anchorImage?: Buffer,
     mapScreenshots?: Record<ViewPoint, string>
-  ): Promise<Array<PromiseSettledResult<{
-    viewpoint: ViewPoint;
-    imageData: Buffer | string;
-    metadata: {
-      model: string;
-      promptHash: string;
-      generationTime: number;
-      width: number;
-      height: number;
-      seed?: number;
-    };
-  }>>> {
+  ): Promise<
+    Array<
+      PromiseSettledResult<{
+        viewpoint: ViewPoint;
+        imageData: Buffer | string;
+        metadata: {
+          model: string;
+          promptHash: string;
+          generationTime: number;
+          width: number;
+          height: number;
+          seed?: number;
+        };
+      }>
+    >
+  > {
     const tasks = viewpoints.map(async (viewpoint) => {
       const prompt = prompts.find((p) => p.viewpoint === viewpoint);
       if (!prompt) {
@@ -483,18 +506,20 @@ export class GenerationOrchestrator {
     });
 
     // Execute with concurrency control
-    const results: Array<PromiseSettledResult<{
-      viewpoint: ViewPoint;
-      imageData: Buffer | string;
-      metadata: {
-        model: string;
-        promptHash: string;
-        generationTime: number;
-        width: number;
-        height: number;
-        seed?: number;
-      };
-    }>> = [];
+    const results: Array<
+      PromiseSettledResult<{
+        viewpoint: ViewPoint;
+        imageData: Buffer | string;
+        metadata: {
+          model: string;
+          promptHash: string;
+          generationTime: number;
+          width: number;
+          height: number;
+          seed?: number;
+        };
+      }>
+    > = [];
     for (let i = 0; i < tasks.length; i += maxConcurrent) {
       const batch = tasks.slice(i, i + maxConcurrent);
       const batchResults = await Promise.allSettled(batch);

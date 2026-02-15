@@ -34,7 +34,10 @@ const BLOCKED_TERMS = [
  * Validates that a prompt does not contain blocked terms in the descriptive sections.
  * The safety section is excluded from validation as it contains negative terms.
  */
-function validatePromptSafety(promptText: string, safetySection: string): { valid: boolean; blockedTerms: string[] } {
+function validatePromptSafety(
+  promptText: string,
+  safetySection: string
+): { valid: boolean; blockedTerms: string[] } {
   // Remove the safety section from validation as it contains negative terms
   const descriptiveText = promptText.replace(safetySection, '');
   const lowerPrompt = descriptiveText.toLowerCase();
@@ -180,11 +183,7 @@ function preparePromptData(request: GenerationRequest): PromptData {
 /**
  * Composes a complete prompt from template sections and data.
  */
-function composePrompt(
-  template: PromptTemplate,
-  data: PromptData,
-  viewpoint: ViewPoint
-): string {
+function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: ViewPoint): string {
   const sections = [
     template.sections.style,
     template.sections.scene(data),

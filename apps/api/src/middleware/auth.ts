@@ -64,12 +64,12 @@ export async function authenticateRequest(
     // Azure Static Web Apps with CIAM provides pre-validated tokens via Easy Auth
     // The token is in the X-MS-CLIENT-PRINCIPAL header (Base64 encoded JSON)
     const clientPrincipalHeader = request.headers.get('X-MS-CLIENT-PRINCIPAL');
-    
+
     if (clientPrincipalHeader) {
       // Parse Easy Auth principal
       const principalJson = Buffer.from(clientPrincipalHeader, 'base64').toString('utf-8');
       const principal = JSON.parse(principalJson);
-      
+
       // Extract user info from principal
       const user: User = {
         id: principal.userId || principal.userDetails,
@@ -118,7 +118,10 @@ function extractRolesFromPrincipal(principal: any): UserRole[] {
 
   // Check for role claims
   const roleClaims = principal.claims?.filter(
-    (c: any) => c.typ === 'roles' || c.typ === 'role' || c.typ === 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+    (c: any) =>
+      c.typ === 'roles' ||
+      c.typ === 'role' ||
+      c.typ === 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
   );
 
   for (const claim of roleClaims || []) {
@@ -173,7 +176,9 @@ function extractRolesFromToken(decoded: any): UserRole[] {
 /**
  * Create a 401 Unauthorized response.
  */
-export function createUnauthorizedResponse(message: string = 'Authentication required'): HttpResponseInit {
+export function createUnauthorizedResponse(
+  message: string = 'Authentication required'
+): HttpResponseInit {
   return {
     status: 401,
     jsonBody: {
@@ -188,11 +193,15 @@ export function createUnauthorizedResponse(message: string = 'Authentication req
  * Validates authentication before calling the handler.
  */
 export function withAuth(
-  handler: (request: HttpRequest, context: InvocationContext, user: User) => Promise<HttpResponseInit>
+  handler: (
+    request: HttpRequest,
+    context: InvocationContext,
+    user: User
+  ) => Promise<HttpResponseInit>
 ) {
   return async (request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> => {
     const user = await authenticateRequest(request, context);
-    
+
     if (!user) {
       return createUnauthorizedResponse();
     }

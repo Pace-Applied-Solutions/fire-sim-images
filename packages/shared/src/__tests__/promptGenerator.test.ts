@@ -5,7 +5,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { generatePrompts } from '../prompts/promptGenerator.js';
-import { INTENSITY_VISUALS, TIME_OF_DAY_LIGHTING, FIRE_STAGE_DESCRIPTIONS } from '../prompts/promptTemplates.js';
+import {
+  INTENSITY_VISUALS,
+  TIME_OF_DAY_LIGHTING,
+  FIRE_STAGE_DESCRIPTIONS,
+} from '../prompts/promptTemplates.js';
 import type { GenerationRequest } from '../types.js';
 
 describe('Prompt Generator', () => {
@@ -14,7 +18,15 @@ describe('Prompt Generator', () => {
       type: 'Feature',
       geometry: {
         type: 'Polygon',
-        coordinates: [[[150.31, -33.72], [150.32, -33.72], [150.32, -33.71], [150.31, -33.71], [150.31, -33.72]]],
+        coordinates: [
+          [
+            [150.31, -33.72],
+            [150.32, -33.72],
+            [150.32, -33.71],
+            [150.31, -33.71],
+            [150.31, -33.72],
+          ],
+        ],
       },
       properties: {
         drawn: true,
@@ -107,7 +119,7 @@ describe('Prompt Generator', () => {
       result.prompts.forEach((prompt) => {
         const text = prompt.promptText.toLowerCase();
         // Should contain at least some RFS/fire service terminology
-        const hasTerminology = 
+        const hasTerminology =
           text.includes('bushfire') ||
           text.includes('eucalypt') ||
           text.includes('crown fire') ||
@@ -159,7 +171,11 @@ describe('Prompt Generator', () => {
   describe('Intensity Mapping', () => {
     it('should map all 5 intensity levels correctly', () => {
       const intensities: Array<'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme'> = [
-        'low', 'moderate', 'high', 'veryHigh', 'extreme'
+        'low',
+        'moderate',
+        'high',
+        'veryHigh',
+        'extreme',
       ];
 
       intensities.forEach((intensity) => {
@@ -197,7 +213,12 @@ describe('Prompt Generator', () => {
   describe('Time of Day Lighting', () => {
     it('should map all 6 time periods correctly', () => {
       const times: Array<'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night'> = [
-        'dawn', 'morning', 'midday', 'afternoon', 'dusk', 'night'
+        'dawn',
+        'morning',
+        'midday',
+        'afternoon',
+        'dusk',
+        'night',
       ];
 
       times.forEach((time) => {
@@ -220,7 +241,10 @@ describe('Prompt Generator', () => {
   describe('Fire Stage Descriptions', () => {
     it('should map all fire stages', () => {
       const stages: Array<'spotFire' | 'developing' | 'established' | 'major'> = [
-        'spotFire', 'developing', 'established', 'major'
+        'spotFire',
+        'developing',
+        'established',
+        'major',
       ];
 
       stages.forEach((stage) => {
@@ -283,19 +307,22 @@ describe('Prompt Generator', () => {
 
       result.prompts.forEach((prompt) => {
         const text = prompt.promptText;
-        
+
         // Check for key sections
         expect(text).toBeTruthy();
         expect(text.length).toBeGreaterThan(100); // Should be substantial
-        
+
         // Should contain scene, fire, weather, perspective elements
-        const hasScene = text.toLowerCase().includes('photograph') || text.toLowerCase().includes('scene');
+        const hasScene =
+          text.toLowerCase().includes('photograph') || text.toLowerCase().includes('scene');
         const hasFire = text.toLowerCase().includes('fire') || text.toLowerCase().includes('flame');
-        const hasWeather = text.toLowerCase().includes('wind') || text.toLowerCase().includes('temperature');
-        const hasPerspective = text.toLowerCase().includes('aerial') || 
-                               text.toLowerCase().includes('helicopter') || 
-                               text.toLowerCase().includes('ground');
-        
+        const hasWeather =
+          text.toLowerCase().includes('wind') || text.toLowerCase().includes('temperature');
+        const hasPerspective =
+          text.toLowerCase().includes('aerial') ||
+          text.toLowerCase().includes('helicopter') ||
+          text.toLowerCase().includes('ground');
+
         expect(hasScene || hasPerspective).toBe(true);
         expect(hasFire).toBe(true);
         expect(hasWeather).toBe(true);

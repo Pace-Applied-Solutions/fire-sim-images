@@ -83,7 +83,7 @@ export async function initializeQuotaService(serviceConfig: QuotaServiceConfig):
       config.tableName,
       credential
     );
-    
+
     console.log(`[Quota] Quota service initialized with table: ${config.tableName}`);
   } catch (error) {
     console.error('[Quota] Failed to initialize quota service:', error);

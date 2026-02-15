@@ -17,7 +17,13 @@ import type { FireDangerRating } from '../types.js';
 describe('Fire Danger Calculations', () => {
   describe('getWeatherProfileForRating', () => {
     it('should return weather profiles for all rating levels', () => {
-      const ratings: FireDangerRating[] = ['noRating', 'moderate', 'high', 'extreme', 'catastrophic'];
+      const ratings: FireDangerRating[] = [
+        'noRating',
+        'moderate',
+        'high',
+        'extreme',
+        'catastrophic',
+      ];
 
       ratings.forEach((rating) => {
         const profile = getWeatherProfileForRating(rating);
@@ -67,7 +73,13 @@ describe('Fire Danger Calculations', () => {
     });
 
     it('should handle all fire danger ratings', () => {
-      const ratings: FireDangerRating[] = ['noRating', 'moderate', 'high', 'extreme', 'catastrophic'];
+      const ratings: FireDangerRating[] = [
+        'noRating',
+        'moderate',
+        'high',
+        'extreme',
+        'catastrophic',
+      ];
 
       ratings.forEach((rating) => {
         const behaviour = getFireBehaviour(rating, 'Dry Sclerophyll Forest');
@@ -122,7 +134,13 @@ describe('Fire Danger Calculations', () => {
 
   describe('getRatingColor', () => {
     it('should return hex colors for all ratings', () => {
-      const ratings: FireDangerRating[] = ['noRating', 'moderate', 'high', 'extreme', 'catastrophic'];
+      const ratings: FireDangerRating[] = [
+        'noRating',
+        'moderate',
+        'high',
+        'extreme',
+        'catastrophic',
+      ];
 
       ratings.forEach((rating) => {
         const color = getRatingColor(rating);
@@ -141,7 +159,13 @@ describe('Fire Danger Calculations', () => {
 
   describe('getRatingDescription', () => {
     it('should return descriptions for all ratings', () => {
-      const ratings: FireDangerRating[] = ['noRating', 'moderate', 'high', 'extreme', 'catastrophic'];
+      const ratings: FireDangerRating[] = [
+        'noRating',
+        'moderate',
+        'high',
+        'extreme',
+        'catastrophic',
+      ];
 
       ratings.forEach((rating) => {
         const description = getRatingDescription(rating);
@@ -216,7 +240,13 @@ describe('Fire Danger Calculations', () => {
   describe('Fire Behaviour Data Integrity', () => {
     it('should have fire behaviour for all vegetation types and ratings', () => {
       const vegTypes = Object.keys(FIRE_BEHAVIOUR_BY_VEGETATION);
-      const ratings: FireDangerRating[] = ['noRating', 'moderate', 'high', 'extreme', 'catastrophic'];
+      const ratings: FireDangerRating[] = [
+        'noRating',
+        'moderate',
+        'high',
+        'extreme',
+        'catastrophic',
+      ];
 
       vegTypes.forEach((vegType) => {
         ratings.forEach((rating) => {

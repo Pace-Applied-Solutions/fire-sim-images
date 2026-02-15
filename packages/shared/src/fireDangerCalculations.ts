@@ -205,10 +205,7 @@ export function getWeatherProfileForRating(rating: FireDangerRating): WeatherPro
  * @param vegetationType Vegetation classification
  * @returns Fire behaviour characteristics
  */
-export function getFireBehaviour(
-  rating: FireDangerRating,
-  vegetationType: string
-): FireBehaviour {
+export function getFireBehaviour(rating: FireDangerRating, vegetationType: string): FireBehaviour {
   // Try exact match first
   if (FIRE_BEHAVIOUR_BY_VEGETATION[vegetationType]) {
     return FIRE_BEHAVIOUR_BY_VEGETATION[vegetationType][rating];

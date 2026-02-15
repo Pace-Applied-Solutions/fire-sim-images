@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log the error to Application Insights
     console.error('ErrorBoundary caught error:', error, errorInfo);
-    
+
     trackException(error, {
       componentStack: errorInfo.componentStack,
       errorBoundary: 'ErrorBoundary',
@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p style={{ fontSize: '1rem', marginBottom: '1.5rem', color: '#666' }}>
             An unexpected error occurred. The error has been reported and we're working on it.
           </p>
-          
+
           {import.meta.env.DEV && this.state.error && (
             <details style={{ marginTop: '2rem', textAlign: 'left', maxWidth: '600px' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '0.5rem' }}>
