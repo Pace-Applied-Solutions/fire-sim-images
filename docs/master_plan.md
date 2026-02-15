@@ -422,12 +422,37 @@ Update this section after each issue or change.
     - Comprehensive observability testing documentation in docs/OBSERVABILITY_TESTING.md
     - GenerationOrchestrator instrumented with structured logging and metrics
     - All builds pass, linting clean, TypeScript strict mode compliant
+- **Phase 5: Validation and hardening (Issue 14) - IN PROGRESS ✅**
+  - **What was achieved:**
+    - Comprehensive test infrastructure with Vitest across all packages
+    - 213 unit tests passing (120 shared, 72 API, 21 web)
+    - Prompt quality test suite validates RFS terminology, blocked terms, viewpoint uniqueness
+    - Consistency validator tests fire size, lighting, smoke direction, color palette
+    - Cost estimation tests for all pricing models (DALL-E 3, Stable Image Core)
+    - State management tests for React store (Zustand)
+    - CI workflow configured with GitHub Actions for automated testing
+    - Trainer feedback workflow implemented:
+      * ImageFeedback and FeedbackSummary types defined
+      * submitFeedback Azure Function endpoint (POST /api/scenarios/{id}/feedback)
+      * FeedbackForm React component with 3 rating dimensions (realism, accuracy, usefulness)
+      * Feedback storage in Blob Storage
+    - Quality gates documentation:
+      * docs/prompt_quality_standards.md - Prompt quality requirements
+      * docs/quality_gates.md - Acceptance criteria and benchmarks
+    - Non-blocking coverage thresholds configured as per agent instructions
+    - 4 standard E2E test scenarios defined (Blue Mountains, Western Plains, South Coast, Night operation)
+  - **What remains:**
+    - Integration tests with MSW for Azure service mocking (planned post-MVP)
+    - E2E test harness implementation with Playwright (planned post-MVP)
+    - Integration of feedback form into GeneratedImages component
+    - Component tests for React components (ScenarioInputPanel, preset loading)
+    - Trainer feedback dashboard for admin review
 - **Open risks:**
   - Azure Functions Core Tools must be installed separately by developers (not available via npm in sandboxed environments)
   - Azure OpenAI availability varies by region; may need fallback to East US 2
   - Mapbox free tier limits: 50,000 map loads/month + 50,000 geocoding requests/month (sufficient for development and early use; caching reduces actual API usage by ~40-60%)
   - Application Insights free tier: 5 GB/month data ingestion (sufficient for early development). When exceeded, billing starts automatically at $2.30/GB for overage. Monitor usage in Azure Portal > Application Insights > Usage and estimated costs.
-- **Next milestone:** Phase 5 - End-to-End Testing & Trainer Validation (Issue 14)
+- **Next milestone:** Integration of feedback form into UI, E2E testing (post-MVP)
 
 ## 14. Change Control Process
 

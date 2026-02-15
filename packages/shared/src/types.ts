@@ -307,3 +307,61 @@ export interface ScenarioSummary {
   thumbnailUrl: string; // URL to representative thumbnail (e.g., aerial view)
   promptVersion?: string;
 }
+
+/**
+ * Trainer feedback on a generated image.
+ * Collected after viewing generated images to assess quality and usefulness.
+ */
+export interface ImageFeedback {
+  scenarioId: string;
+  imageUrl: string;
+  viewpoint: ViewPoint;
+  trainerId: string;
+  timestamp: string; // ISO 8601
+  ratings: {
+    realism: number; // 1-5: Does it look like a real photo?
+    accuracy: number; // 1-5: Does it match the location and conditions?
+    usefulness: number; // 1-5: Would you use this in training?
+  };
+  comments?: string;
+  metadata?: {
+    intensity?: ScenarioInputs['intensity'];
+    timeOfDay?: ScenarioInputs['timeOfDay'];
+    [key: string]: any;
+  };
+}
+
+/**
+ * Aggregated feedback summary for reporting.
+ */
+export interface FeedbackSummary {
+  totalFeedback: number;
+  averageRatings: {
+    realism: number;
+    accuracy: number;
+    usefulness: number;
+    overall: number;
+  };
+  ratingDistribution: {
+    realism: Record<number, number>; // Star rating -> count
+    accuracy: Record<number, number>;
+    usefulness: Record<number, number>;
+  };
+  byViewpoint?: Record<string, {
+    count: number;
+    averageRatings: {
+      realism: number;
+      accuracy: number;
+      usefulness: number;
+    };
+  }>;
+  byIntensity?: Record<string, {
+    count: number;
+    averageRatings: {
+      realism: number;
+      accuracy: number;
+      usefulness: number;
+    };
+  }>;
+}
+

@@ -19,7 +19,12 @@
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:unit": "npm run test --workspace=packages/shared --workspace=apps/api --workspace=apps/web",
+    "test:integration": "npm run test --workspace=apps/api -- --run integration",
+    "test:e2e": "npm run test --workspace=apps/web -- --run e2e",
+    "test:coverage": "npm run test:coverage --workspaces --if-present"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
@@ -27,6 +32,7 @@
     "@typescript-eslint/parser": "^8.55.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
+    "msw": "^2.12.10",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"
   },
