@@ -1,0 +1,94 @@
+name: Deploy Azure Functions API
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'infra/**'
+      - '*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AZURE_FUNCTIONAPP_NAME: firesim-dev-api   # Change to your Functions app name
+  NODE_VERSION: '22.x'
+
+jobs:
+  deploy-api:
+    name: Build & Deploy API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # Install everything at workspace root so npm workspaces resolve correctly
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
+
+      - name: Build API
+        run: npm run build --workspace=apps/api
+
+      # Assemble a self-contained API directory.
+      # npm workspace symlinks break when zipped, so we copy real files only.
+      - name: Assemble deployment package
+        run: |
+          set -e
+          mkdir -p .deploy/api
+
+          # Azure Functions runtime config
+          cp apps/api/host.json .deploy/api/
+
+          # Compiled TypeScript output
+          cp -R apps/api/dist .deploy/api/dist
+
+          # Minimal package.json (no workspace refs, no devDeps)
+          node -e "
+            const pkg = JSON.parse(require('fs').readFileSync('apps/api/package.json', 'utf8'));
+            delete pkg.dependencies['@fire-sim/shared'];
+            delete pkg.devDependencies;
+            delete pkg.scripts;
+            require('fs').writeFileSync('.deploy/api/package.json', JSON.stringify(pkg, null, 2));
+          "
+
+          # Install production deps (no workspace links)
+          cd .deploy/api
+          npm install --omit=dev
+
+          # Place built @fire-sim/shared directly (real copy, no symlinks)
+          mkdir -p node_modules/@fire-sim/shared
+          cp -R ../../packages/shared/dist   node_modules/@fire-sim/shared/dist
+          cp    ../../packages/shared/package.json node_modules/@fire-sim/shared/package.json
+
+      - name: Verify module resolution
+        run: |
+          cd .deploy/api
+          node -e "
+            const shared = require.resolve('@fire-sim/shared');
+            console.log('✓ @fire-sim/shared →', shared);
+            const funcs = require.resolve('@azure/functions');
+            console.log('✓ @azure/functions →', funcs);
+          "
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: .deploy/api

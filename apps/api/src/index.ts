@@ -19,6 +19,10 @@ import './functions/prompts.js';
 import './functions/getGenerationStatus.js';
 import './functions/getGenerationResults.js';
 import './functions/getUsageSummary.js';
+import './functions/listScenarios.js';
+import './functions/getScenario.js';
+import './functions/deleteScenario.js';
+import './functions/submitFeedback.js';
 
 // Export the app object for Azure Functions runtime discovery
 // This is required for the v4 programming model to work correctly

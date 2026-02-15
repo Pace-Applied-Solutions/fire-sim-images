@@ -13,7 +13,7 @@ Fire service trainers need realistic, location-specific visuals to help crews an
 
 The problem we are solving is twofold: speed and fidelity. Speed means a trainer can sketch a perimeter and quickly produce multiple views that feel like real observations from the fireground. Fidelity means those outputs respect the actual vegetation type, terrain slope, and weather conditions so the visuals do not mislead trainees. The tool is not intended to replace physics-based fire simulators; instead it creates visual injects that complement existing operational planning tools and improve training immersion. By anchoring each scenario to authoritative datasets (vegetation, elevation, imagery) and structuring prompts with fire behavior parameters, the outputs remain credible and consistent with how fire agencies describe and assess fire behavior.
 
-The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as embedded Azure Functions within the Static Web App at the `/api` endpoint. This API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure AI Foundry with Stable Image Core (from Stability AI) for rapid integration and regional availability, with Flux as an optional fallback provider. Future enhancements will add SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management, Microsoft Entra External ID (CIAM) for authentication, and managed identities for service-to-service authentication.
+The architecture is a lightweight, modular pipeline hosted in Azure. A React web front-end, hosted on Azure Static Web Apps, provides a 3D map where trainers draw the fire perimeter and set scenario inputs like wind, temperature, humidity, time of day, and qualitative intensity. The back-end API runs as a standalone Azure Functions app linked to the Static Web App via the "Bring Your Own Functions" (BYOF) pattern, which proxies `/api` requests to the Functions app. This separation gives the API full access to managed identities, Key Vault references, Table Storage, and Content Safety — features not supported by SWA's managed functions runtime. The API enriches the scenario by querying geospatial datasets to derive vegetation type, elevation, slope, and nearby context. A prompt builder converts this structured data into consistent, multi-view descriptions tailored to different perspectives (aerial, ground, ridge). The image generation layer uses Azure AI Foundry with Stable Image Core (from Stability AI) for rapid integration and regional availability, with Flux as an optional fallback provider. Future enhancements will add SDXL with ControlNet for precise spatial alignment when a mask or depth map is needed. Generated images are stored in Azure Blob Storage with access managed via managed identities and returned to the client. For motion, a short image-to-video step (SVD or a third-party service) creates a 4 to 10 second looping clip; longer videos can be produced later by stitching or chaining segments. Security is enforced through Azure Key Vault for secrets management, Microsoft Entra External ID (CIAM) for authentication, and managed identities for service-to-service authentication.
 
 Key architectural principles include keeping data within the target agency's Azure environment, favoring regional and national datasets for geographic accuracy, and maintaining model modularity so newer AI services can be swapped in as they mature. This allows the system to start small and reliable, then evolve toward higher fidelity and longer-duration outputs without reworking the entire stack. The end result is a practical training tool that can quickly generate credible fireground visuals, improve scenario realism, and support consistent, repeatable training outcomes.
 
@@ -108,6 +108,8 @@ Key architectural principles include keeping data within the target agency's Azu
 **Back-end API**
 
 - Azure Functions embedded in Static Web App at `/api` endpoint (Node.js 22, TypeScript).
+- Standalone Azure Functions app (Node.js 22, TypeScript) linked to SWA via BYOF.
+- SWA proxies `/api` to the linked Functions app automatically.
 - Durable Functions for long-running generation tasks.
 - Geodata lookup for vegetation, slope, elevation.
 - Prompt builder for multi-view outputs.
@@ -538,6 +540,16 @@ Update this section after each issue or change.
     - Includes troubleshooting guide and local development setup instructions
     - Fix enables Azure Functions runtime to discover all registered functions in v4 programming model during pre-built deployments
 - **Current focus:** MVP validation complete - ready for trainer feedback and Phase 2 planning
+  - **Architecture pivot: SWA + standalone Azure Functions (BYOF):**
+    - SWA managed functions cannot support Managed Identity, Key Vault, Table Storage, Content Safety, or function-level auth — all used by the API
+    - Moved to "Bring Your Own Functions" pattern: SWA hosts front-end only, API deploys as a standalone Azure Functions app linked via SWA portal
+    - Created separate `deploy-api.yml` workflow using `Azure/functions-action@v1`
+    - Simplified `deploy-swa.yml` to front-end only (removed `api_location`, API build steps, artifact assembly)
+    - Removed `apiRuntime` from `staticwebapp.config.json` (no managed functions)
+    - Updated Bicep SWA module: removed `apiLocation` and managed-functions app settings
+    - Fixed 4 missing function registrations in `index.ts`: `listScenarios`, `getScenario`, `deleteScenario`, `submitFeedback`
+    - Fixed 3 bare ESM imports missing `.js` extension in `deleteScenario`, `getScenario`, `listScenarios`
+    - All 11 functions now compile and register correctly
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.

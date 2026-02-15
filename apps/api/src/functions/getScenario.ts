@@ -11,7 +11,7 @@ import {
   type HttpResponseInit,
   type InvocationContext,
 } from '@azure/functions';
-import { BlobStorageService } from '../services/blobStorage';
+import { BlobStorageService } from '../services/blobStorage.js';
 
 export async function getScenario(
   request: HttpRequest,

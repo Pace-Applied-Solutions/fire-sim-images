@@ -1,5 +1,5 @@
-// Static Web App with embedded Azure Functions API
-// Provides hosting for the React front-end and serverless API at /api
+// Static Web App – front-end only
+// The API is a standalone Azure Functions app linked via SWA "Bring Your Own Functions"
 
 @description('The name of the Static Web App')
 param name string
@@ -37,7 +37,6 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
     branch: ''
     buildProperties: {
       appLocation: 'apps/web'
-      apiLocation: 'apps/api'
       outputLocation: 'dist'
     }
     stagingEnvironmentPolicy: sku == 'Standard' ? 'Enabled' : 'Disabled'
@@ -47,14 +46,10 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
 }
 
 // App settings for the Static Web App
-// These will be available to the embedded API functions
 resource appSettingsConfig 'Microsoft.Web/staticSites/config@2023-01-01' = {
   parent: staticWebApp
   name: 'appsettings'
-  properties: union({
-    FUNCTIONS_WORKER_RUNTIME: 'node'
-    AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
-  }, appSettings)
+  properties: appSettings
 }
 
 // Outputs
