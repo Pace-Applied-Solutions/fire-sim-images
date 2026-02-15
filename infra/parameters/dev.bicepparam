@@ -3,7 +3,7 @@ using '../main.bicep'
 
 // Environment configuration
 param environmentName = 'dev'
-param location = 'australiaeast'
+param location = 'eastus2'
 
 // Static Web App
 param staticWebAppSku = 'Standard'

@@ -252,6 +252,9 @@ Update this section after each issue or change.
     - Consolidated Key Vault access policies to support both SWA and Function App identities
     - Added AzureWebJobsStorage__accountName setting for Flex Consumption validation in CI/CD
     - Fixed deploy-infra workflow to derive resource group from environment input (dev/prod)
+    - Updated deploy-infra workflow to run on infra/ path changes (push)
+    - Split infra workflow into validate-only push runs and a gated deploy job for manual dispatch
+    - Added separate dev/prod deploy jobs so only prod requires environment approval
   - **Issue 3 complete:** Front-End Shell, Design System & Navigation
     - Comprehensive design token system with dark theme optimized for training rooms
     - Responsive layout with Header, Sidebar, MainArea, and ResultsPanel components
