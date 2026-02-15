@@ -1,0 +1,158 @@
+.feedbackForm {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.title {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.ratingSection {
+  margin-bottom: 24px;
+}
+
+.ratingLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ratingName {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.ratingDescription {
+  font-size: 13px;
+  color: #666;
+}
+
+.stars {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.star {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.1s;
+  padding: 0;
+  line-height: 1;
+}
+
+.star:hover {
+  color: #ffc107;
+  transform: scale(1.1);
+}
+
+.star.selected {
+  color: #ffc107;
+}
+
+.star:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.commentsSection {
+  margin-bottom: 24px;
+}
+
+.commentsLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.labelText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.commentsTextarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.commentsTextarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.error {
+  padding: 12px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  color: #c00;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.submitButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelButton {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.submitButton {
+  background: #4a90e2;
+  color: white;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.cancelButton:disabled,
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

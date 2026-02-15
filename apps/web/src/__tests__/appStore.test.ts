@@ -13,7 +13,7 @@ describe('App Store', () => {
     store.setScenarioState('idle');
     store.setPerimeter(null);
     store.setGeoContext(null);
-    store.setScenarioInputs(null);
+    store.setScenarioInputs(null as any); // Allow null in tests for reset
     store.setGenerationResult(null);
     store.setError(null);
   });
