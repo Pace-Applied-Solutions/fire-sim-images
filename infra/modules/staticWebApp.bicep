@@ -37,7 +37,7 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
     branch: ''
     buildProperties: {
       appLocation: 'apps/web'
-      apiLocation: 'api'
+      apiLocation: 'apps/api'
       outputLocation: 'dist'
     }
     stagingEnvironmentPolicy: sku == 'Standard' ? 'Enabled' : 'Disabled'
