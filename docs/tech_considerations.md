@@ -82,14 +82,14 @@ We envision a web-based Bushfire Simulation Inject tool that lets fire service t
 
 **Front-end mapping app**
 
-- Azure Static Web App hosting a React client with embedded API.
+- Azure Static Web App hosting a React client; `/api` is proxied to a linked standalone Azure Functions app via BYOF.
 - Mapbox GL JS or Azure Maps with 3D terrain and drawing tools.
 - Camera controls for north/south/east/west and aerial views.
 - Snapshot capture to seed image-to-image pipelines.
 
 **Back-end generation pipeline**
 
-- Azure Functions embedded at `/api` endpoint within Static Web App (Node.js 22, TypeScript).
+- Standalone Azure Functions app (Node.js 22, TypeScript) linked to the Static Web App BYOF proxy at `/api`.
 - Durable Functions for orchestrating long-running generation tasks.
 - Geospatial data retrieval for vegetation, terrain, and context.
 - Prompt construction with scenario parameters and viewpoint variants.

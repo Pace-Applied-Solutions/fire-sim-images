@@ -6,7 +6,8 @@ This directory contains Bicep templates for deploying the Fire Simulation Inject
 
 The infrastructure consists of the following Azure resources:
 
-- **Static Web App** — Hosts the React front-end and embedded Azure Functions API at `/api`
+- **Static Web App** — Hosts the React front-end; `/api` routes forward to a linked Azure Functions app (BYOF)
+- **Azure Functions App** — Standalone Functions resource for the API (managed identity enabled)
 - **Storage Account** — Blob storage for generated images, videos, and scenario data
 - **Key Vault** — Secure storage for API keys and secrets
 - **Azure AI Foundry (AIServices)** — Account + project with Stable Diffusion (Stable Image Core) deployment for real image generation
@@ -19,7 +20,7 @@ All resources use managed identities and are deployed to Australia East by defau
 infra/
 ├── main.bicep                 # Main orchestrator template
 ├── modules/                   # Resource-specific modules
-│   ├── staticWebApp.bicep     # Static Web App with embedded API
+│   ├── staticWebApp.bicep     # Static Web App (front-end only, BYOF link configured post-deploy)
 │   ├── storage.bicep          # Blob Storage with containers and lifecycle
 │   ├── keyVault.bicep         # Key Vault with access policies
 │   └── openai.bicep           # Azure OpenAI with model deployment
@@ -186,11 +187,11 @@ Optimized for reliability and performance:
 The Static Web App is configured with:
 
 - System-assigned managed identity for secure access to other Azure services
-- Embedded Azure Functions API at `/api` (Node.js 20, TypeScript)
+- Front-end only build; `/api` calls are forwarded to a linked standalone Azure Functions app (Node.js 22) using BYOF
 - Build configuration:
   - App location: `apps/web`
-  - API location: `api`
   - Output location: `dist`
+- Post-deploy configuration: Link the Functions app in the Static Web App portal so `/api/*` proxies to the dedicated Functions resource
 
 ### Storage Account
 
@@ -259,6 +260,7 @@ After deployment, you'll need to:
    - Link your GitHub repository to the Static Web App
    - Configure the deployment token as a GitHub secret
    - Update the Static Web App configuration with the correct branch
+   - In the Static Web App portal, set the linked API to your standalone Functions app (BYOF) so `/api/*` routes correctly
 
 3. **Grant additional access** (if needed):
    - Add developers or deployment pipelines to Key Vault access policies

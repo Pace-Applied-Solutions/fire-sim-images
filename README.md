@@ -26,14 +26,16 @@ For complete project context, architecture, and planning, see:
 This is a monorepo containing:
 
 - **apps/web** — React front-end (Vite + TypeScript) served via Azure Static Web Apps
-- **apps/api** — Azure Functions back-end (TypeScript, v4 programming model)
+- **apps/api** — Azure Functions back-end (TypeScript, v4 programming model) deployed as a standalone Functions app and linked to SWA via the Bring Your Own Functions `/api` proxy
 - **packages/shared** — Shared TypeScript types and constants
 
 The front-end provides a 3D map interface for drawing fire perimeters and setting scenario parameters. The back-end handles geospatial data lookup, prompt generation, AI model integration, and storage.
 
+For deployment-specific details on the BYOF link between the Static Web App and Functions API, see `docs/current_state/api_byof_integration.md`.
+
 ## Prerequisites
 
-- Node.js >= 20.0.0
+- Node.js >= 22.0.0
 - npm >= 9.0.0
 - Azure Functions Core Tools (for API development)
 
@@ -58,6 +60,8 @@ The front-end provides a 3D map interface for drawing fire perimeters and settin
 
    ```bash
    VITE_MAPBOX_TOKEN=your_mapbox_token_here
+   # Optional: point the web app at a remote Functions API when not using the SWA BYOF link
+   VITE_API_BASE_URL=https://<your-functions-app>.azurewebsites.net/api
    ```
 
    Get a free Mapbox token from https://account.mapbox.com/ (free tier: 50,000 map loads/month).
@@ -71,6 +75,8 @@ The front-end provides a 3D map interface for drawing fire perimeters and settin
    This starts both the web app (port 5173) and API (port 7071) concurrently.
 
 ## Development
+
+The Static Web App deploys the web client only; `/api` calls are forwarded to the linked standalone Azure Functions app (BYOF). Locally, `npm run dev` starts both the Vite dev server and the Functions host on port 7071, so the browser can call `/api` without extra proxy setup. If you need to point at a remote Functions app, set `VITE_API_BASE_URL`.
 
 ### Available Scripts
 
