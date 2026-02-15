@@ -73,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
             An unexpected error occurred. The error has been reported and we're working on it.
           </p>
           
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {import.meta.env.DEV && this.state.error && (
             <details style={{ marginTop: '2rem', textAlign: 'left', maxWidth: '600px' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 Error Details

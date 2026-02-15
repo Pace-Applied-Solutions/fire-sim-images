@@ -99,7 +99,7 @@ export class Logger {
       error: error ? {
         message: error.message,
         stack: error.stack,
-        code: (error as any).code,
+        code: (error as Error & { code?: string }).code,
       } : undefined,
     };
     this.log('error', message, errorContext);

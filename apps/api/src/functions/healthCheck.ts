@@ -239,6 +239,7 @@ async function checkExternalData(): Promise<HealthCheck> {
   
   try {
     // Check NSW spatial data endpoints with a HEAD request
+    // Note: AbortSignal.timeout() requires Node.js >=17.3.0 (Azure Functions v4 uses Node 20)
     const response = await fetch(
       'https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/ePlanning/Planning_Portal_Hazard/MapServer',
       { method: 'HEAD', signal: AbortSignal.timeout(EXTERNAL_SERVICE_TIMEOUT_MS) }

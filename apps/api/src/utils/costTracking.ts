@@ -43,7 +43,8 @@ export interface PricingConfig {
  * 
  * Note: These are estimates based on public pricing as of 2024.
  * Actual prices may vary by region and may change over time.
- * TODO: Consider implementing dynamic pricing updates via Azure Pricing API.
+ * TODO(Future): Consider implementing dynamic pricing updates via Azure Pricing API
+ * when the project scales to multi-region or high-volume usage.
  */
 const DEFAULT_PRICING: PricingConfig = {
   dalle3Standard: 0.040, // $0.040 per image (1024x1024)
