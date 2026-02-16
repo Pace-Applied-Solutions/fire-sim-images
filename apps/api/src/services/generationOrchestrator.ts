@@ -12,9 +12,11 @@ import type {
   ScenarioMetadata,
 } from '@fire-sim/shared';
 import { generatePrompts } from '@fire-sim/shared';
+import type { VegetationContext } from '@fire-sim/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageGeneratorService } from './imageGenerator.js';
 import { BlobStorageService } from './blobStorage.js';
+import { queryVegetationContext, formatVegetationContextForPrompt } from './vegetationService.js';
 import { ConsistencyValidator } from '../validation/consistencyValidator.js';
 import { createLogger } from '../utils/logger.js';
 import { startTimer, GenerationMetrics } from '../utils/metrics.js';
@@ -153,6 +155,41 @@ export class GenerationOrchestrator {
         templateVersion: promptSet.templateVersion,
       });
 
+      // Step 1b: Query NSW SVTM vegetation context at the fire perimeter
+      let vegetationContext: VegetationContext | null = null;
+      let vegetationPromptText = '';
+      try {
+        const perimeterCoords = request.perimeter.geometry.coordinates[0];
+        const lngs = perimeterCoords.map((c: number[]) => c[0]);
+        const lats = perimeterCoords.map((c: number[]) => c[1]);
+        const centroid: [number, number] = [
+          lngs.reduce((a: number, b: number) => a + b, 0) / lngs.length,
+          lats.reduce((a: number, b: number) => a + b, 0) / lats.length,
+        ];
+        const perimeterBbox: [number, number, number, number] = [
+          Math.min(...lngs), Math.min(...lats),
+          Math.max(...lngs), Math.max(...lats),
+        ];
+
+        logger.info('Querying NSW SVTM vegetation context', { centroid });
+        vegetationContext = await queryVegetationContext(centroid, perimeterBbox);
+
+        if (vegetationContext) {
+          vegetationPromptText = formatVegetationContextForPrompt(vegetationContext);
+          logger.info('SVTM vegetation context resolved', {
+            centerFormation: vegetationContext.centerFormation,
+            uniqueFormations: vegetationContext.uniqueFormations,
+          });
+        } else {
+          logger.warn('SVTM vegetation context unavailable — continuing without');
+        }
+      } catch (vegError) {
+        // Non-fatal — continue without vegetation context
+        logger.warn('SVTM vegetation query failed', {
+          error: vegError instanceof Error ? vegError.message : String(vegError),
+        });
+      }
+
       // Step 2: Determine anchor viewpoint (prefer aerial, fallback to first available)
       const maxImages = 10;
       const viewpointsToGenerate = request.requestedViews.slice(0, maxImages);
@@ -186,6 +223,8 @@ export class GenerationOrchestrator {
           const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
             seed: request.seed,
             mapScreenshot: anchorMapScreenshot,
+            vegetationMapScreenshot: request.vegetationMapScreenshot,
+            vegetationPromptText: vegetationPromptText || undefined,
             // Surface thinking text to the progress store in real time so the
             // frontend poll picks it up while the model is still working.
             onThinkingUpdate: (thinkingText: string) => {
@@ -301,7 +340,9 @@ export class GenerationOrchestrator {
         this.imageGenerator.getMaxConcurrent(),
         request.seed,
         anchorImageData,
-        request.mapScreenshots
+        request.mapScreenshots,
+        request.vegetationMapScreenshot,
+        vegetationPromptText || undefined,
       );
 
       // Step 5: Upload images to blob storage and generate SAS URLs
@@ -468,6 +509,8 @@ export class GenerationOrchestrator {
           model: images[0]?.metadata.model,
           generationTimeMs: Date.now() - new Date(progress.createdAt).getTime(),
           timestamp: new Date().toISOString(),
+          vegetationContext: vegetationContext ?? undefined,
+          hadVegetationScreenshot: !!request.vegetationMapScreenshot,
         };
         await this.blobStorage.uploadGenerationLog(scenarioId, generationLog);
         logger.info('Generation log saved', { scenarioId });
@@ -540,7 +583,9 @@ export class GenerationOrchestrator {
     maxConcurrent: number,
     seed?: number,
     anchorImage?: Buffer,
-    mapScreenshots?: Record<ViewPoint, string>
+    mapScreenshots?: Record<ViewPoint, string>,
+    vegetationMapScreenshot?: string,
+    vegetationPromptText?: string,
   ): Promise<
     Array<
       PromiseSettledResult<{
@@ -574,6 +619,8 @@ export class GenerationOrchestrator {
           referenceImage: !mapScreenshot ? anchorImage : undefined,
           referenceStrength: 0.5, // 50% adherence to reference
           mapScreenshot,
+          vegetationMapScreenshot,
+          vegetationPromptText,
         });
         return {
           viewpoint,

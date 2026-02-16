@@ -6,9 +6,10 @@ import centroid from '@turf/centroid';
 import bbox from '@turf/bbox';
 import type { Feature, Polygon } from 'geojson';
 import type { FirePerimeter, ViewPoint } from '@fire-sim/shared';
+import { SVTM_WMS_URL } from '@fire-sim/shared';
 import { useAppStore } from '../../store/appStore';
 import { useToastStore } from '../../store/toastStore';
-import { captureViewpointScreenshots } from '../../utils/mapCapture';
+import { captureViewpointScreenshots, captureVegetationScreenshot } from '../../utils/mapCapture';
 import {
   MAPBOX_TOKEN,
   DEFAULT_CENTER,
@@ -65,6 +66,7 @@ export const MapContainer = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const drawRef = useRef<MapboxDraw | null>(null);
+  const mapLoadedRef = useRef(false);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [perimeter, setPerimeter] = useState<FirePerimeter | null>(null);
@@ -72,10 +74,12 @@ export const MapContainer = () => {
   const [mapError, setMapError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('helicopter');
   const [currentDirection, setCurrentDirection] = useState<ViewDirection>('north');
+  const [showVegetation, setShowVegetation] = useState(false);
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
   const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
+  const setCaptureVegetationScreenshot = useAppStore((s) => s.setCaptureVegetationScreenshot);
   const { addToast } = useToastStore();
 
   const setMapCursor = useCallback((cursor: string | null) => {
@@ -83,6 +87,15 @@ export const MapContainer = () => {
     if (!map) return;
     map.getCanvas().style.cursor = cursor ?? '';
   }, []);
+
+  // Toggle NSW SVTM vegetation overlay visibility
+  const toggleVegetationOverlay = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer('nsw-vegetation-layer')) return;
+    const next = !showVegetation;
+    map.setLayoutProperty('nsw-vegetation-layer', 'visibility', next ? 'visible' : 'none');
+    setShowVegetation(next);
+  }, [showVegetation]);
 
   const startPolygonDraw = useCallback(() => {
     if (!drawRef.current) return;
@@ -250,12 +263,44 @@ export const MapContainer = () => {
         });
       }
 
+      // Add NSW State Vegetation Type Map (SVTM) as a WMS raster overlay
+      // CC-BY 4.0 — publicly accessible, CORS enabled
+      if (!map.getSource('nsw-vegetation')) {
+        const wmsUrl = `${SVTM_WMS_URL}?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
+        map.addSource('nsw-vegetation', {
+          type: 'raster',
+          tiles: [wmsUrl],
+          tileSize: 256,
+        });
+
+        map.addLayer({
+          id: 'nsw-vegetation-layer',
+          type: 'raster',
+          source: 'nsw-vegetation',
+          paint: { 'raster-opacity': 0.65 },
+          layout: { visibility: 'none' },
+        });
+      }
+
       setIsMapLoaded(true);
       setMapError(null);
+      mapLoadedRef.current = true;
     });
 
     // Handle map errors
     map.on('error', (e) => {
+      // Type guard: error events from sources may include sourceId at runtime
+      const errorWithSource = e as typeof e & { sourceId?: string };
+      if (errorWithSource?.sourceId === 'nsw-vegetation') {
+        console.warn('Vegetation WMS error:', e?.error ?? e);
+        return;
+      }
+
+      if (mapLoadedRef.current) {
+        console.warn('Map error after load:', e?.error ?? e);
+        return;
+      }
+
       console.error('Map error:', e);
       setMapError('Map failed to load. Check your Mapbox token and network access.');
     });
@@ -273,6 +318,7 @@ export const MapContainer = () => {
       drawRef.current = null;
       mapRef.current = null;
       setIsMapLoaded(false);
+      mapLoadedRef.current = false;
     };
   }, []);
 
@@ -474,6 +520,7 @@ export const MapContainer = () => {
   useEffect(() => {
     if (!isMapLoaded || !metadata) {
       setCaptureMapScreenshots(null);
+      setCaptureVegetationScreenshot(null);
       return;
     }
 
@@ -487,12 +534,24 @@ export const MapContainer = () => {
       }, viewpoints);
     };
 
+    const vegCaptureFn = async (): Promise<string | null> => {
+      const map = mapRef.current;
+      if (!map) return null;
+
+      return captureVegetationScreenshot(map, {
+        centroid: metadata.centroid,
+        bbox: metadata.bbox,
+      });
+    };
+
     setCaptureMapScreenshots(captureFn);
+    setCaptureVegetationScreenshot(vegCaptureFn);
 
     return () => {
       setCaptureMapScreenshots(null);
+      setCaptureVegetationScreenshot(null);
     };
-  }, [isMapLoaded, metadata, setCaptureMapScreenshots]);
+  }, [isMapLoaded, metadata, setCaptureMapScreenshots, setCaptureVegetationScreenshot]);
 
   // Fly to viewpoint preset
   const flyToViewpoint = useCallback(
@@ -781,6 +840,16 @@ export const MapContainer = () => {
                   type="button"
                 >
                   📷
+                </button>
+                <button
+                  onClick={toggleVegetationOverlay}
+                  className={`${styles.viewpointBtn} ${showVegetation ? styles.viewpointBtnActive : ''}`}
+                  aria-pressed={showVegetation}
+                  title={showVegetation ? 'Hide vegetation overlay (NSW SVTM)' : 'Show vegetation overlay (NSW SVTM)'}
+                  aria-label={showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'}
+                  type="button"
+                >
+                  🌿
                 </button>
               </div>
             </div>

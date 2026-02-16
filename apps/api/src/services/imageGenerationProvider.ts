@@ -11,6 +11,8 @@ export interface ImageGenOptions {
   referenceImage?: string | Buffer; // Base64 data URL or Buffer for reference/anchor image
   referenceStrength?: number; // 0-1, how much to adhere to reference (0.5 default)
   mapScreenshot?: string | Buffer; // Map view screenshot for terrain grounding
+  vegetationMapScreenshot?: string | Buffer; // NSW SVTM vegetation overlay screenshot
+  vegetationPromptText?: string; // Spatial vegetation context text from SVTM queries
   /**
    * Called whenever new thinking/reasoning text arrives during streaming.
    * The callback receives the full accumulated thinking text so far.

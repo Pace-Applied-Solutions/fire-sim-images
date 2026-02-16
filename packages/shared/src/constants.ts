@@ -97,3 +97,44 @@ export const VEGETATION_DESCRIPTORS: Record<string, string> = {
   'Plantation Forest': 'structured plantation rows with dense fuel between tree lines',
   'Cleared/Urban': 'cleared land or urban area with minimal vegetation and structures',
 };
+
+/**
+ * NSW State Vegetation Type Map (SVTM) formation descriptors.
+ * Maps the 17 SVTM vegetation formation categories to natural language descriptions
+ * suitable for AI image generation prompts.
+ *
+ * Source: NSW DCCEEW via ArcGIS MapServer
+ * https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer
+ */
+export const SVTM_FORMATION_DESCRIPTORS: Record<string, string> = {
+  'Alpine complex': 'alpine heath and snow grass mosaic with stunted shrubs, herbfields, and exposed rocky outcrops above the treeline',
+  'Arid shrublands (Acacia subformation)': 'arid mulga and acacia shrubland with spinifex hummock grass and sparse canopy on red-brown soil',
+  'Arid shrublands (Chenopod subformation)': 'sparse saltbush and bluebush shrubland on flat clay plains with minimal ground fuel',
+  'Cleared': 'cleared agricultural land, pasture, or urban area with minimal native vegetation and scattered structures',
+  'Dry sclerophyll forests (Shrub/grass subformation)': 'dry eucalyptus forest with grassy understorey and scattered low shrubs over leaf litter on well-drained ridges',
+  'Dry sclerophyll forests (Shrubby subformation)': 'dry eucalyptus forest with dense shrubby understorey of banksia, hakea, and pea-flowers over deep leaf litter and bark fuel',
+  'Forested wetlands': 'paperbark and swamp mahogany forest on waterlogged soils with sedge and reed understorey',
+  'Freshwater wetlands': 'open freshwater marsh with reeds, sedges, and rushes around shallow ephemeral water bodies',
+  'Grasslands': 'open native grassland with tussock grasses and minimal tree canopy, often cured dry in summer',
+  'Grassy woodlands': 'open eucalypt woodland with scattered mature trees over a continuous native grass understorey',
+  'Heathlands': 'low dense coastal or montane heath with banksia, tea-tree, and grevillea over sandy or rocky substrate',
+  'Rainforests': 'dense subtropical or temperate rainforest with closed canopy, buttress roots, vines, and epiphytes',
+  'Saline  wetlands': 'coastal saltmarsh and mangrove communities on tidal flats with salt-tolerant grasses and succulents',
+  'Semi-arid woodlands (Grassy subformation)': 'open semi-arid eucalypt or cypress woodland with native grass understorey on flat to undulating terrain',
+  'Semi-arid woodlands (Shrubby subformation)': 'semi-arid woodland with mixed shrub understorey of cassia, hopbush, and native pine',
+  'Wet sclerophyll forests (Grassy subformation)': 'tall wet eucalyptus forest with grassy understorey and scattered ferns in sheltered gullies and south-facing slopes',
+  'Wet sclerophyll forests (Shrubby subformation)': 'tall wet eucalyptus forest with dense shrubby understorey of tree ferns, sassafras, and soft-leaved shrubs in high-rainfall areas',
+};
+
+/**
+ * NSW SVTM WMS endpoint for vegetation formation overlay tiles.
+ * CC-BY 4.0 licensed, publicly accessible, CORS enabled.
+ */
+export const SVTM_WMS_URL =
+  'https://mapprod3.environment.nsw.gov.au/arcgis/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer/WmsServer';
+
+/**
+ * NSW SVTM ArcGIS REST endpoint for identify/query operations.
+ */
+export const SVTM_REST_URL =
+  'https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer';

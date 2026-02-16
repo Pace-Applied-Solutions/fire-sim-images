@@ -112,6 +112,7 @@ export const ScenarioInputPanel: React.FC = () => {
     setMapScreenshots,
     setError,
     captureMapScreenshots,
+    captureVegetationScreenshot,
   } = useAppStore();
   const { addToast } = useToastStore();
   const [inputs, setInputs] = useState<ScenarioInputs>(DEFAULT_INPUTS);
@@ -270,6 +271,22 @@ export const ScenarioInputPanel: React.FC = () => {
         }
       }
 
+      // Capture vegetation overlay screenshot (NSW SVTM)
+      let vegetationMapScreenshot: string | undefined;
+      if (captureVegetationScreenshot) {
+        setGenerationProgress('Capturing vegetation data...');
+        try {
+          const vegScreenshot = await captureVegetationScreenshot();
+          if (vegScreenshot) {
+            vegetationMapScreenshot = vegScreenshot;
+            console.log('Captured vegetation overlay screenshot for AI context');
+          }
+        } catch (error) {
+          console.warn('Vegetation screenshot capture failed, proceeding without:', error);
+          // Non-fatal: continue without vegetation overlay
+        }
+      }
+
       // Start generation
       const startResponse = await generationApi.startGeneration({
         perimeter,
@@ -277,6 +294,7 @@ export const ScenarioInputPanel: React.FC = () => {
         geoContext,
         requestedViews,
         mapScreenshots: mapScreenshots as Record<ViewPoint, string>,
+        vegetationMapScreenshot,
       });
 
       addToast({ type: 'success', message: 'Generation started' });
