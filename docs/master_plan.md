@@ -738,6 +738,27 @@ Update this section after each issue or change.
     - **Responsive behavior:** Search scales appropriately on mobile (max-width: 400px tablet, 280px mobile)
     - **Acceptance criteria met:** Address search in header, map controls unobstructed, clean accessible layout maintained across viewports
     - **Files modified:** `appStore.ts`, `MapContainer.tsx`, `MapContainer.module.css`, `Header.tsx`, `Header.module.css`
+  - **Address Search Pan and Zoom Fix (Feb 16, 2026):**
+    - **Problem addressed:** Map always used fixed zoom level 14 after address search, regardless of whether result was a point location or a large area (suburb, region). Large areas appeared too zoomed in, small areas sometimes had too little context.
+    - **Solution:** Implemented intelligent zoom behavior using bounding box (bbox) data from Mapbox Geocoding API
+    - **Implementation details:**
+      - Added optional `bbox` property to `MapboxFeature` interface: `[minLng, minLat, maxLng, maxLat]`
+      - Updated `AddressSearchProps.onLocationSelect` signature to accept optional bbox parameter
+      - Modified `handleSelectResult` in AddressSearch to pass bbox to parent component
+      - Enhanced `handleLocationSelect` in MapContainer with dual-mode logic:
+        - **With bbox**: Uses `map.fitBounds()` to show entire address area with dynamic padding (50-100px based on size), maxZoom: 16 to prevent excessive zoom
+        - **Without bbox**: Falls back to `map.flyTo()` with zoom 14 (original behavior for point locations)
+      - Both modes use 2000ms duration and essential: true for smooth, reliable animation
+    - **Benefits:**
+      - Suburbs and regions now show full extent, not just center point
+      - Point addresses still get appropriate zoom level
+      - Dynamic padding adapts to area size for optimal framing
+      - maxZoom prevents over-zooming on very small areas (individual buildings)
+      - Maintains backward compatibility (fallback to zoom 14 when no bbox)
+    - **Testing considerations:** Works for rural areas (large bbox), urban addresses (medium bbox), and precise points (no bbox)
+    - **Documentation updated:** `docs/current_state/address_search.md` updated to reflect new fitBounds behavior and dual-mode navigation
+    - **Files modified:** `apps/web/src/components/Map/AddressSearch.tsx`, `apps/web/src/components/Map/MapContainer.tsx`, `docs/current_state/address_search.md`
+    - **Acceptance criteria met:** Map pans and zooms to show full address area when available, suitable zoom for all result types, no regression on default map controls
 
 ## 14. Change Control Process
 
