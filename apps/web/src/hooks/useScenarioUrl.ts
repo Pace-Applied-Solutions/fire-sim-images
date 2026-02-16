@@ -12,7 +12,8 @@ import { useToastStore } from '../store/toastStore';
 export const useScenarioUrl = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToast } = useToastStore();
-  const hasLoadedRef = useRef(false);
+  const loadedScenarioIdRef = useRef<string | null>(null);
+  const isLoadingFromUrlRef = useRef(false);
 
   const {
     setPerimeter,
@@ -28,13 +29,15 @@ export const useScenarioUrl = () => {
   useEffect(() => {
     const scenarioId = searchParams.get('scenario');
 
-    if (!scenarioId || hasLoadedRef.current) {
+    // Skip if no scenario ID in URL or if we already loaded this scenario
+    if (!scenarioId || loadedScenarioIdRef.current === scenarioId) {
       return;
     }
 
     const loadScenario = async () => {
       try {
-        hasLoadedRef.current = true;
+        isLoadingFromUrlRef.current = true;
+        loadedScenarioIdRef.current = scenarioId;
         setScenarioState('generating'); // Show loading state
         
         const scenario = await generationApi.getScenario(scenarioId);
@@ -61,7 +64,7 @@ export const useScenarioUrl = () => {
         });
       } catch (error) {
         console.error('Failed to load scenario from URL:', error);
-        hasLoadedRef.current = false; // Allow retry
+        loadedScenarioIdRef.current = null; // Allow retry
         
         const errorMsg = error instanceof Error ? error.message : 'Failed to load scenario';
         setError(errorMsg);
@@ -75,6 +78,8 @@ export const useScenarioUrl = () => {
         // Remove invalid scenario parameter
         searchParams.delete('scenario');
         setSearchParams(searchParams, { replace: true });
+      } finally {
+        isLoadingFromUrlRef.current = false;
       }
     };
 
@@ -93,12 +98,18 @@ export const useScenarioUrl = () => {
 
   // Update URL when a new scenario is generated
   useEffect(() => {
+    // Don't update URL if we're currently loading from URL
+    if (isLoadingFromUrlRef.current) {
+      return;
+    }
+
     if (generationResult?.id && generationResult.status === 'completed') {
       const currentScenarioId = searchParams.get('scenario');
       
       // Only update if the scenario ID changed
       if (currentScenarioId !== generationResult.id) {
         setSearchParams({ scenario: generationResult.id }, { replace: false });
+        loadedScenarioIdRef.current = generationResult.id;
       }
     }
   }, [generationResult, searchParams, setSearchParams]);
