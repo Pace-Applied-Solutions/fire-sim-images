@@ -206,13 +206,20 @@ export const ScenarioInputPanel: React.FC = () => {
       setGenerationProgress('Starting generation...');
       setError(null);
 
-      // Default viewpoints for now - could be made configurable later
+      // Default viewpoints: capture cardinal directions at each perspective for consistency
+      // This matches the perspective toggles in the UI (NESW for helicopter and ground, plus aerial)
       const requestedViews: ViewPoint[] = [
         'aerial',
+        // Helicopter views: wide-area situational awareness
         'helicopter_north',
+        'helicopter_south',
+        'helicopter_east',
+        'helicopter_west',
+        // Ground views: truck/vehicle perspective
         'ground_north',
+        'ground_south',
         'ground_east',
-        'ridge',
+        'ground_west',
       ];
 
       // Capture map screenshots from each viewpoint for terrain reference
