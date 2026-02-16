@@ -810,29 +810,7 @@ export const MapContainer = () => {
         </div>
       )}
 
-      {/* Perimeter Metadata Panel */}
-      {metadata && (
-        <div className={styles.metadataPanel}>
-          <div className={styles.metadataTitle}>Fire Perimeter</div>
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Area:</span>
-            <span className={styles.metadataValue}>{metadata.areaHectares.toFixed(2)} ha</span>
-          </div>
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Centroid:</span>
-            <span className={styles.metadataValue}>
-              {metadata.centroid[1].toFixed(4)}°, {metadata.centroid[0].toFixed(4)}°
-            </span>
-          </div>
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Bounding Box:</span>
-            <span className={styles.metadataValue}>
-              {metadata.bbox[1].toFixed(4)}°, {metadata.bbox[0].toFixed(4)}° to{' '}
-              {metadata.bbox[3].toFixed(4)}°, {metadata.bbox[2].toFixed(4)}°
-            </span>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

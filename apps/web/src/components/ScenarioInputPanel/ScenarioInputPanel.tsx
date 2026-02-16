@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/appStore';
 import type { ScenarioInputs, FireDangerRating, ViewPoint, GenerationResult } from '@fire-sim/shared';
+import area from '@turf/area';
+import centroid from '@turf/centroid';
+import bbox from '@turf/bbox';
 import {
   getWeatherProfileForRating,
   validateWeatherParameters,
@@ -337,6 +340,23 @@ export const ScenarioInputPanel: React.FC = () => {
   const isValid = Object.keys(errors).length === 0;
   const canGenerate = isValid && perimeter !== null;
 
+  // Compute perimeter metadata from the GeoJSON feature
+  const perimeterMeta = useMemo(() => {
+    if (!perimeter) return null;
+    try {
+      const areaM2 = area(perimeter);
+      const center = centroid(perimeter);
+      const bounds = bbox(perimeter);
+      return {
+        areaHectares: areaM2 / 10_000,
+        centroid: center.geometry.coordinates as [number, number],
+        bbox: bounds as [number, number, number, number],
+      };
+    } catch {
+      return null;
+    }
+  }, [perimeter]);
+
   const getSummaryText = (): string => {
     const stageMap = {
       spotFire: 'Spot fire',
@@ -669,6 +689,28 @@ export const ScenarioInputPanel: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Fire Perimeter Info */}
+      {perimeterMeta && (
+        <div className={styles.perimeterCard}>
+          <h4 className={styles.perimeterTitle}>
+            <span className={styles.perimeterIcon}>🔥</span>
+            Fire Perimeter
+          </h4>
+          <div className={styles.perimeterGrid}>
+            <div className={styles.perimeterStat}>
+              <span className={styles.perimeterLabel}>Area</span>
+              <span className={styles.perimeterValue}>{perimeterMeta.areaHectares.toFixed(2)} ha</span>
+            </div>
+            <div className={styles.perimeterStat}>
+              <span className={styles.perimeterLabel}>Centre</span>
+              <span className={styles.perimeterValue}>
+                {perimeterMeta.centroid[1].toFixed(4)}°, {perimeterMeta.centroid[0].toFixed(4)}°
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Card */}
       <div className={styles.summary}>
