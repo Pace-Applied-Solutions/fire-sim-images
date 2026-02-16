@@ -993,8 +993,8 @@ export const MapContainer = () => {
       return;
     }
 
-    setHandleLocationSelect(() => handleLocationSelect);
-    setHandleGeolocationRequest(() => handleGeolocationRequest);
+    setHandleLocationSelect(handleLocationSelect);
+    setHandleGeolocationRequest(handleGeolocationRequest);
 
     return () => {
       setHandleLocationSelect(null);
