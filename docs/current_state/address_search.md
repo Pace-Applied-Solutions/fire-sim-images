@@ -329,6 +329,7 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 **Issue**: Address search always used fixed zoom level 14, regardless of result type
 
 **Changes**:
+
 - Added bbox (bounding box) support from Mapbox Geocoding API
 - Implemented `map.fitBounds()` for results with bbox to show entire address area
 - Dynamic padding (50-100px) based on area size
@@ -336,10 +337,12 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 - Fallback to `map.flyTo()` with zoom 14 for point-only results
 
 **Impact**:
+
 - Better framing for large areas (suburbs, regions)
 - Appropriate zoom for both point and area address types
 - Improved user experience when searching for different location types
 
 **Files Changed**:
+
 - `apps/web/src/components/Map/AddressSearch.tsx`
 - `apps/web/src/components/Map/MapContainer.tsx`

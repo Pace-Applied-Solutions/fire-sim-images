@@ -241,7 +241,7 @@ export const NVIS_MVS_DESCRIPTORS: Record<string, string> = {
   'Melaleuca forests and woodlands':
     'paperbark forest on waterlogged soils with sedge and reed understorey; paperbark is highly flammable when dry',
   // Heathlands
-  'Heathlands':
+  Heathlands:
     'low dense heath with banksia, tea-tree, and grevillea over sandy or rocky substrate; very high surface fuel loads and fire intensity',
   // Grasslands
   'Tussock grasslands':
@@ -271,10 +271,8 @@ export const NVIS_MVS_DESCRIPTORS: Record<string, string> = {
   // Cleared / urban
   Cleared:
     'cleared agricultural land, pasture, or urban area with minimal native vegetation and scattered structures',
-  'Naturally bare':
-    'naturally bare rock, sand, or water body with no vegetation fuel',
-  Unclassified:
-    'vegetation type not classified or insufficient survey data',
+  'Naturally bare': 'naturally bare rock, sand, or water body with no vegetation fuel',
+  Unclassified: 'vegetation type not classified or insufficient survey data',
 };
 
 /**

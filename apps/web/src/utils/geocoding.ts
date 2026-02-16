@@ -1,6 +1,6 @@
 /**
  * Mapbox Geocoding Utilities
- * 
+ *
  * Provides reverse geocoding functionality to convert coordinates to human-readable place names.
  */
 
@@ -35,14 +35,14 @@ interface MapboxReverseGeocodingResponse {
 
 /**
  * Formats a locality description from Mapbox reverse geocoding result.
- * 
+ *
  * Extracts the most relevant place name and state/region for fire location context.
- * 
+ *
  * Examples:
  * - "near Bungendore, New South Wales"
  * - "south of Bendigo, Victoria"
  * - "in the Blue Mountains, New South Wales"
- * 
+ *
  * @param feature - Mapbox feature from reverse geocoding response
  * @returns Formatted locality description, or undefined if not available
  */
@@ -51,7 +51,7 @@ function formatLocalityDescription(feature: MapboxReverseGeocodingFeature): stri
 
   const placeName = feature.text || feature.place_name;
   const placeTypes = feature.place_type || [];
-  
+
   // Extract state/region from context
   let state: string | undefined;
   if (feature.context) {
@@ -78,9 +78,9 @@ function formatLocalityDescription(feature: MapboxReverseGeocodingFeature): stri
 
 /**
  * Performs reverse geocoding to get a locality description for coordinates.
- * 
+ *
  * Uses Mapbox Geocoding API to convert longitude/latitude to a human-readable place name.
- * 
+ *
  * @param longitude - Longitude coordinate
  * @param latitude - Latitude coordinate
  * @returns Formatted locality description (e.g., "near Bungendore, New South Wales"), or undefined if failed
@@ -100,7 +100,7 @@ export async function reverseGeocode(
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}&types=place,locality,district,region&limit=1`;
 
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       console.warn(`Reverse geocoding failed: ${response.status} ${response.statusText}`);
       return undefined;
@@ -127,7 +127,7 @@ export async function reverseGeocode(
 
 /**
  * Gets locality description for a fire perimeter centroid.
- * 
+ *
  * @param centroid - Fire perimeter centroid coordinates [lng, lat]
  * @returns Formatted locality description, or undefined if failed
  */

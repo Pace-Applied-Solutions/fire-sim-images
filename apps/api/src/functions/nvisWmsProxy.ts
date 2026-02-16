@@ -105,7 +105,8 @@ export async function nvisWmsProxy(
 
       // Read the upstream body as a buffer so we can return it as-is
       const body = Buffer.from(await upstreamResponse.arrayBuffer());
-      const contentType = upstreamResponse.headers.get('content-type') ?? 'application/octet-stream';
+      const contentType =
+        upstreamResponse.headers.get('content-type') ?? 'application/octet-stream';
 
       // Determine cache duration: tiles (GetMap) can be cached longer
       const wmsRequest = (url.searchParams.get('request') ?? '').toLowerCase();

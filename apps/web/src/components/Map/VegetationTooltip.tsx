@@ -108,7 +108,11 @@ export const VegetationTooltip = ({ result, loading, onClose }: VegetationToolti
   }, [result.lngLat]);
 
   return (
-    <div className={`${styles.tooltip} ${styles.tooltipFixed}`} role="dialog" aria-label="Vegetation information">
+    <div
+      className={`${styles.tooltip} ${styles.tooltipFixed}`}
+      role="dialog"
+      aria-label="Vegetation information"
+    >
       <div className={styles.header}>
         <span className={styles.headerIcon}>📍</span>
         <span className={styles.headerTitle}>Vegetation Info</span>

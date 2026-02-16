@@ -233,7 +233,7 @@ export const ScenarioInputPanel: React.FC = () => {
       if (perimeter && perimeter.geometry) {
         try {
           const context = await generationApi.getGeoContext(perimeter.geometry);
-          
+
           // Get locality information from reverse geocoding
           try {
             if (perimeterMeta?.centroid) {
@@ -246,7 +246,7 @@ export const ScenarioInputPanel: React.FC = () => {
             console.warn('Failed to fetch locality, continuing without:', localityError);
             // Non-fatal: continue without locality information
           }
-          
+
           setGeoContext(context);
         } catch (error) {
           console.error('Failed to fetch geo context:', error);
@@ -310,7 +310,9 @@ export const ScenarioInputPanel: React.FC = () => {
             throw new Error('Failed to capture any terrain screenshots');
           }
           if (count < requestedViews.length) {
-            console.warn(`Only ${count}/${requestedViews.length} screenshots captured - some views failed`);
+            console.warn(
+              `Only ${count}/${requestedViews.length} screenshots captured - some views failed`
+            );
             addToast({
               type: 'warning',
               message: `Only ${count}/${requestedViews.length} terrain views captured - proceeding with available screenshots`,
@@ -334,7 +336,10 @@ export const ScenarioInputPanel: React.FC = () => {
         setError('Map screenshot capture not available');
         setScenarioState('error');
         setGenerationProgress(null);
-        addToast({ type: 'error', message: 'Cannot start generation: Map not ready for screenshot capture' });
+        addToast({
+          type: 'error',
+          message: 'Cannot start generation: Map not ready for screenshot capture',
+        });
         return;
       }
 

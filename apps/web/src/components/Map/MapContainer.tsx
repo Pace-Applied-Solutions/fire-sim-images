@@ -109,9 +109,7 @@ export const MapContainer = () => {
   const [vegIdentifyResult, setVegIdentifyResult] = useState<VegetationIdentifyResult | null>(null);
   const [vegIdentifyLoading, setVegIdentifyLoading] = useState(false);
   const vegIdentifyAbortRef = useRef<AbortController | null>(null);
-  const [vegLegendItems, setVegLegendItems] = useState<Array<{ name: string; color: string }>>(
-    []
-  );
+  const [vegLegendItems, setVegLegendItems] = useState<Array<{ name: string; color: string }>>([]);
   const [vegLegendLoading, setVegLegendLoading] = useState(false);
   const [vegLegendError, setVegLegendError] = useState<string | null>(null);
   const vegLegendAbortRef = useRef<AbortController | null>(null);
@@ -1264,7 +1262,13 @@ export const MapContainer = () => {
       setHandleLocationSelect(null);
       setHandleGeolocationRequest(null);
     };
-  }, [isMapLoaded, handleLocationSelect, handleGeolocationRequest, setHandleLocationSelect, setHandleGeolocationRequest]);
+  }, [
+    isMapLoaded,
+    handleLocationSelect,
+    handleGeolocationRequest,
+    setHandleLocationSelect,
+    setHandleGeolocationRequest,
+  ]);
 
   const showToolbarHint = isMapLoaded && !perimeter && !hintDismissed;
 
@@ -1338,32 +1342,30 @@ export const MapContainer = () => {
               >
                 {viewMode === 'helicopter' ? '🚁' : '🚒'}
               </button>
-              {(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
-                (direction) => (
-                  <button
-                    key={direction}
-                    onClick={() => handleDirectionSelect(direction)}
-                    className={`${styles.viewpointBtn} ${
-                      currentDirection === direction ? styles.viewpointBtnActive : ''
-                    }`}
-                    title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
-                      direction === 'above' ? 'above' : `from ${direction}`
-                    }`}
-                    aria-pressed={currentDirection === direction}
-                    type="button"
-                  >
-                    {direction === 'north'
-                      ? 'N'
-                      : direction === 'south'
-                        ? 'S'
-                        : direction === 'east'
-                          ? 'E'
-                          : direction === 'west'
-                            ? 'W'
-                            : '⬆'}
-                  </button>
-                )
-              )}
+              {(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map((direction) => (
+                <button
+                  key={direction}
+                  onClick={() => handleDirectionSelect(direction)}
+                  className={`${styles.viewpointBtn} ${
+                    currentDirection === direction ? styles.viewpointBtnActive : ''
+                  }`}
+                  title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
+                    direction === 'above' ? 'above' : `from ${direction}`
+                  }`}
+                  aria-pressed={currentDirection === direction}
+                  type="button"
+                >
+                  {direction === 'north'
+                    ? 'N'
+                    : direction === 'south'
+                      ? 'S'
+                      : direction === 'east'
+                        ? 'E'
+                        : direction === 'west'
+                          ? 'W'
+                          : '⬆'}
+                </button>
+              ))}
               <button
                 onClick={captureMapView}
                 className={styles.viewpointCapture}
@@ -1382,9 +1384,7 @@ export const MapContainer = () => {
                     ? 'Hide vegetation overlay (NVIS National)'
                     : 'Show vegetation overlay (NVIS National)'
                 }
-                aria-label={
-                  showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'
-                }
+                aria-label={showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'}
                 type="button"
               >
                 🌿

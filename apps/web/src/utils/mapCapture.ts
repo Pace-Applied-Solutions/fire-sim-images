@@ -157,11 +157,7 @@ function waitForMapReady(map: MapboxMap, maxWaitMs = 8000): Promise<void> {
  * Useful for WMS layers like NVIS which can take longer than vector tiles.
  * Also resolves on source errors to avoid hanging when the WMS server is down.
  */
-function waitForSourceLoaded(
-  map: MapboxMap,
-  sourceId: string,
-  maxWaitMs = 12000
-): Promise<void> {
+function waitForSourceLoaded(map: MapboxMap, sourceId: string, maxWaitMs = 12000): Promise<void> {
   return new Promise((resolve) => {
     if (map.isSourceLoaded(sourceId)) {
       resolve();
@@ -183,7 +179,10 @@ function waitForSourceLoaded(
     // Also resolve on source errors so we don't hang when WMS is down
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onError = (e: any) => {
-      console.warn(`Map error during source '${sourceId}' load — proceeding with capture`, e?.error?.message);
+      console.warn(
+        `Map error during source '${sourceId}' load — proceeding with capture`,
+        e?.error?.message
+      );
       cleanup();
       resolve();
     };
