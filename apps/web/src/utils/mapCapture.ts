@@ -214,8 +214,8 @@ export async function captureVegetationScreenshot(
   perimeterInfo: PerimeterInfo
 ): Promise<string | null> {
   // Check the vegetation layer exists
-  if (!map.getLayer('nsw-vegetation-layer')) {
-    console.warn('NSW vegetation layer not found — skipping vegetation capture');
+  if (!map.getLayer('nvis-vegetation-layer')) {
+    console.warn('NVIS vegetation layer not found — skipping vegetation capture');
     return null;
   }
 
@@ -226,10 +226,10 @@ export async function captureVegetationScreenshot(
     bearing: map.getBearing(),
     pitch: map.getPitch(),
   };
-  const wasVisible = map.getLayoutProperty('nsw-vegetation-layer', 'visibility') === 'visible';
+  const wasVisible = map.getLayoutProperty('nvis-vegetation-layer', 'visibility') === 'visible';
 
   // Turn vegetation layer ON
-  map.setLayoutProperty('nsw-vegetation-layer', 'visibility', 'visible');
+  map.setLayoutProperty('nvis-vegetation-layer', 'visibility', 'visible');
 
   // Move to flat aerial view showing the full perimeter with buffer
   const [centerLng, centerLat] = perimeterInfo.centroid;
@@ -256,7 +256,7 @@ export async function captureVegetationScreenshot(
 
   // Restore vegetation layer visibility
   if (!wasVisible) {
-    map.setLayoutProperty('nsw-vegetation-layer', 'visibility', 'none');
+    map.setLayoutProperty('nvis-vegetation-layer', 'visibility', 'none');
   }
 
   // Restore camera
