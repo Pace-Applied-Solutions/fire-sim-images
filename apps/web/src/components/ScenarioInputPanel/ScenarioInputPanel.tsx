@@ -285,7 +285,10 @@ export const ScenarioInputPanel: React.FC = () => {
     fetchGeoContext();
   }, [perimeter, perimeterMeta, setGeoContext, addToast]);
 
-  // Update flame height and ROS when vegetation type changes (auto-detected only, not manual)
+  // Update flame height and ROS when auto-detected vegetation type first arrives
+  // This runs ONLY when geoContext.vegetationType changes (new perimeter drawn)
+  // Manual overrides are handled by handleVegetationChange, not this effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (geoContext?.vegetationType && !geoContext?.isVegetationManuallySet) {
       const effectiveVegType = getEffectiveVegetationType(geoContext);
@@ -300,7 +303,6 @@ export const ScenarioInputPanel: React.FC = () => {
       setInputs(newInputs);
       setScenarioInputs(newInputs);
     }
-    // Only re-run when auto-detected vegetation type changes, not on manual changes or every inputs change
   }, [geoContext?.vegetationType]);
 
   const handleGenerate = async () => {

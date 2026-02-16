@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getEffectiveVegetationType } from '../constants.js';
+import { getEffectiveVegetationType, DEFAULT_VEGETATION_TYPE } from '../constants.js';
 import type { GeoContext } from '../types.js';
 
 describe('getEffectiveVegetationType', () => {
@@ -35,12 +35,12 @@ describe('getEffectiveVegetationType', () => {
 
   it('should return default fallback when geoContext is null', () => {
     const result = getEffectiveVegetationType(null);
-    expect(result).toBe('Dry Sclerophyll Forest');
+    expect(result).toBe(DEFAULT_VEGETATION_TYPE);
   });
 
   it('should return default fallback when geoContext is undefined', () => {
     const result = getEffectiveVegetationType(undefined);
-    expect(result).toBe('Dry Sclerophyll Forest');
+    expect(result).toBe(DEFAULT_VEGETATION_TYPE);
   });
 
   it('should prioritize manual override even if empty string', () => {

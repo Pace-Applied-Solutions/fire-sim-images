@@ -52,7 +52,7 @@ export const VegetationSelector: React.FC<VegetationSelectorProps> = ({
         onChange={handleChange}
         className={`${styles.select} ${isManual ? styles.selectManual : ''}`}
       >
-        {!isManual && autoDetected && (
+        {autoDetected && (
           <option value="">Auto-detected: {autoDetected}</option>
         )}
         {VEGETATION_TYPES.map((vegType) => (
