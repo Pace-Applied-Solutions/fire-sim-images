@@ -4,14 +4,14 @@ import type {
   ImageGenOptions,
   ImageGenResult,
 } from './imageGenerationProvider.js';
-import type { ImageModelConfig } from '../fluxConfig.js';
+import type { ImageModelConfig } from '../imageModelConfig.js';
 
 /**
  * Detects whether the config points to an Azure AI serverless endpoint
  * (e.g., /providers/blackforestlabs/...) vs the OpenAI-compatible format.
  */
 function isServerlessEndpoint(config: ImageModelConfig): boolean {
-  return Boolean(config.baseUrl?.includes('/providers/'));
+  return Boolean(config.url?.includes('/providers/'));
 }
 
 export class AzureImageProvider implements ImageGenerationProvider {
@@ -19,12 +19,11 @@ export class AzureImageProvider implements ImageGenerationProvider {
   readonly maxConcurrent = 2;
 
   constructor(private readonly config: ImageModelConfig) {
-    this.modelId = config.deployment;
+    this.modelId = config.model;
   }
 
   async isAvailable(): Promise<boolean> {
-    return Boolean(this.config.apiKey && this.config.deployment &&
-      (this.config.baseUrl || this.config.endpoint));
+    return Boolean(this.config.key && this.config.model && this.config.url);
   }
 
   async generateImage(prompt: string, options?: ImageGenOptions): Promise<ImageGenResult> {
@@ -34,10 +33,10 @@ export class AzureImageProvider implements ImageGenerationProvider {
 
     const serverless = isServerlessEndpoint(this.config);
 
-    // Build URL — use baseUrl if provided, otherwise construct OpenAI-compatible URL
-    const url = this.config.baseUrl
-      ? this.config.baseUrl
-      : `${this.config.endpoint}/openai/deployments/${this.config.deployment}/images/generations?api-version=${this.config.apiVersion}`;
+    // Build URL — detect serverless vs OpenAI-compatible from the URL pattern
+    const url = serverless
+      ? this.config.url
+      : `${this.config.url}/openai/deployments/${this.config.model}/images/generations?api-version=2024-12-01-preview`;
 
     // If a map screenshot is provided, use image-to-image mode.
     const referenceImage = options?.mapScreenshot ?? options?.referenceImage;
@@ -56,10 +55,22 @@ export class AzureImageProvider implements ImageGenerationProvider {
       if (base64Data.length > 0) {
         base64Image = base64Data;
         effectivePrompt =
-          'Using the provided satellite/terrain map as a strict spatial reference, generate a photorealistic photograph of this exact location. ' +
-          'CRITICAL: Preserve every topographic feature — the shape of hills, ridges, valleys, gullies, roads, clearings, tree canopy outlines, bare earth patches, and water bodies — exactly as they appear in the reference image. ' +
+          // 1. Describe what the reference image IS
+          'REFERENCE IMAGE DESCRIPTION: The provided image is a 3D terrain visualisation of a real landscape, rendered from a mapping application. ' +
+          'It shows the actual topography with a satellite/aerial photograph draped over the 3D terrain surface. ' +
+          'In this rendering: grassy paddocks and pasture appear as light brown, tan, or green areas; ' +
+          'tree canopy and bushland appear as darker green textured patches with visible individual tree crowns; ' +
+          'bare earth, fire breaks, and cleared land appear as pale brown or beige; ' +
+          'sealed roads appear as thin grey or dark lines; unsealed roads and tracks appear as lighter dirt-coloured lines; ' +
+          'buildings and structures appear as small rectangular light-coloured shapes, often with visible rooftops and shadows; ' +
+          'water bodies such as dams, creeks, and rivers appear as dark blue or dark patches; ' +
+          'fences and property boundaries may appear as faint straight lines. ' +
+          // 2. Instruction on what to DO with the reference
+          'YOUR TASK: Using this terrain visualisation as a strict spatial guide, produce a photorealistic photograph of this exact location as if captured by a real camera. ' +
+          'CRITICAL — you must preserve the exact spatial layout: the shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body must remain in the same position and proportion. ' +
           'Match the same camera angle, field of view, and spatial composition. ' +
-          'Replace the map rendering style with photorealistic textures: real vegetation, real soil, real sky, natural lighting. ' +
+          'Replace the map rendering style with photorealistic textures — real eucalyptus trees, real Australian bush vegetation, real grass, real soil, real sky with natural lighting and atmospheric haze. ' +
+          // 3. Then add the fire scenario
           'Then overlay the following fire scenario onto this faithful landscape rendering: ' +
           prompt;
       }
@@ -85,7 +96,7 @@ export class AzureImageProvider implements ImageGenerationProvider {
       }
       headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        'Authorization': `Bearer ${this.config.key}`,
       };
     } else {
       // OpenAI-compatible format
@@ -100,7 +111,7 @@ export class AzureImageProvider implements ImageGenerationProvider {
       }
       headers = {
         'Content-Type': 'application/json',
-        'api-key': this.config.apiKey,
+        'api-key': this.config.key,
       };
     }
 

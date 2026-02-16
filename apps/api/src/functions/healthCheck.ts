@@ -235,14 +235,14 @@ async function checkAIServices(): Promise<HealthCheck> {
     const foundryImageModel = process.env.FOUNDRY_IMAGE_MODEL;
     const foundryRegion = process.env.FOUNDRY_PROJECT_REGION;
 
-    // Check for generic image model provider
-    const imageModelEndpoint = process.env.IMAGE_MODEL_ENDPOINT ?? process.env.FLUX_ENDPOINT;
-    const imageModelDeployment = process.env.IMAGE_MODEL_DEPLOYMENT ?? process.env.FLUX_DEPLOYMENT;
+    // Check for generic image model provider (new 3-var scheme)
+    const imageModel = process.env.IMAGE_MODEL ?? process.env.IMAGE_MODEL_DEPLOYMENT ?? process.env.FLUX_DEPLOYMENT;
+    const imageModelUrl = process.env.IMAGE_MODEL_URL ?? process.env.IMAGE_MODEL_BASE_URL ?? process.env.IMAGE_MODEL_ENDPOINT ?? process.env.FLUX_ENDPOINT;
 
     // Check for Azure OpenAI (alternative)
     const openaiEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
 
-    if (!foundryProjectPath && !imageModelEndpoint && !openaiEndpoint) {
+    if (!foundryProjectPath && !imageModelUrl && !openaiEndpoint) {
       return {
         service: 'AI Services',
         status: 'degraded',
@@ -256,8 +256,8 @@ async function checkAIServices(): Promise<HealthCheck> {
     let message = '';
     if (foundryProjectPath && foundryImageModel && foundryRegion) {
       message = `Azure AI Foundry configured (${foundryImageModel} in ${foundryRegion})`;
-    } else if (imageModelEndpoint) {
-      message = `Image model configured (${imageModelDeployment || 'unknown deployment'})`;
+    } else if (imageModelUrl) {
+      message = `Image model configured (${imageModel || 'unknown model'})`;
     } else if (openaiEndpoint) {
       message = 'Azure OpenAI configured';
     }

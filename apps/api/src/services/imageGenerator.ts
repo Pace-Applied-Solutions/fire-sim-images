@@ -10,7 +10,8 @@ import type {
 } from './imageGenerationProvider.js';
 import { StableDiffusionProvider } from './stableDiffusionProvider.js';
 import { AzureImageProvider } from './fluxImageProvider.js';
-import { getImageModelConfig } from '../fluxConfig.js';
+import { GeminiImageProvider, isGeminiConfig } from './geminiImageProvider.js';
+import { getImageModelConfig } from '../imageModelConfig.js';
 
 export interface ImageGeneratorConfig {
   provider?: ImageGenerationProvider;
@@ -48,8 +49,13 @@ export class ImageGeneratorService {
     if (this.provider instanceof StableDiffusionProvider) {
       const imageConfig = await getImageModelConfig(this.context);
       if (imageConfig) {
-        this.context.log(`[ImageGenerator] Switching to ${imageConfig.deployment} provider from StableDiffusion fallback`);
-        this.provider = new AzureImageProvider(imageConfig);
+        if (isGeminiConfig(imageConfig)) {
+          this.context.log(`[ImageGenerator] Switching to Gemini provider (${imageConfig.model})`);
+          this.provider = new GeminiImageProvider(imageConfig);
+        } else {
+          this.context.log(`[ImageGenerator] Switching to ${imageConfig.model} provider from StableDiffusion fallback`);
+          this.provider = new AzureImageProvider(imageConfig);
+        }
       } else {
         this.context.warn('[ImageGenerator] Image model config not available, using StableDiffusion mock provider. This will generate placeholder images.');
       }
