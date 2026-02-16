@@ -52,6 +52,10 @@ export interface ScenarioInputs {
   // Fire characteristics
   intensity: 'low' | 'moderate' | 'high' | 'extreme' | 'catastrophic' | 'veryHigh';
   fireStage: 'spotFire' | 'developing' | 'established' | 'major';
+
+  // Explicit fire behaviour parameters (override intensity-based defaults)
+  flameHeightM?: number; // Flame height in metres (0.1-40)
+  rateOfSpreadKmh?: number; // Rate of spread in km/h (0.1-60)
 }
 
 export type FuelLoadCategory = 'low' | 'moderate' | 'high' | 'veryHigh';

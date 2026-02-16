@@ -9,8 +9,8 @@ import type {
   ImageGenResult,
 } from './imageGenerationProvider.js';
 import { StableDiffusionProvider } from './stableDiffusionProvider.js';
-import { FluxImageProvider } from './fluxImageProvider.js';
-import { getFluxConfig } from '../fluxConfig.js';
+import { AzureImageProvider } from './fluxImageProvider.js';
+import { getImageModelConfig } from '../fluxConfig.js';
 
 export interface ImageGeneratorConfig {
   provider?: ImageGenerationProvider;
@@ -44,14 +44,14 @@ export class ImageGeneratorService {
    * Generate an image from a prompt with retry logic.
    */
   async generateImage(prompt: string, options?: ImageGenOptions): Promise<ImageGenResult> {
-    // Attempt to switch to Flux provider if configured and available
+    // Attempt to switch to real image provider if configured and available
     if (this.provider instanceof StableDiffusionProvider) {
-      const fluxConfig = await getFluxConfig(this.context);
-      if (fluxConfig) {
-        this.context.log('[ImageGenerator] Switching to Flux provider from StableDiffusion fallback');
-        this.provider = new FluxImageProvider(fluxConfig);
+      const imageConfig = await getImageModelConfig(this.context);
+      if (imageConfig) {
+        this.context.log(`[ImageGenerator] Switching to ${imageConfig.deployment} provider from StableDiffusion fallback`);
+        this.provider = new AzureImageProvider(imageConfig);
       } else {
-        this.context.warn('[ImageGenerator] Flux config not available, using StableDiffusion mock provider. This will generate placeholder images.');
+        this.context.warn('[ImageGenerator] Image model config not available, using StableDiffusion mock provider. This will generate placeholder images.');
       }
     }
 

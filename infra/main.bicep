@@ -71,6 +71,12 @@ param foundryModelPublisher string = 'stabilityai'
 @description('Deploy AI Foundry resources (set to false when using an existing deployment)')
 param deployFoundry bool = false
 
+@description('Image model endpoint URL (e.g., https://your-resource.cognitiveservices.azure.com)')
+param imageModelEndpoint string = ''
+
+@description('Image model deployment name (e.g., FLUX.1-Kontext-pro, gpt-image-1)')
+param imageModelDeployment string = ''
+
 @description('Content Safety SKU')
 @allowed([
   'F0'
@@ -122,6 +128,8 @@ module staticWebApp './modules/staticWebApp.bicep' = {
       FOUNDRY_IMAGE_MODEL: foundryImageModel
       FOUNDRY_ENDPOINT: ''
       FOUNDRY_DEPLOYMENT_NAME: ''
+      IMAGE_MODEL_ENDPOINT: imageModelEndpoint
+      IMAGE_MODEL_DEPLOYMENT: imageModelDeployment
       KEY_VAULT_URI: 'https://${keyVaultName}.${environment().suffixes.keyvaultDns}/'
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.outputs.connectionString
     }
@@ -207,6 +215,8 @@ module functionApp './modules/functionApp.bicep' = {
       FOUNDRY_PROJECT_PATH: foundryProjectPath
       FOUNDRY_PROJECT_REGION: foundryProjectRegion
       FOUNDRY_IMAGE_MODEL: foundryImageModel
+      IMAGE_MODEL_ENDPOINT: imageModelEndpoint
+      IMAGE_MODEL_DEPLOYMENT: imageModelDeployment
     }
   }
 }
@@ -297,3 +307,6 @@ output functionAppHostingPlanName string = functionApp.outputs.hostingPlanName
 output foundryAccountName string = ''
 output foundryEndpoint string = ''
 output foundryDeploymentName string = ''
+
+output imageModelEndpoint string = imageModelEndpoint
+output imageModelDeployment string = imageModelDeployment

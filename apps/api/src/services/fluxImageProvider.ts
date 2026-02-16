@@ -4,13 +4,15 @@ import type {
   ImageGenOptions,
   ImageGenResult,
 } from './imageGenerationProvider.js';
-import type { FluxConfig } from '../fluxConfig.js';
+import type { ImageModelConfig } from '../fluxConfig.js';
 
-export class FluxImageProvider implements ImageGenerationProvider {
-  readonly modelId = 'FLUX.1-Kontext-pro';
+export class AzureImageProvider implements ImageGenerationProvider {
+  readonly modelId: string;
   readonly maxConcurrent = 2;
 
-  constructor(private readonly config: FluxConfig) {}
+  constructor(private readonly config: ImageModelConfig) {
+    this.modelId = config.deployment;
+  }
 
   async isAvailable(): Promise<boolean> {
     return Boolean(this.config.endpoint && this.config.apiKey && this.config.deployment);
@@ -68,7 +70,7 @@ export class FluxImageProvider implements ImageGenerationProvider {
     if (!response.ok) {
       const text = await response.text();
       throw new Error(
-        `Flux API error ${response.status}: ${text.substring(0, 500)}`
+        `Image model API error ${response.status}: ${text.substring(0, 500)}`
       );
     }
 
@@ -79,7 +81,7 @@ export class FluxImageProvider implements ImageGenerationProvider {
     const b64 = payload.data?.[0]?.b64_json;
     if (!b64) {
       throw new Error(
-        `Flux API returned no image data. Response: ${JSON.stringify(payload).substring(0, 200)}`
+        `Image model API returned no image data. Response: ${JSON.stringify(payload).substring(0, 200)}`
       );
     }
 
@@ -89,7 +91,7 @@ export class FluxImageProvider implements ImageGenerationProvider {
 
     if (imageData.length < 100) {
       throw new Error(
-        `Flux generated image is suspiciously small (${imageData.length} bytes). This may indicate an API error or placeholder response.`
+        `Generated image is suspiciously small (${imageData.length} bytes). This may indicate an API error or placeholder response.`
       );
     }
 

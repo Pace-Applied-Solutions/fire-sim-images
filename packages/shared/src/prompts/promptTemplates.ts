@@ -7,23 +7,47 @@ import type { ViewPoint, ScenarioInputs } from '../types.js';
 import type { PromptTemplate, IntensityVisuals } from './promptTypes.js';
 
 /**
+ * Derives a realistic intensity qualifier from explicit flame height in metres.
+ * This ensures the AI model gets an appropriate qualitative description that
+ * matches the numeric flame height, preventing over-dramatic imagery.
+ */
+function getFlameHeightQualifier(flameHeightM: number): string {
+  if (flameHeightM < 0.5) {
+    return 'Very low intensity surface fire with minimal visible flames, mostly smouldering';
+  }
+  if (flameHeightM < 1.5) {
+    return 'Low intensity surface fire with small flames close to the ground';
+  }
+  if (flameHeightM < 3) {
+    return 'Moderate intensity surface fire, no crown involvement';
+  }
+  if (flameHeightM < 8) {
+    return 'High intensity fire with intermittent crown involvement';
+  }
+  if (flameHeightM < 20) {
+    return 'Very high intensity fire with active crown fire';
+  }
+  return 'Extreme intensity fire with full crown fire and explosive fire behaviour';
+}
+
+/**
  * Intensity-to-visual mapping table.
  * Maps qualitative intensity levels to visual fire characteristics.
  */
 export const INTENSITY_VISUALS: Record<ScenarioInputs['intensity'], IntensityVisuals> = {
   low: {
+    flameHeight: '0.2 to 0.5 metres',
+    smoke: 'light wispy smoke drifting upward',
+    crownInvolvement: 'surface fire only, no crown involvement whatsoever',
+    spotting: 'no spotting activity',
+    descriptor: 'Very low intensity surface fire with small flames barely visible above the grass or leaf litter',
+  },
+  moderate: {
     flameHeight: '0.5 to 1.5 metres',
     smoke: 'light grey smoke drifting upward',
     crownInvolvement: 'surface fire only, no crown involvement',
     spotting: 'no spotting activity',
-    descriptor: 'Low intensity surface fire',
-  },
-  moderate: {
-    flameHeight: '1.5 to 3 metres',
-    smoke: 'grey-white smoke columns rising steadily',
-    crownInvolvement: 'occasional torching of individual trees',
-    spotting: 'minimal short-range spotting',
-    descriptor: 'Moderate intensity with occasional tree torching',
+    descriptor: 'Low to moderate intensity surface fire with flames below head height, no crown involvement',
   },
   high: {
     flameHeight: '3 to 10 metres',
@@ -125,11 +149,25 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       `${data.vegetationDescriptor} on ${data.terrainDescription} in New South Wales, Australia. ` +
       `Elevation approximately ${data.elevation} metres. ${data.nearbyFeatures}`,
 
-    fire: (data) =>
-      `A ${data.fireStage} burning through the vegetation. ` +
-      `${data.intensityDescription.descriptor}. ` +
-      `Flames are ${data.flameHeight} high with ${data.smokeDescription}. ` +
-      `The head fire is spreading ${data.spreadDirection} driven by ${data.windDescription}.`,
+    fire: (data) => {
+      // Use explicit flame height/ROS when provided (from trainer controls)
+      const flameDesc = data.explicitFlameHeightM !== undefined
+        ? `Flames are approximately ${data.explicitFlameHeightM} metres high`
+        : `Flames are ${data.flameHeight} high`;
+      const rosDesc = data.explicitRateOfSpreadKmh !== undefined
+        ? ` Rate of spread is ${data.explicitRateOfSpreadKmh} km/h.`
+        : '';
+      // Derive a realistic intensity qualifier from explicit flame height
+      const qualifier = data.explicitFlameHeightM !== undefined
+        ? getFlameHeightQualifier(data.explicitFlameHeightM)
+        : data.intensityDescription.descriptor;
+      return (
+        `A ${data.fireStage} burning through the vegetation. ` +
+        `${qualifier}. ` +
+        `${flameDesc} with ${data.smokeDescription}.${rosDesc} ` +
+        `The head fire is spreading ${data.spreadDirection} driven by ${data.windDescription}.`
+      );
+    },
 
     weather: (data) =>
       `Temperature is ${data.temperature}°C with ${data.humidity}% relative humidity. ` +

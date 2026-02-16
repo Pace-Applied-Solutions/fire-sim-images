@@ -26,6 +26,11 @@ param foundryModelFormat = 'OpenAI'
 param foundryModelPublisher = 'stabilityai'
 param deployFoundry = false
 
+// Image Model (generic — works with FLUX, GPT-image, DALL-E, etc.)
+// Endpoint and API key are stored in Key Vault as ImageModel--Endpoint and ImageModel--ApiKey
+param imageModelEndpoint = 'https://firesim-fh-dev.cognitiveservices.azure.com'
+param imageModelDeployment = 'FLUX.1-Kontext-pro'
+
 // Content Safety
 param contentSafetySku = 'S0'
 

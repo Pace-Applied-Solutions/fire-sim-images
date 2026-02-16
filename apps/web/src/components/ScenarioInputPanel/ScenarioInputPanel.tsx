@@ -5,6 +5,7 @@ import {
   getWeatherProfileForRating,
   validateWeatherParameters,
   formatRating,
+  getFireBehaviour,
 } from '@fire-sim/shared';
 import { generationApi } from '../../services/generationApi';
 import { useToastStore } from '../../store/toastStore';
@@ -20,6 +21,8 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'afternoon',
     intensity: 'moderate',
     fireStage: 'established',
+    flameHeightM: 1.5,
+    rateOfSpreadKmh: 6,
   },
   forestfireSevere: {
     fireDangerRating: 'extreme',
@@ -30,6 +33,8 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'afternoon',
     intensity: 'veryHigh',
     fireStage: 'established',
+    flameHeightM: 10,
+    rateOfSpreadKmh: 5,
   },
   nightOperation: {
     fireDangerRating: 'moderate',
@@ -40,6 +45,8 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'night',
     intensity: 'moderate',
     fireStage: 'established',
+    flameHeightM: 0.5,
+    rateOfSpreadKmh: 0.5,
   },
   extremeDay: {
     fireDangerRating: 'extreme',
@@ -50,6 +57,8 @@ const PRESETS: Record<string, ScenarioInputs> = {
     timeOfDay: 'midday',
     intensity: 'extreme',
     fireStage: 'major',
+    flameHeightM: 15,
+    rateOfSpreadKmh: 8,
   },
 };
 
@@ -62,6 +71,8 @@ const DEFAULT_INPUTS: ScenarioInputs = {
   timeOfDay: 'afternoon',
   intensity: 'high',
   fireStage: 'established',
+  flameHeightM: 3,
+  rateOfSpreadKmh: 1.5,
 };
 
 const RATING_CLASS_MAP: Record<FireDangerRating, string> = {
@@ -146,6 +157,10 @@ export const ScenarioInputPanel: React.FC = () => {
     // Update rating and load typical weather profile
     const profile = getWeatherProfileForRating(rating);
 
+    // Get fire behaviour based on rating and current vegetation type
+    const vegType = geoContext?.vegetationType || 'Dry Sclerophyll Forest';
+    const fireBehaviour = getFireBehaviour(rating, vegType);
+
     const newInputs: ScenarioInputs = {
       ...inputs,
       fireDangerRating: rating,
@@ -153,6 +168,8 @@ export const ScenarioInputPanel: React.FC = () => {
       temperature: profile.temperature,
       humidity: profile.humidity,
       windSpeed: profile.windSpeed,
+      flameHeightM: Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10,
+      rateOfSpreadKmh: Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) / 10,
     };
 
     setInputs(newInputs);
@@ -194,6 +211,21 @@ export const ScenarioInputPanel: React.FC = () => {
 
     fetchGeoContext();
   }, [perimeter, setGeoContext, addToast]);
+
+  // Update flame height and ROS when vegetation type changes (from geo context)
+  useEffect(() => {
+    if (geoContext?.vegetationType) {
+      const fireBehaviour = getFireBehaviour(inputs.fireDangerRating, geoContext.vegetationType);
+      const newFlameHeight = Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10;
+      const newROS = Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) / 10;
+
+      const newInputs = { ...inputs, flameHeightM: newFlameHeight, rateOfSpreadKmh: newROS };
+      setInputs(newInputs);
+      setScenarioInputs(newInputs);
+    }
+    // Only re-run when vegetation type changes, not on every inputs change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoContext?.vegetationType]);
 
   const handleGenerate = async () => {
     if (!perimeter || !geoContext) {
@@ -301,15 +333,6 @@ export const ScenarioInputPanel: React.FC = () => {
   const canGenerate = isValid && perimeter !== null;
 
   const getSummaryText = (): string => {
-    const intensityMap = {
-      low: 'Low',
-      moderate: 'Moderate',
-      high: 'High',
-      catastrophic: 'Catastrophic',
-      veryHigh: 'Very High',
-      extreme: 'Extreme',
-    };
-
     const stageMap = {
       spotFire: 'Spot fire',
       developing: 'Developing fire',
@@ -326,7 +349,7 @@ export const ScenarioInputPanel: React.FC = () => {
       night: 'night',
     };
 
-    return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)}. Intensity: ${intensityMap[inputs.intensity]}.`;
+    return `${stageMap[inputs.fireStage]} on a ${inputs.temperature}°C ${timeMap[inputs.timeOfDay]} with ${inputs.windSpeed} km/h ${inputs.windDirection} winds and ${inputs.humidity}% humidity. Fire Danger: ${formatRating(inputs.fireDangerRating)}. Flames: ${inputs.flameHeightM ?? '?'}m, ROS: ${inputs.rateOfSpreadKmh ?? '?'} km/h.`;
   };
 
   return (
@@ -509,7 +532,7 @@ export const ScenarioInputPanel: React.FC = () => {
       {/* Fire Section */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>Fire</h3>
+          <h3 className={styles.sectionTitle}>Fire Behaviour</h3>
         </div>
 
         <div className={styles.sectionContent}>
@@ -532,6 +555,82 @@ export const ScenarioInputPanel: React.FC = () => {
               <option value="major">Major</option>
             </select>
           </div>
+
+          {/* Flame Height */}
+          <div className={styles.field}>
+            <label htmlFor="flame-height" className={styles.label}>
+              Flame height (m)
+            </label>
+            <div className={styles.sliderGroup}>
+              <input
+                id="flame-height"
+                type="range"
+                min="0.1"
+                max="40"
+                step="0.1"
+                value={inputs.flameHeightM ?? 1}
+                onChange={(e) => updateInput('flameHeightM', Number(e.target.value))}
+                className={styles.slider}
+              />
+              <input
+                type="number"
+                min="0.1"
+                max="40"
+                step="0.1"
+                value={inputs.flameHeightM ?? 1}
+                onChange={(e) => updateInput('flameHeightM', Number(e.target.value))}
+                className={styles.numberInput}
+                aria-label="Flame height number input"
+              />
+            </div>
+            <span className={styles.fieldHint}>
+              {(inputs.flameHeightM ?? 1) < 0.5 ? 'Smouldering / minimal flames' :
+               (inputs.flameHeightM ?? 1) < 1.5 ? 'Low surface fire' :
+               (inputs.flameHeightM ?? 1) < 3 ? 'Moderate surface fire' :
+               (inputs.flameHeightM ?? 1) < 8 ? 'Active fire, some crown involvement' :
+               (inputs.flameHeightM ?? 1) < 20 ? 'Very intense, crown fire likely' :
+               'Extreme — full crown fire'}
+            </span>
+          </div>
+
+          {/* Rate of Spread */}
+          <div className={styles.field}>
+            <label htmlFor="rate-of-spread" className={styles.label}>
+              Rate of spread (km/h)
+            </label>
+            <div className={styles.sliderGroup}>
+              <input
+                id="rate-of-spread"
+                type="range"
+                min="0.1"
+                max="60"
+                step="0.1"
+                value={inputs.rateOfSpreadKmh ?? 1}
+                onChange={(e) => updateInput('rateOfSpreadKmh', Number(e.target.value))}
+                className={styles.slider}
+              />
+              <input
+                type="number"
+                min="0.1"
+                max="60"
+                step="0.1"
+                value={inputs.rateOfSpreadKmh ?? 1}
+                onChange={(e) => updateInput('rateOfSpreadKmh', Number(e.target.value))}
+                className={styles.numberInput}
+                aria-label="Rate of spread number input"
+              />
+            </div>
+            <span className={styles.fieldHint}>
+              {(inputs.rateOfSpreadKmh ?? 1) < 1 ? 'Slow creep' :
+               (inputs.rateOfSpreadKmh ?? 1) < 4 ? 'Walking pace' :
+               (inputs.rateOfSpreadKmh ?? 1) < 10 ? 'Fast — outrunning on foot difficult' :
+               (inputs.rateOfSpreadKmh ?? 1) < 25 ? 'Very fast — vehicle speed' :
+               'Extreme — near-instantaneous spread'}
+            </span>
+          </div>
+          <p className={styles.ratingHint}>
+            Auto-calculated from fire danger rating and vegetation type. Adjust to fine-tune.
+          </p>
         </div>
       </section>
 

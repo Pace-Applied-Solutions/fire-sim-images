@@ -195,6 +195,8 @@ function preparePromptData(request: GenerationRequest): PromptData {
     windSpeed: inputs.windSpeed,
     windDirection: inputs.windDirection,
     timeOfDayLighting,
+    explicitFlameHeightM: inputs.flameHeightM,
+    explicitRateOfSpreadKmh: inputs.rateOfSpreadKmh,
   };
 }
 

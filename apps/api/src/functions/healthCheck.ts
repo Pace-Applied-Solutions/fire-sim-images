@@ -235,13 +235,14 @@ async function checkAIServices(): Promise<HealthCheck> {
     const foundryImageModel = process.env.FOUNDRY_IMAGE_MODEL;
     const foundryRegion = process.env.FOUNDRY_PROJECT_REGION;
 
-    // Check for Flux (fallback provider)
-    const fluxEndpoint = process.env.FLUX_ENDPOINT;
+    // Check for generic image model provider
+    const imageModelEndpoint = process.env.IMAGE_MODEL_ENDPOINT ?? process.env.FLUX_ENDPOINT;
+    const imageModelDeployment = process.env.IMAGE_MODEL_DEPLOYMENT ?? process.env.FLUX_DEPLOYMENT;
 
     // Check for Azure OpenAI (alternative)
     const openaiEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
 
-    if (!foundryProjectPath && !fluxEndpoint && !openaiEndpoint) {
+    if (!foundryProjectPath && !imageModelEndpoint && !openaiEndpoint) {
       return {
         service: 'AI Services',
         status: 'degraded',
@@ -255,8 +256,8 @@ async function checkAIServices(): Promise<HealthCheck> {
     let message = '';
     if (foundryProjectPath && foundryImageModel && foundryRegion) {
       message = `Azure AI Foundry configured (${foundryImageModel} in ${foundryRegion})`;
-    } else if (fluxEndpoint) {
-      message = 'Flux AI configured';
+    } else if (imageModelEndpoint) {
+      message = `Image model configured (${imageModelDeployment || 'unknown deployment'})`;
     } else if (openaiEndpoint) {
       message = 'Azure OpenAI configured';
     }

@@ -229,12 +229,21 @@ Deployed with DALL-E 3 model for image generation:
 - Capacity: 1 unit (dev), 2 units (prod)
 - Content filtering: Default policy
 
-**Note:** If you are supplying an existing Cognitive Services deployment (e.g., FLUX.1-Kontext-pro), skip the AI deployment modules and populate these secrets manually in Key Vault for the Functions app to read:
+**Note:** If you are supplying an existing Cognitive Services deployment (e.g., FLUX.1-Kontext-pro, gpt-image-1), skip the AI deployment modules and populate these secrets manually in Key Vault for the Functions app to read:
 
-- `Flux--Endpoint` — e.g., https://your-resource.cognitiveservices.azure.com
-- `Flux--ApiKey` — the key from the deployment
-- `Flux--Deployment` — the deployment name (e.g., FLUX.1-Kontext-pro)
-- `Flux--ApiVersion` — API version (default: 2024-12-01-preview)
+- `ImageModel--Endpoint` — e.g., https://your-resource.cognitiveservices.azure.com
+- `ImageModel--ApiKey` — the key from the deployment
+- `ImageModel--Deployment` — the deployment name (e.g., FLUX.1-Kontext-pro, gpt-image-1)
+- `ImageModel--ApiVersion` — API version (default: 2024-12-01-preview)
+
+Alternatively, set these as **app settings** (environment variables) on the Function App:
+
+- `IMAGE_MODEL_ENDPOINT`
+- `IMAGE_MODEL_API_KEY`
+- `IMAGE_MODEL_DEPLOYMENT`
+- `IMAGE_MODEL_API_VERSION`
+
+> Legacy `FLUX_*` / `Flux--*` names are still supported for backward compatibility.
 
 ## Post-Deployment Configuration
 

@@ -59,6 +59,10 @@ export interface PromptData {
   windSpeed: number;
   windDirection: string;
   timeOfDayLighting: string;
+  /** Explicit flame height in metres (from trainer input) */
+  explicitFlameHeightM?: number;
+  /** Explicit rate of spread in km/h (from trainer input) */
+  explicitRateOfSpreadKmh?: number;
 }
 
 /**
