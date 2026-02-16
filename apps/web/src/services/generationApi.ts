@@ -103,6 +103,7 @@ export class GenerationApiClient {
 
   /**
    * Poll for generation completion with automatic retries.
+   * Tolerates transient 404s during the first few polls (cold start / process restart).
    * @param scenarioId The scenario ID to poll
    * @param onProgress Callback for progress updates
    * @param pollIntervalMs Interval between polls in milliseconds (default: 2000)
@@ -115,16 +116,40 @@ export class GenerationApiClient {
     maxPolls = 300
   ): Promise<GenerationResult> {
     let polls = 0;
+    let consecutive404s = 0;
+    const MAX_INITIAL_404_RETRIES = 5; // Tolerate up to 5 consecutive 404s (cold start)
 
     while (polls < maxPolls) {
-      const status = await this.getGenerationStatus(scenarioId);
+      try {
+        const status = await this.getGenerationStatus(scenarioId);
 
-      if (onProgress) {
-        onProgress(status);
-      }
+        // Reset 404 counter on success
+        consecutive404s = 0;
 
-      if (status.status === 'completed' || status.status === 'failed') {
-        return this.getGenerationResults(scenarioId);
+        if (onProgress) {
+          onProgress(status);
+        }
+
+        if (status.status === 'completed' || status.status === 'failed') {
+          return this.getGenerationResults(scenarioId);
+        }
+      } catch (error) {
+        const isNotFound =
+          error instanceof Error && error.message.includes('Scenario not found');
+
+        if (isNotFound && consecutive404s < MAX_INITIAL_404_RETRIES) {
+          consecutive404s++;
+          console.warn(
+            `Status poll returned 404 (attempt ${consecutive404s}/${MAX_INITIAL_404_RETRIES}), retrying...`
+          );
+          // Use increasing delay for 404 retries
+          await this.delay(pollIntervalMs * consecutive404s);
+          polls++;
+          continue;
+        }
+
+        // Non-404 error or too many consecutive 404s — rethrow
+        throw error;
       }
 
       polls++;

@@ -24,7 +24,7 @@ export async function getGenerationStatus(
 
   try {
     const orchestrator = new GenerationOrchestrator(context);
-    const progress = orchestrator.getStatus(scenarioId);
+    const progress = await orchestrator.getStatus(scenarioId);
 
     if (!progress) {
       return {

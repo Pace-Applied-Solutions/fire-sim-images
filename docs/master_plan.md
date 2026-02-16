@@ -789,6 +789,21 @@ Update this section after each issue or change.
     - **Testing:** All TypeScript builds passing (shared, api, web), no new type errors introduced
     - **Documentation:** Created comprehensive fix documentation at `docs/current_state/scenario_not_found_fix.md` with root cause analysis, code examples, testing notes, and future considerations
     - **Acceptance criteria met:** No more "Scenario not found" errors during polling, results panel timing aligned with content availability, screenshot validation prevents generation without terrain references, 80% viewport requirement verified for all captures
+  - **Generation Reliability & Screenshot Quality (Feb 16, 2026):**
+    - **Problem addressed:** "Scenario not found" 404 errors persisted despite previous race-condition fix because the in-memory `progressStore` is lost on process restarts, cold starts, or scale-out. Additionally, screenshot sequences captured before map tiles/terrain fully rendered, resulting in blank or partially-loaded reference images. Camera jumps felt jarring. Vegetation overlay screenshot did not wait for NVIS WMS tiles to load.
+    - **Solution:**
+      1. **Blob-backed progress store:** Added `saveProgress()`/`loadProgress()` methods to `BlobStorageService` using a `generation-progress` blob container. `GenerationOrchestrator.getStatus()` now falls back to blob storage when in-memory lookup misses. Progress is persisted at start, on each state transition (in_progress, completed, failed), with debounced writes for rapid updates (thinking text).
+      2. **Client-side 404 retry:** `pollForCompletion()` now tolerates up to 5 consecutive 404s with increasing back-off delays before failing, covering cold-start scenarios.
+      3. **Robust render waiting:** Replaced single `waitForMapIdle()` with `waitForMapReady()` that verifies both `map.loaded()` and `map.areTilesLoaded()` before capture, plus double `requestAnimationFrame` for GPU flush.
+      4. **Smooth camera transitions:** Replaced `jumpTo()` with `easeTo()` using ease-out quadratic easing (800ms between viewpoints) for polished camera movement.
+      5. **NVIS source loading:** Added `waitForSourceLoaded()` helper that listens for `sourcedata` events on the specific NVIS WMS source (12s timeout), followed by `waitForMapReady()` to ensure raster tiles render before capture.
+    - **Files modified:**
+      - `apps/api/src/services/blobStorage.ts` (added `saveProgress`/`loadProgress`)
+      - `apps/api/src/services/generationOrchestrator.ts` (blob persistence, debounce, async `getStatus`)
+      - `apps/api/src/functions/getGenerationStatus.ts` (await async `getStatus`)
+      - `apps/web/src/services/generationApi.ts` (404 retry with backoff)
+      - `apps/web/src/utils/mapCapture.ts` (waitForMapReady, waitForSourceLoaded, smooth transitions)
+    - **Testing:** All TypeScript builds passing (api, web)
 
 ## 14. Change Control Process
 

@@ -113,20 +113,117 @@ function getCameraForViewpoint(viewpoint: ViewPoint, info: PerimeterInfo): Camer
 }
 
 /**
- * Wait for the map to reach an idle state after a camera move.
- * Times out after maxWaitMs to avoid hanging.
+ * Wait for the map to fully finish rendering tiles and terrain.
+ * More robust than a single `idle` event — waits for tiles to load
+ * and the map to stabilise before resolving.
  */
-function waitForMapIdle(map: MapboxMap, maxWaitMs = 5000): Promise<void> {
+function waitForMapReady(map: MapboxMap, maxWaitMs = 8000): Promise<void> {
   return new Promise((resolve) => {
+    // If already fully loaded, still allow one render cycle to settle
+    const checkReady = () => map.loaded() && map.areTilesLoaded();
+
+    if (checkReady()) {
+      // Give one extra animation frame for the GPU to flush the render
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      return;
+    }
+
     const timeout = setTimeout(() => {
+      cleanup();
+      resolve(); // Resolve even on timeout to avoid hanging
+    }, maxWaitMs);
+
+    const onIdle = () => {
+      // After idle fires, verify tiles are loaded (idle can fire before source loads)
+      if (checkReady()) {
+        cleanup();
+        // Extra frame buffer so the canvas pixel data has been flushed
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }
+      // else: stay subscribed, another idle will fire once sources finish
+    };
+
+    map.on('idle', onIdle);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      map.off('idle', onIdle);
+    }
+  });
+}
+
+/**
+ * Wait for a specific raster source to have loaded its tiles.
+ * Useful for WMS layers like NVIS which can take longer than vector tiles.
+ */
+function waitForSourceLoaded(
+  map: MapboxMap,
+  sourceId: string,
+  maxWaitMs = 12000
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (map.isSourceLoaded(sourceId)) {
+      resolve();
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      cleanup();
       resolve();
     }, maxWaitMs);
 
-    map.once('idle', () => {
+    const onSourceData = (e: { sourceId?: string; isSourceLoaded?: boolean }) => {
+      if (e.sourceId === sourceId && map.isSourceLoaded(sourceId)) {
+        cleanup();
+        resolve();
+      }
+    };
+
+    map.on('sourcedata', onSourceData);
+
+    function cleanup() {
       clearTimeout(timeout);
-      resolve();
-    });
+      map.off('sourcedata', onSourceData);
+    }
   });
+}
+
+/**
+ * Smoothly transition the map camera and wait for all tiles to render.
+ * Uses `easeTo` for a polished feel, falls back to `jumpTo` if duration is 0.
+ */
+async function transitionAndCapture(
+  map: MapboxMap,
+  camera: CameraParams,
+  durationMs = 800
+): Promise<void> {
+  if (durationMs > 0) {
+    map.easeTo({
+      center: camera.center,
+      zoom: camera.zoom,
+      bearing: camera.bearing,
+      pitch: camera.pitch,
+      duration: durationMs,
+      easing: (t) => t * (2 - t), // ease-out quadratic
+    });
+
+    // Wait for the animation to complete
+    await new Promise<void>((resolve) => {
+      map.once('moveend', () => resolve());
+      // Safety timeout
+      setTimeout(resolve, durationMs + 500);
+    });
+  } else {
+    map.jumpTo({
+      center: camera.center,
+      zoom: camera.zoom,
+      bearing: camera.bearing,
+      pitch: camera.pitch,
+    });
+  }
+
+  // Wait for tiles and terrain to fully load after the camera settles
+  await waitForMapReady(map, 8000);
 }
 
 /**
@@ -140,7 +237,8 @@ function captureCanvas(map: MapboxMap): string {
 
 /**
  * Capture map screenshots for each requested viewpoint.
- * Moves the camera to each viewpoint, waits for tiles to load, and captures.
+ * Smoothly transitions the camera between viewpoints, waits for all tiles
+ * and terrain to render, then captures.
  *
  * @param map - The Mapbox GL map instance
  * @param perimeterInfo - Centroid and bounding box of the fire perimeter
@@ -170,44 +268,39 @@ export async function captureViewpointScreenshots(
 
     const camera = getCameraForViewpoint(viewpoint, perimeterInfo);
 
-    // Jump immediately (no animation) for speed
-    map.jumpTo({
-      center: camera.center,
-      zoom: camera.zoom,
-      bearing: camera.bearing,
-      pitch: camera.pitch,
-    });
-
-    // Wait for tiles and terrain to load
-    await waitForMapIdle(map, 6000);
+    // Use smooth transition for a polished sequence (shorter for first move)
+    const duration = i === 0 ? 400 : 800;
+    await transitionAndCapture(map, camera, duration);
 
     // Capture the screenshot
     const dataUrl = captureCanvas(map);
     screenshots[viewpoint] = dataUrl;
   }
 
-  // Restore original camera position
-  map.jumpTo({
+  // Restore original camera position with a smooth transition
+  map.easeTo({
     center: savedCamera.center,
     zoom: savedCamera.zoom,
     bearing: savedCamera.bearing,
     pitch: savedCamera.pitch,
+    duration: 600,
+    easing: (t) => t * (2 - t),
   });
 
   return screenshots;
 }
 
 /**
- * Capture a vegetation overlay screenshot from the NSW SVTM WMS layer.
+ * Capture a vegetation overlay screenshot from the NVIS WMS layer.
  *
- * Temporarily toggles the 'nsw-vegetation-layer' on, moves the camera
+ * Temporarily toggles the 'nvis-vegetation-layer' on, moves the camera
  * to a flat aerial (top-down) view centered on the fire perimeter, waits
- * for WMS tiles to load, captures the canvas, then restores the original
- * state.
+ * for WMS tiles to fully load, captures the canvas, then restores the
+ * original state.
  *
  * @param map - The Mapbox GL map instance
  * @param perimeterInfo - Centroid and bounding box of the fire perimeter
- * @returns Base64 JPEG data URL of the vegetation overlay, or null if layer unavailable
+ * @returns Base64 PNG data URL of the vegetation overlay, or null if layer unavailable
  */
 export async function captureVegetationScreenshot(
   map: MapboxMap,
@@ -258,8 +351,14 @@ export async function captureVegetationScreenshot(
     }
   );
 
-  // Wait for WMS tiles to load (may be slower than Mapbox tiles)
-  await waitForMapIdle(map, 8000);
+  // Wait specifically for the NVIS WMS source tiles to load (can be slow)
+  const nvisSourceId = 'nvis-vegetation-source';
+  if (map.getSource(nvisSourceId)) {
+    await waitForSourceLoaded(map, nvisSourceId, 12000);
+  }
+
+  // Then wait for the full map (including the raster layer render) to be idle
+  await waitForMapReady(map, 10000);
 
   // Capture
   const dataUrl = map.getCanvas().toDataURL('image/png');
@@ -270,12 +369,14 @@ export async function captureVegetationScreenshot(
     map.setLayoutProperty('nvis-vegetation-layer', 'visibility', 'none');
   }
 
-  // Restore camera
-  map.jumpTo({
+  // Restore camera with smooth transition
+  map.easeTo({
     center: savedCamera.center,
     zoom: savedCamera.zoom,
     bearing: savedCamera.bearing,
     pitch: savedCamera.pitch,
+    duration: 400,
+    easing: (t) => t * (2 - t),
   });
 
   return dataUrl;

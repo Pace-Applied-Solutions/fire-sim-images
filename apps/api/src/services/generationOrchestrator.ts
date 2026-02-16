@@ -38,8 +38,11 @@ export interface GenerationProgress {
   updatedAt: string;
 }
 
-// In-memory store for generation progress (would use Durable Functions state in production)
+// In-memory store for generation progress (backed by blob storage for durability)
 const progressStore = new Map<string, GenerationProgress>();
+
+// Debounce timers for blob persistence (avoid overwhelming storage on rapid updates)
+const persistTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 // Maximum seed value for random seed generation
 const MAX_SEED_VALUE = 1000000;
@@ -80,8 +83,9 @@ export class GenerationOrchestrator {
       updatedAt: timestamp,
     };
 
-    // Store progress BEFORE starting async execution to prevent 404 race condition
+    // Store progress in-memory AND persist to blob for durability
     progressStore.set(scenarioId, progress);
+    await this.persistProgress(scenarioId, progress);
 
     this.logger.info('Generation request received', {
       scenarioId,
@@ -99,6 +103,7 @@ export class GenerationOrchestrator {
         failedProgress.status = 'failed';
         failedProgress.error = error instanceof Error ? error.message : String(error);
         failedProgress.updatedAt = new Date().toISOString();
+        this.persistProgress(scenarioId, failedProgress, true);
       }
     });
 
@@ -107,9 +112,30 @@ export class GenerationOrchestrator {
 
   /**
    * Get the current status of a generation request.
+   * Checks in-memory store first, then falls back to blob storage.
    */
-  getStatus(scenarioId: string): GenerationProgress | undefined {
-    return progressStore.get(scenarioId);
+  async getStatus(scenarioId: string): Promise<GenerationProgress | undefined> {
+    // Fast path: in-memory lookup
+    const cached = progressStore.get(scenarioId);
+    if (cached) return cached;
+
+    // Fallback: load from blob storage (handles process restarts / cold starts)
+    try {
+      const persisted = (await this.blobStorage.loadProgress(scenarioId)) as GenerationProgress | null;
+      if (persisted) {
+        // Re-hydrate in-memory store
+        progressStore.set(scenarioId, persisted);
+        this.logger.info('Re-hydrated progress from blob storage', { scenarioId });
+        return persisted;
+      }
+    } catch (error) {
+      this.logger.warn('Blob progress lookup failed', {
+        scenarioId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    return undefined;
   }
 
   /**
@@ -140,6 +166,39 @@ export class GenerationOrchestrator {
   }
 
   /**
+   * Persist progress to blob storage. Debounces writes so rapid updates
+   * (e.g. thinking text streaming) don't flood storage.
+   */
+  private persistProgress(scenarioId: string, progress: GenerationProgress, immediate = false): Promise<void> {
+    // Clear any pending debounce timer
+    const existing = persistTimers.get(scenarioId);
+    if (existing) clearTimeout(existing);
+
+    if (immediate) {
+      return this.blobStorage.saveProgress(scenarioId, progress).catch((err) => {
+        this.logger.warn('Failed to persist progress to blob', {
+          scenarioId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
+
+    // Debounce: persist after 1 second of inactivity
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        persistTimers.delete(scenarioId);
+        this.blobStorage.saveProgress(scenarioId, progress).catch((err) => {
+          this.logger.warn('Failed to persist progress to blob', {
+            scenarioId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }).finally(resolve);
+      }, 1000);
+      persistTimers.set(scenarioId, timer);
+    });
+  }
+
+  /**
    * Execute the full generation pipeline with anchor image strategy.
    * Pass 1: Generate a ground-level anchor view
    * Pass 2: Generate remaining views using anchor as reference
@@ -148,6 +207,7 @@ export class GenerationOrchestrator {
     const progress = progressStore.get(scenarioId)!;
     progress.status = 'in_progress';
     progress.updatedAt = new Date().toISOString();
+    this.persistProgress(scenarioId, progress);
 
     const logger = this.logger.child({ scenarioId });
     const endToEndTimer = startTimer('generation', { scenarioId });
@@ -558,6 +618,9 @@ export class GenerationOrchestrator {
         progress.error = `Partial success: ${progress.completedImages} succeeded, ${progress.failedImages} failed`;
       }
 
+      // Persist final state to blob immediately
+      await this.persistProgress(scenarioId, progress, true);
+
       // Track final metrics
       const totalDuration = endToEndTimer.stop();
       GenerationMetrics.trackGenerationDuration(totalDuration, { scenarioId });
@@ -580,6 +643,7 @@ export class GenerationOrchestrator {
       progress.status = 'failed';
       progress.error = error instanceof Error ? error.message : String(error);
       progress.updatedAt = new Date().toISOString();
+      await this.persistProgress(scenarioId, progress, true);
       endToEndTimer.stop();
     }
   }

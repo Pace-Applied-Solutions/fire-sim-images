@@ -430,6 +430,72 @@ export class BlobStorageService {
   }
 
   /**
+   * Save generation progress to blob storage for durability across process restarts.
+   * Writes to `generation-progress/{scenarioId}.json`.
+   */
+  async saveProgress(scenarioId: string, progress: unknown): Promise<void> {
+    if (this.devMode) {
+      // In dev mode without storage, skip persistence
+      return;
+    }
+
+    try {
+      const client = await this.getClient();
+      const containerClient = client.getContainerClient('generation-progress');
+      await containerClient.createIfNotExists();
+
+      const blobName = `${scenarioId}.json`;
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+      const json = JSON.stringify(progress);
+      const buffer = Buffer.from(json, 'utf-8');
+
+      await blockBlobClient.upload(buffer, buffer.length, {
+        blobHTTPHeaders: { blobContentType: 'application/json' },
+      });
+    } catch (error) {
+      this.context.warn('[BlobStorage] Failed to persist progress (non-fatal)', {
+        scenarioId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Load generation progress from blob storage (fallback when in-memory store is empty).
+   */
+  async loadProgress(scenarioId: string): Promise<unknown | null> {
+    if (this.devMode) {
+      return null;
+    }
+
+    try {
+      const client = await this.getClient();
+      const containerClient = client.getContainerClient('generation-progress');
+      const blobName = `${scenarioId}.json`;
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+      const downloadResponse = await blockBlobClient.download(0);
+      if (!downloadResponse.readableStreamBody) {
+        return null;
+      }
+
+      const buffer = await this.streamToBuffer(downloadResponse.readableStreamBody);
+      return JSON.parse(buffer.toString('utf-8'));
+    } catch (error) {
+      // 404 means no persisted progress — not an error
+      const statusCode = (error as { statusCode?: number })?.statusCode;
+      if (statusCode === 404) {
+        return null;
+      }
+      this.context.warn('[BlobStorage] Failed to load progress (non-fatal)', {
+        scenarioId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  }
+
+  /**
    * Helper to convert stream to buffer.
    */
   private async streamToBuffer(readableStream: NodeJS.ReadableStream): Promise<Buffer> {
