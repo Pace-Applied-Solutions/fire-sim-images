@@ -98,6 +98,7 @@ export const TIME_OF_DAY_LIGHTING: Record<ScenarioInputs['timeOfDay'], string> =
 /**
  * Viewpoint perspective descriptions.
  * Defines camera position and angle for each viewpoint type.
+ * Ground-level views now include directional narrative for improved context.
  */
 export const VIEWPOINT_PERSPECTIVES: Record<ViewPoint, string> = {
   aerial:
@@ -113,13 +114,13 @@ export const VIEWPOINT_PERSPECTIVES: Record<ViewPoint, string> = {
   helicopter_above:
     'Elevated aerial photograph from directly above the fire at 200 metres altitude, capturing the full extent of the fire perimeter and smoke plume',
   ground_north:
-    'Ground-level photograph taken from the north side of the fire, approximately 500 metres away, looking south towards the flame front at eye level',
+    "You're standing on the ground to the north of the fire, looking south towards the approaching flame front. Ground-level photograph taken at eye level, approximately 500 metres from the fire edge",
   ground_south:
-    'Ground-level photograph taken from the south side looking north, showing the burned area with fire visible in the distance',
+    "You're standing on the ground to the south of the fire, looking north across the burned area towards the active fire line. Ground-level photograph showing the burned area with fire visible in the distance",
   ground_east:
-    'Ground-level photograph taken from the east looking west towards the fire, capturing the flank of the fire at eye level',
+    "You're standing on the ground to the east of the fire, looking west at the flank of the fire. Ground-level photograph taken at eye level, capturing the fire's flank and smoke movement",
   ground_west:
-    'Ground-level photograph taken from the west looking east towards the fire, capturing the flank of the fire at eye level',
+    "You're standing on the ground to the west of the fire, looking east at the flank of the fire. Ground-level photograph taken at eye level, capturing the fire's flank and smoke movement",
   ground_above:
     'Ground-level photograph from slightly elevated terrain looking across the fire area, showing the full fire perimeter and smoke column',
   ridge:
@@ -138,12 +139,13 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.0.0).
+ * Default prompt template (v1.3.0).
  * Structured template for generating photorealistic bushfire scenario prompts.
+ * Updated to enhance landscape adherence and add directional narratives for ground-level views.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.2.0',
+  version: '1.3.0',
   sections: {
     // Step 1 — Establish the photographic style and intent (Gemini best practice:
     // provide context, use camera/lens language, describe purpose)
@@ -151,16 +153,20 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       'Create a photorealistic photograph for a fire service training exercise. ' +
       'The image should look like it was captured on location by a firefighter with a Canon EOS R5 and a 24-70mm f/2.8 lens. ' +
       'It depicts a real, specific place in the Australian landscape during a bushfire — not a generic or stock fire image. ' +
-      'Every landform, ridge line, valley contour, vegetation patch, and visible road or clearing in the reference terrain must be faithfully preserved.',
+      'This is NOT an artistic interpretation — it must accurately depict the actual landscape as it exists. ' +
+      'Every landform, ridge line, valley contour, vegetation patch, and visible road or clearing in the reference terrain must be faithfully preserved. ' +
+      'Any man-made structures (buildings, roads, fences, clearings) visible in satellite imagery must appear in the same position and scale. ' +
+      'Match the reference landscape precisely — the generated image must be recognizable as this specific location.',
 
     // Step 2 — Describe the scene narratively (Gemini best practice: hyper-specific,
     // narrative description over keyword lists)
     scene: (data) =>
-      `First, establish the landscape. The terrain is ${data.terrainDescription}, ` +
+      `First, establish the landscape with strict adherence to the reference imagery. The terrain is ${data.terrainDescription}, ` +
       `covered with ${data.vegetationDescriptor}, ` +
       `at approximately ${data.elevation} metres elevation in New South Wales, Australia. ` +
       `${data.nearbyFeatures} ` +
-      `Keep every topographic feature exactly where it appears — hills, gullies, flat paddocks, tree lines, bare earth patches, fence lines, and any built structures.`,
+      `Preserve every topographic feature exactly where it appears in the reference — hills, gullies, flat paddocks, tree lines, bare earth patches, fence lines, and any built structures. ` +
+      `If the reference shows a building, road, or clearing, it must appear in the generated image in the same location with the same scale and orientation.`,
 
     // Step 3 — Layer the fire behaviour on top (Gemini best practice: step-by-step
     // instructions for complex multi-element scenes)
