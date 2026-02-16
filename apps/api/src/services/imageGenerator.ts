@@ -53,11 +53,15 @@ export class ImageGeneratorService {
           this.context.log(`[ImageGenerator] Switching to Gemini provider (${imageConfig.model})`);
           this.provider = new GeminiImageProvider(imageConfig);
         } else {
-          this.context.log(`[ImageGenerator] Switching to ${imageConfig.model} provider from StableDiffusion fallback`);
+          this.context.log(
+            `[ImageGenerator] Switching to ${imageConfig.model} provider from StableDiffusion fallback`
+          );
           this.provider = new AzureImageProvider(imageConfig);
         }
       } else {
-        this.context.warn('[ImageGenerator] Image model config not available, using StableDiffusion mock provider. This will generate placeholder images.');
+        this.context.warn(
+          '[ImageGenerator] Image model config not available, using StableDiffusion mock provider. This will generate placeholder images.'
+        );
       }
     }
 
@@ -101,7 +105,8 @@ export class ImageGeneratorService {
           provider: this.provider.constructor.name,
           model: result.metadata.model,
           generationTime: result.metadata.generationTime,
-          imageSizeBytes: (result.imageData instanceof Buffer) ? result.imageData.length : result.imageData.length,
+          imageSizeBytes:
+            result.imageData instanceof Buffer ? result.imageData.length : result.imageData.length,
           promptHash: result.metadata.promptHash,
         });
 

@@ -117,7 +117,12 @@ export interface VegetationContext {
   /** Detailed class name at centroid (e.g. "Sydney Montane Dry Sclerophyll Forests") */
   centerClassName?: string;
   /** Formation names at compass points around the perimeter */
-  surrounding: Partial<Record<'north' | 'south' | 'east' | 'west' | 'northeast' | 'southeast' | 'southwest' | 'northwest', string>>;
+  surrounding: Partial<
+    Record<
+      'north' | 'south' | 'east' | 'west' | 'northeast' | 'southeast' | 'southwest' | 'northwest',
+      string
+    >
+  >;
   /** Unique formation names found across all query points */
   uniqueFormations: string[];
   /** Data source identifier */

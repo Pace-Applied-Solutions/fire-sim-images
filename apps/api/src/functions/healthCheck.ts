@@ -260,8 +260,13 @@ async function checkAIServices(): Promise<HealthCheck> {
     const foundryRegion = process.env.FOUNDRY_PROJECT_REGION;
 
     // Check for generic image model provider (new 3-var scheme)
-    const imageModel = process.env.IMAGE_MODEL ?? process.env.IMAGE_MODEL_DEPLOYMENT ?? process.env.FLUX_DEPLOYMENT;
-    const imageModelUrl = process.env.IMAGE_MODEL_URL ?? process.env.IMAGE_MODEL_BASE_URL ?? process.env.IMAGE_MODEL_ENDPOINT ?? process.env.FLUX_ENDPOINT;
+    const imageModel =
+      process.env.IMAGE_MODEL ?? process.env.IMAGE_MODEL_DEPLOYMENT ?? process.env.FLUX_DEPLOYMENT;
+    const imageModelUrl =
+      process.env.IMAGE_MODEL_URL ??
+      process.env.IMAGE_MODEL_BASE_URL ??
+      process.env.IMAGE_MODEL_ENDPOINT ??
+      process.env.FLUX_ENDPOINT;
 
     // Check for Azure OpenAI (alternative)
     const openaiEndpoint = process.env.AZURE_OPENAI_ENDPOINT;

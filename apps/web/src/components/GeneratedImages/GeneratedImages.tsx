@@ -14,7 +14,10 @@ import styles from './GeneratedImages.module.css';
 /**
  * Renders model thinking text in a chat-like scrollable panel.
  */
-const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({ text, isStreaming }) => {
+const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({
+  text,
+  isStreaming,
+}) => {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,9 +32,7 @@ const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({ text
         {isStreaming && <span className={styles.thinkingDot} />}
       </div>
       <div className={styles.thinkingBody}>
-        <div className={styles.thinkingBubble}>
-          {text}
-        </div>
+        <div className={styles.thinkingBubble}>{text}</div>
         <div ref={endRef} />
       </div>
     </div>
@@ -62,7 +63,10 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [showScreenshotCompare, setShowScreenshotCompare] = useState(false);
-  const [promptModalData, setPromptModalData] = useState<{ prompt: string; viewpoint: string } | null>(null);
+  const [promptModalData, setPromptModalData] = useState<{
+    prompt: string;
+    viewpoint: string;
+  } | null>(null);
 
   const hasScreenshots = mapScreenshots && Object.keys(mapScreenshots).length > 0;
 
@@ -162,7 +166,9 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
               <div className={styles.thinkingBubble}>
                 <div className={styles.waitingIndicator}>
                   <div className={styles.thinkingSpinner} />
-                  <span>Model is thinking… this can take 30–90 seconds for complex fire scenarios.</span>
+                  <span>
+                    Model is thinking… this can take 30–90 seconds for complex fire scenarios.
+                  </span>
                 </div>
               </div>
             </div>
@@ -184,11 +190,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
                   }
                 }}
               >
-                <img
-                  src={image.url}
-                  alt={`${image.viewPoint} view`}
-                  className={styles.image}
-                />
+                <img src={image.url} alt={`${image.viewPoint} view`} className={styles.image} />
                 <div className={styles.imageOverlay}>
                   <span className={styles.viewIcon}>🔍</span>
                 </div>
@@ -203,7 +205,10 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           ))}
           {/* Placeholder cards for images still generating */}
           {Array.from({ length: remainingCount }).map((_, i) => (
-            <div key={`placeholder-${i}`} className={`${styles.imageCard} ${styles.placeholderCard}`}>
+            <div
+              key={`placeholder-${i}`}
+              className={`${styles.imageCard} ${styles.placeholderCard}`}
+            >
               <div className={styles.placeholderWrapper}>
                 <div className={styles.spinner} />
                 <p className={styles.placeholderText}>Generating...</p>
@@ -232,9 +237,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           <p>{result.error || 'An unknown error occurred'}</p>
         </div>
         {/* Show thinking text even on failure — helps debug what the model was doing */}
-        {result.thinkingText && (
-          <ThinkingPanel text={result.thinkingText} />
-        )}
+        {result.thinkingText && <ThinkingPanel text={result.thinkingText} />}
       </div>
     );
   }
@@ -332,7 +335,12 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
               </a>
               <button
                 className={styles.promptButton}
-                onClick={() => showPromptModal(result.anchorImage!.metadata.prompt, result.anchorImage!.viewPoint)}
+                onClick={() =>
+                  showPromptModal(
+                    result.anchorImage!.metadata.prompt,
+                    result.anchorImage!.viewPoint
+                  )
+                }
                 title="View generation prompt"
               >
                 View Prompt
@@ -341,64 +349,62 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           </div>
         )}
         {result.images
-          .filter((image) => !result.anchorImage || image.viewPoint !== result.anchorImage.viewPoint)
+          .filter(
+            (image) => !result.anchorImage || image.viewPoint !== result.anchorImage.viewPoint
+          )
           .map((image, index) => (
-          <div key={image.viewPoint} className={styles.imageCard}>
-            <div
-              className={styles.imageWrapper}
-              onClick={() => openLightbox(index + (result.anchorImage ? 1 : 0))}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openLightbox(index + (result.anchorImage ? 1 : 0));
-                }
-              }}
-            >
-              <img
-                src={image.url}
-                alt={`${image.viewPoint} view`}
-                className={styles.image}
-              />
-              <div className={styles.imageOverlay}>
-                <span className={styles.viewIcon}>🔍</span>
+            <div key={image.viewPoint} className={styles.imageCard}>
+              <div
+                className={styles.imageWrapper}
+                onClick={() => openLightbox(index + (result.anchorImage ? 1 : 0))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openLightbox(index + (result.anchorImage ? 1 : 0));
+                  }
+                }}
+              >
+                <img src={image.url} alt={`${image.viewPoint} view`} className={styles.image} />
+                <div className={styles.imageOverlay}>
+                  <span className={styles.viewIcon}>🔍</span>
+                </div>
+              </div>
+              <div className={styles.imageInfo}>
+                <h4 className={styles.viewpoint}>{formatViewpoint(image.viewPoint)}</h4>
+                <p className={styles.metadata}>
+                  {image.metadata.width} × {image.metadata.height} • {image.metadata.model}
+                </p>
+              </div>
+              <div className={styles.actions}>
+                <a
+                  href={image.url}
+                  download={`${image.viewPoint}.png`}
+                  className={styles.downloadButton}
+                  title="Download image"
+                >
+                  Download
+                </a>
+                <button
+                  className={styles.promptButton}
+                  onClick={() => showPromptModal(image.metadata.prompt, image.viewPoint)}
+                  title="View generation prompt"
+                >
+                  View Prompt
+                </button>
+                {onRegenerateImage && (
+                  <button
+                    className={styles.regenerateButton}
+                    onClick={() => onRegenerateImage(image.viewPoint)}
+                    title="Regenerate this view"
+                  >
+                    Regenerate
+                  </button>
+                )}
               </div>
             </div>
-            <div className={styles.imageInfo}>
-              <h4 className={styles.viewpoint}>{formatViewpoint(image.viewPoint)}</h4>
-              <p className={styles.metadata}>
-                {image.metadata.width} × {image.metadata.height} • {image.metadata.model}
-              </p>
-            </div>
-            <div className={styles.actions}>
-              <a
-                href={image.url}
-                download={`${image.viewPoint}.png`}
-                className={styles.downloadButton}
-                title="Download image"
-              >
-                Download
-              </a>
-              <button
-                className={styles.promptButton}
-                onClick={() => showPromptModal(image.metadata.prompt, image.viewPoint)}
-                title="View generation prompt"
-              >
-                View Prompt
-              </button>
-              {onRegenerateImage && (
-                <button
-                  className={styles.regenerateButton}
-                  onClick={() => onRegenerateImage(image.viewPoint)}
-                  title="Regenerate this view"
-                >
-                  Regenerate
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {result.completedAt && (

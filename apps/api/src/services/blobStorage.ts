@@ -39,7 +39,7 @@ export class BlobStorageService {
     // Dev mode when no storage credentials are configured
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     this.devMode = !connectionString && !this.accountName;
-    
+
     // Log configuration for debugging
     this.context.log('[BlobStorage] Configuration:', {
       accountName: this.accountName ? '***' : 'not set',
@@ -334,10 +334,13 @@ export class BlobStorageService {
 
       return `${blobUrl}?${sasToken}`;
     } catch (error) {
-      this.context.error('[BlobStorage] Failed to generate User Delegation SAS. Ensure the managed identity has "Storage Blob Delegator" role.', {
-        error: error instanceof Error ? error.message : String(error),
-        blobUrl: blobUrl.substring(0, 60) + '...',
-      });
+      this.context.error(
+        '[BlobStorage] Failed to generate User Delegation SAS. Ensure the managed identity has "Storage Blob Delegator" role.',
+        {
+          error: error instanceof Error ? error.message : String(error),
+          blobUrl: blobUrl.substring(0, 60) + '...',
+        }
+      );
       // Return raw URL as last resort - will fail with 409 if storage isn't public
       return blobUrl;
     }

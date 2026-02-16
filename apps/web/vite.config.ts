@@ -12,7 +12,7 @@ export default defineConfig({
       transformIndexHtml(html) {
         return html.replace(
           '</head>',
-          `  <meta name="app-version" content="${commitSha}" />\n  </head>`,
+          `  <meta name="app-version" content="${commitSha}" />\n  </head>`
         );
       },
     },

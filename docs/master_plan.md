@@ -250,7 +250,7 @@ Update this section after each issue or change.
     - Added AI Foundry (AIServices) deployment with Stable Image Core model and project scaffolding; outputs and secrets wired to Key Vault and Static Web App app settings
     - Added Flex Consumption Function App module with deployment container, managed identity RBAC, and App Insights role assignment; wired Key Vault access and environment parameters
     - Consolidated Key Vault access policies to support both SWA and Function App identities
-    - Added AzureWebJobsStorage__accountName setting for Flex Consumption validation in CI/CD
+    - Added AzureWebJobsStorage\_\_accountName setting for Flex Consumption validation in CI/CD
     - Fixed deploy-infra workflow to derive resource group from environment input (dev/prod)
     - Updated deploy-infra workflow to run on infra/ path changes (push)
     - Split infra workflow into validate-only push runs and a gated deploy job for manual dispatch

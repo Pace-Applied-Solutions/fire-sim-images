@@ -27,7 +27,9 @@ export const ScreenshotCompare: React.FC<ScreenshotCompareProps> = ({
       <div className={styles.container}>
         <div className={styles.topBar}>
           <h3 className={styles.title}>Screenshot vs Generated</h3>
-          <button className={styles.closeButton} onClick={onClose}>✕</button>
+          <button className={styles.closeButton} onClick={onClose}>
+            ✕
+          </button>
         </div>
         <p className={styles.empty}>No matching map screenshots found for comparison.</p>
       </div>
@@ -42,7 +44,9 @@ export const ScreenshotCompare: React.FC<ScreenshotCompareProps> = ({
       {/* Top bar */}
       <div className={styles.topBar}>
         <h3 className={styles.title}>Screenshot vs Generated</h3>
-        <button className={styles.closeButton} onClick={onClose} title="Back to grid">✕</button>
+        <button className={styles.closeButton} onClick={onClose} title="Back to grid">
+          ✕
+        </button>
       </div>
 
       {/* Viewpoint tabs */}

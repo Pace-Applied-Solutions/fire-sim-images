@@ -258,7 +258,11 @@ export const MapContainer = () => {
             });
           } else {
             const onSourceData = (e: mapboxgl.MapSourceDataEvent) => {
-              if (e.sourceId === 'mapbox-dem' && map.getSource('mapbox-dem') && map.isSourceLoaded('mapbox-dem')) {
+              if (
+                e.sourceId === 'mapbox-dem' &&
+                map.getSource('mapbox-dem') &&
+                map.isSourceLoaded('mapbox-dem')
+              ) {
                 map.setTerrain({
                   source: 'mapbox-dem',
                   exaggeration: TERRAIN_EXAGGERATION,
@@ -292,7 +296,8 @@ export const MapContainer = () => {
             'line-width': [
               'match',
               ['get', 'index'],
-              5, 1.5,  // Every 5th contour line is thicker (major)
+              5,
+              1.5, // Every 5th contour line is thicker (major)
               0.6,
             ],
           },
@@ -599,10 +604,14 @@ export const MapContainer = () => {
       const map = mapRef.current;
       if (!map) return {};
 
-      return captureViewpointScreenshots(map, {
-        centroid: metadata.centroid,
-        bbox: metadata.bbox,
-      }, viewpoints);
+      return captureViewpointScreenshots(
+        map,
+        {
+          centroid: metadata.centroid,
+          bbox: metadata.bbox,
+        },
+        viewpoints
+      );
     };
 
     const vegCaptureFn = async (): Promise<string | null> => {
@@ -890,8 +899,14 @@ export const MapContainer = () => {
                   onClick={toggleVegetationOverlay}
                   className={`${styles.viewpointBtn} ${showVegetation ? styles.viewpointBtnActive : ''}`}
                   aria-pressed={showVegetation}
-                  title={showVegetation ? 'Hide vegetation overlay (NSW SVTM)' : 'Show vegetation overlay (NSW SVTM)'}
-                  aria-label={showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'}
+                  title={
+                    showVegetation
+                      ? 'Hide vegetation overlay (NSW SVTM)'
+                      : 'Show vegetation overlay (NSW SVTM)'
+                  }
+                  aria-label={
+                    showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'
+                  }
                   type="button"
                 >
                   🌿
@@ -908,8 +923,6 @@ export const MapContainer = () => {
           <p className={styles.mapErrorText}>{mapError}</p>
         </div>
       )}
-
-
     </div>
   );
 };

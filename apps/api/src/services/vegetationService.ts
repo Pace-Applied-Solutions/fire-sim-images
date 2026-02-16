@@ -13,7 +13,15 @@ import { SVTM_REST_URL } from '@fire-sim/shared';
 import type { VegetationContext } from '@fire-sim/shared';
 
 /** Compass directions for surrounding queries */
-type CompassDirection = 'north' | 'south' | 'east' | 'west' | 'northeast' | 'southeast' | 'southwest' | 'northwest';
+type CompassDirection =
+  | 'north'
+  | 'south'
+  | 'east'
+  | 'west'
+  | 'northeast'
+  | 'southeast'
+  | 'southwest'
+  | 'northwest';
 
 /** Raw response from the ArcGIS identify endpoint */
 interface IdentifyResult {
@@ -39,7 +47,7 @@ function offsetPoint(
   lng: number,
   lat: number,
   eastMetres: number,
-  northMetres: number,
+  northMetres: number
 ): [number, number] {
   const latRad = (lat * Math.PI) / 180;
   const dLat = northMetres / 111_320;
@@ -54,7 +62,7 @@ function offsetPoint(
  */
 function buildSamplePoints(
   centroid: [number, number],
-  radiusM: number,
+  radiusM: number
 ): Array<{ direction: CompassDirection | 'center'; point: [number, number] }> {
   const [lng, lat] = centroid;
   const r = radiusM;
@@ -79,7 +87,7 @@ function buildSamplePoints(
  */
 async function identifyAtPoint(
   point: [number, number],
-  bbox: [number, number, number, number],
+  bbox: [number, number, number, number]
 ): Promise<{ formationName: string; className: string } | null> {
   const [lng, lat] = point;
   const [minLng, minLat, maxLng, maxLat] = bbox;
@@ -140,7 +148,7 @@ async function identifyAtPoint(
 export async function queryVegetationContext(
   centroid: [number, number],
   bbox: [number, number, number, number],
-  radiusM = 500,
+  radiusM = 500
 ): Promise<VegetationContext | null> {
   // Expand bbox slightly to ensure all query points fall within the map extent
   const bufferLng = (bbox[2] - bbox[0]) * 0.5;
@@ -159,7 +167,7 @@ export async function queryVegetationContext(
     samplePoints.map(async ({ direction, point }) => ({
       direction,
       result: await identifyAtPoint(point, expandedBbox),
-    })),
+    }))
   );
 
   // Extract center result
@@ -219,11 +227,11 @@ export function formatVegetationContextForPrompt(ctx: VegetationContext): string
 
   if (ctx.uniqueFormations.length > 1) {
     lines.push(
-      `This area contains a mix of ${ctx.uniqueFormations.length} vegetation formations: ${ctx.uniqueFormations.join(', ')}.`,
+      `This area contains a mix of ${ctx.uniqueFormations.length} vegetation formations: ${ctx.uniqueFormations.join(', ')}.`
     );
     lines.push(
       'Ensure the generated image shows the correct vegetation type in each part of the landscape — ' +
-      'ridgelines may have drier forest, gullies may have wetter forest, and flat areas may be grassland or cleared.',
+        'ridgelines may have drier forest, gullies may have wetter forest, and flat areas may be grassland or cleared.'
     );
   }
 

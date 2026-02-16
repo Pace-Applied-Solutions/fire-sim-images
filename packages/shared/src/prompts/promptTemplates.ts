@@ -40,14 +40,16 @@ export const INTENSITY_VISUALS: Record<ScenarioInputs['intensity'], IntensityVis
     smoke: 'light wispy smoke drifting upward',
     crownInvolvement: 'surface fire only, no crown involvement whatsoever',
     spotting: 'no spotting activity',
-    descriptor: 'Very low intensity surface fire with small flames barely visible above the grass or leaf litter',
+    descriptor:
+      'Very low intensity surface fire with small flames barely visible above the grass or leaf litter',
   },
   moderate: {
     flameHeight: '0.5 to 1.5 metres',
     smoke: 'light grey smoke drifting upward',
     crownInvolvement: 'surface fire only, no crown involvement',
     spotting: 'no spotting activity',
-    descriptor: 'Low to moderate intensity surface fire with flames below head height, no crown involvement',
+    descriptor:
+      'Low to moderate intensity surface fire with flames below head height, no crown involvement',
   },
   high: {
     flameHeight: '3 to 10 metres',
@@ -164,16 +166,19 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     // instructions for complex multi-element scenes)
     fire: (data) => {
       // Use explicit flame height/ROS when provided (from trainer controls)
-      const flameDesc = data.explicitFlameHeightM !== undefined
-        ? `Flames are approximately ${data.explicitFlameHeightM} metres high`
-        : `Flames are ${data.flameHeight} high`;
-      const rosDesc = data.explicitRateOfSpreadKmh !== undefined
-        ? ` The fire is advancing at ${data.explicitRateOfSpreadKmh} km/h.`
-        : '';
+      const flameDesc =
+        data.explicitFlameHeightM !== undefined
+          ? `Flames are approximately ${data.explicitFlameHeightM} metres high`
+          : `Flames are ${data.flameHeight} high`;
+      const rosDesc =
+        data.explicitRateOfSpreadKmh !== undefined
+          ? ` The fire is advancing at ${data.explicitRateOfSpreadKmh} km/h.`
+          : '';
       // Derive a realistic intensity qualifier from explicit flame height
-      const qualifier = data.explicitFlameHeightM !== undefined
-        ? getFlameHeightQualifier(data.explicitFlameHeightM)
-        : data.intensityDescription.descriptor;
+      const qualifier =
+        data.explicitFlameHeightM !== undefined
+          ? getFlameHeightQualifier(data.explicitFlameHeightM)
+          : data.intensityDescription.descriptor;
       return (
         `Then, add the fire. A ${data.fireStage} is burning through the vegetation. ` +
         `${qualifier}. ` +
