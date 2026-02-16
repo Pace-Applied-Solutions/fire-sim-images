@@ -141,7 +141,7 @@ export interface GenerationResult {
   id: string;
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   images: GeneratedImage[];
-  anchorImage?: GeneratedImage; // Aerial view used as reference for other views
+  anchorImage?: GeneratedImage; // Anchor view used as reference for other views
   seed?: number; // Consistent seed used across all viewpoints
   createdAt: string; // ISO 8601 timestamp
   completedAt?: string; // ISO 8601 timestamp

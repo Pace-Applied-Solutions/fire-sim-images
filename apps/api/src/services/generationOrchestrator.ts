@@ -131,9 +131,9 @@ export class GenerationOrchestrator {
   }
 
   /**
-   * Execute the full generation pipeline with anchor image strategy.
-   * Pass 1: Generate aerial view as anchor
-   * Pass 2: Generate remaining views using anchor as reference
+  * Execute the full generation pipeline with anchor image strategy.
+  * Pass 1: Generate a ground-level anchor view
+  * Pass 2: Generate remaining views using anchor as reference
    */
   private async executeGeneration(scenarioId: string, request: GenerationRequest): Promise<void> {
     const progress = progressStore.get(scenarioId)!;
@@ -190,14 +190,15 @@ export class GenerationOrchestrator {
         });
       }
 
-      // Step 2: Determine anchor viewpoint (prefer aerial, fallback to first available)
+      // Step 2: Determine anchor viewpoint (prefer ground-level, fallback to first available)
       const maxImages = 10;
       const viewpointsToGenerate = request.requestedViews.slice(0, maxImages);
-      const anchorViewpoint = viewpointsToGenerate.includes('aerial')
-        ? 'aerial'
-        : viewpointsToGenerate.includes('helicopter_above')
+      const anchorViewpoint = viewpointsToGenerate.find((viewpoint) => viewpoint.startsWith('ground_'))
+        ?? (viewpointsToGenerate.includes('helicopter_above')
           ? 'helicopter_above'
-          : viewpointsToGenerate[0];
+          : viewpointsToGenerate.includes('aerial')
+            ? 'aerial'
+            : viewpointsToGenerate[0]);
 
       logger.info('Starting anchor image generation', {
         anchorViewpoint,

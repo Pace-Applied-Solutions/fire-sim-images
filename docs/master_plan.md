@@ -656,6 +656,7 @@ Update this section after each issue or change.
     - All builds pass (shared, API, web), TypeScript strict mode compliant.
     - **Map error handling:** WMS tile errors from the vegetation overlay no longer trigger the full "Map unavailable" overlay; errors are logged and the base map remains usable.
     - **WMS fix:** Updated the SVTM WMS tile template to EPSG:3857 with `{bbox-epsg-3857}` so Mapbox substitutes the bbox and the WMS server no longer returns 400 errors.
+    - **Anchor sequencing:** Default generation now starts with a truck-level ground view, follows with other ground views, and finishes with aerial; anchor selection prefers ground-level viewpoints.
 
 ## 14. Change Control Process
 

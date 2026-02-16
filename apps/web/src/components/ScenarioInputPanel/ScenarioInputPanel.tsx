@@ -242,14 +242,14 @@ export const ScenarioInputPanel: React.FC = () => {
       setGenerationProgress('Starting generation...');
       setError(null);
 
-      // Default viewpoints: capture cardinal directions at each perspective for consistency
-      // This matches the perspective toggles in the UI (NESW for helicopter and ground, plus aerial)
-      // Single perspective for initial testing — additional perspectives can be
-      // enabled later or offered as user-selectable options
+      // Default viewpoints: start at truck-level, sweep ground views, then finish with aerial
+      // This preserves a strong ground context before the overhead reference view.
       const requestedViews: ViewPoint[] = [
-        'aerial',
         'ground_north',
         'ground_east',
+        'ground_south',
+        'ground_west',
+        'aerial',
       ];
 
       // Capture map screenshots from each viewpoint for terrain reference
