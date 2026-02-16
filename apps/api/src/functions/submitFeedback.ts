@@ -1,4 +1,3 @@
-import '../setup.js';
 /**
  * Azure Function: Submit Feedback
  * POST /api/scenarios/{scenarioId}/feedback

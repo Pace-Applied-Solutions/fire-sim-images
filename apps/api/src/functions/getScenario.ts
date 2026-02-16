@@ -1,4 +1,3 @@
-import '../setup.js';
 /**
  * Azure Function: Get Scenario
  * GET /api/scenarios/{scenarioId}
