@@ -11,7 +11,10 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
     useAppStore();
 
   useEffect(() => {
-    setResultsPanelOpen(scenarioState === 'complete');
+    // Open panel when generating (to show progress) or when complete (to show results)
+    if (scenarioState === 'generating' || scenarioState === 'complete') {
+      setResultsPanelOpen(true);
+    }
   }, [scenarioState, setResultsPanelOpen]);
 
   return (

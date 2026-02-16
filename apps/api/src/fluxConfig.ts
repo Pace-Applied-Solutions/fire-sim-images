@@ -18,19 +18,34 @@ const getEnvConfig = (): FluxConfig => {
     deployment: process.env.FLUX_DEPLOYMENT ?? '',
     apiVersion: process.env.FLUX_API_VERSION ?? '2024-12-01-preview',
   };
-  
+
   console.log('[FluxConfig] Environment configuration loaded:', {
     endpoint: config.endpoint ? '***' : 'missing',
     apiKey: config.apiKey ? '***' : 'missing',
-    deployment: config.deployment,
+    deployment: config.deployment || 'missing',
     apiVersion: config.apiVersion,
   });
-  
+
   return config;
 };
 
 const isComplete = (config: FluxConfig): boolean =>
   Boolean(config.endpoint && config.apiKey && config.deployment && config.apiVersion);
+
+/**
+ * Helper to safely read a Key Vault secret, returning undefined on any error.
+ */
+const safeGetSecret = async (
+  client: SecretClient,
+  secretName: string
+): Promise<string | undefined> => {
+  try {
+    const secret = await client.getSecret(secretName);
+    return secret.value;
+  } catch {
+    return undefined;
+  }
+};
 
 export const getFluxConfig = async (context: InvocationContext): Promise<FluxConfig | null> => {
   if (cache.config) {
@@ -39,54 +54,59 @@ export const getFluxConfig = async (context: InvocationContext): Promise<FluxCon
 
   const envConfig = getEnvConfig();
 
-  // If no Key Vault configured, rely on env vars
-  if (!process.env.KEY_VAULT_URI) {
-    console.log('[FluxConfig] No Key Vault configured, checking environment variables');
-    if (!isComplete(envConfig)) {
-      context.warn('[FluxConfig] Flux config incomplete in environment variables.', {
-        endpoint: !!envConfig.endpoint,
-        apiKey: !!envConfig.apiKey,
-        deployment: !!envConfig.deployment,
-      });
-      return null;
-    }
+  // Check env vars first — always the fastest path
+  if (isComplete(envConfig)) {
     cache.config = envConfig;
     console.log('[FluxConfig] Using Flux config from environment variables');
     return envConfig;
   }
 
-  try {
-    const credential = new DefaultAzureCredential();
-    const client = new SecretClient(process.env.KEY_VAULT_URI, credential);
-    const [endpoint, apiKey, deployment, apiVersion] = await Promise.all([
-      client.getSecret('Flux--Endpoint'),
-      client.getSecret('Flux--ApiKey'),
-      client.getSecret('Flux--Deployment'),
-      client.getSecret('Flux--ApiVersion'),
-    ]);
+  // Try Key Vault if configured
+  const keyVaultUri = process.env.KEY_VAULT_URI || process.env.KEY_VAULT_URL;
+  if (keyVaultUri) {
+    try {
+      const credential = new DefaultAzureCredential();
+      const client = new SecretClient(keyVaultUri, credential);
 
-    const config: FluxConfig = {
-      endpoint: endpoint.value ?? envConfig.endpoint,
-      apiKey: apiKey.value ?? envConfig.apiKey,
-      deployment: deployment.value ?? envConfig.deployment,
-      apiVersion: apiVersion.value ?? envConfig.apiVersion,
-    };
+      const [endpoint, apiKey, deployment, apiVersion] = await Promise.all([
+        safeGetSecret(client, 'Flux--Endpoint'),
+        safeGetSecret(client, 'Flux--ApiKey'),
+        safeGetSecret(client, 'Flux--Deployment'),
+        safeGetSecret(client, 'Flux--ApiVersion'),
+      ]);
 
-    if (!isComplete(config)) {
-      context.warn('Flux config incomplete in Key Vault/environment.');
-      return null;
+      const kvConfig: FluxConfig = {
+        endpoint: endpoint ?? envConfig.endpoint,
+        apiKey: apiKey ?? envConfig.apiKey,
+        deployment: deployment ?? envConfig.deployment,
+        apiVersion: apiVersion ?? envConfig.apiVersion,
+      };
+
+      if (isComplete(kvConfig)) {
+        cache.config = kvConfig;
+        console.log('[FluxConfig] Using Flux config from Key Vault');
+        return kvConfig;
+      }
+
+      context.warn('[FluxConfig] Flux config incomplete after Key Vault lookup.', {
+        endpoint: !!kvConfig.endpoint,
+        apiKey: !!kvConfig.apiKey,
+        deployment: !!kvConfig.deployment,
+      });
+    } catch (error) {
+      context.warn('[FluxConfig] Key Vault lookup failed, continuing with env vars.', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-
-    cache.config = config;
-    console.log('[FluxConfig] Using Flux config from Key Vault');
-    return config;
-  } catch (error) {
-    context.error('Failed to read Flux config from Key Vault.', error);
-    if (isComplete(envConfig)) {
-      cache.config = envConfig;
-      console.log('[FluxConfig] Fell back to environment variables after Key Vault error');
-      return envConfig;
-    }
-    return null;
   }
+
+  // Final check — env vars might still be partially filled from above
+  if (isComplete(envConfig)) {
+    cache.config = envConfig;
+    console.log('[FluxConfig] Using Flux config from environment variables (after Key Vault fallback)');
+    return envConfig;
+  }
+
+  context.warn('[FluxConfig] Flux config not available from any source. Image generation will use mock provider.');
+  return null;
 };

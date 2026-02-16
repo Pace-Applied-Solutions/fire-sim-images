@@ -253,7 +253,12 @@ export const ScenarioInputPanel: React.FC = () => {
 
       // Poll for completion
       const result = await generationApi.pollForCompletion(startResponse.scenarioId, (status) => {
-        setGenerationProgress(status.progress);
+        const progressMsg = status.status === 'in_progress'
+          ? `Generating images... ${status.completedImages}/${status.totalImages} complete`
+          : status.status === 'pending'
+            ? 'Waiting for generation to start...'
+            : status.progress;
+        setGenerationProgress(progressMsg);
         console.log('Generation progress:', status.progress);
       });
 
