@@ -152,12 +152,13 @@ jobs:
           echo "| Set DEPLOY_COMMIT_SHA | ✅ |" >> $GITHUB_STEP_SUMMARY
 
       # Wait for the app to restart and verify the new version is live
-      - name: Verify deployment
+      - name: Verify deployment (attempt 1)
         id: verify
+        continue-on-error: true
         run: |
           EXPECTED="${{ github.sha }}"
           URL="https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health"
-          MAX_ATTEMPTS=12       # 60s initial wait + 12 × 10s = 3 minutes
+          MAX_ATTEMPTS=24       # 60s initial wait + 24 × 10s = 5 minutes
           ATTEMPT=0
 
           echo "Waiting 60s for app to restart after deployment..."
@@ -182,21 +183,93 @@ jobs:
             sleep 10
           done
 
-          echo "❌ Deployment verification failed after $MAX_ATTEMPTS attempts"
+          echo "⚠️ Deployment verification failed after $MAX_ATTEMPTS attempts (5 minutes)"
           echo "Expected: $EXPECTED"
           echo "Got:      $LIVE_SHA"
           echo "deploy_verified=false" >> "$GITHUB_OUTPUT"
-          echo "| Verify deployment (health check) | ❌ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Verify deployment attempt 1 (health check) | ❌ |" >> $GITHUB_STEP_SUMMARY
+          exit 1
+
+      # Retry deployment if first verification failed
+      - name: Retry deployment
+        id: retry_deploy
+        if: steps.verify.outcome == 'failure'
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: .deploy/api
+
+      - name: Record retry deploy status
+        if: steps.verify.outcome == 'failure'
+        run: |
+          if [ "${{ steps.retry_deploy.outcome }}" = "success" ]; then
+            echo "| Retry deployment to Azure Functions | ✅ |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.retry_deploy.outcome }}" = "failure" ]; then
+            echo "| Retry deployment to Azure Functions | ❌ |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # Re-set the commit SHA app setting after retry
+      - name: Set DEPLOY_COMMIT_SHA app setting (retry)
+        id: commit_sha_retry
+        if: steps.verify.outcome == 'failure' && steps.retry_deploy.outcome == 'success'
+        run: |
+          az functionapp config appsettings set \
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group firesim-rg-dev \
+            --settings "DEPLOY_COMMIT_SHA=${{ github.sha }}" \
+            -o none
+          echo "| Set DEPLOY_COMMIT_SHA (retry) | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      # Verify deployment after retry
+      - name: Verify deployment (attempt 2)
+        id: verify_retry
+        if: steps.verify.outcome == 'failure' && steps.retry_deploy.outcome == 'success'
+        run: |
+          EXPECTED="${{ github.sha }}"
+          URL="https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health"
+          MAX_ATTEMPTS=24       # 60s initial wait + 24 × 10s = 5 minutes
+          ATTEMPT=0
+
+          echo "Waiting 60s for app to restart after retry deployment..."
+          sleep 60
+          echo "Starting health checks (retry) — expecting commitSha=$EXPECTED at $URL"
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+
+            RESPONSE=$(curl -s -m 10 "$URL" 2>/dev/null || echo '{}')
+            LIVE_SHA=$(echo "$RESPONSE" | jq -r '.commitSha // empty' 2>/dev/null || echo '')
+            STATUS=$(echo "$RESPONSE" | jq -r '.status // empty' 2>/dev/null || echo '')
+
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS — commitSha=$LIVE_SHA status=$STATUS"
+
+            if [ "$LIVE_SHA" = "$EXPECTED" ]; then
+              echo "✅ Deployment verified on retry — correct commit is live"
+              echo "deploy_verified=true" >> "$GITHUB_OUTPUT"
+              echo "| Verify deployment attempt 2 (health check) | ✅ |" >> $GITHUB_STEP_SUMMARY
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "❌ Deployment verification failed after retry ($MAX_ATTEMPTS attempts, 5 minutes)"
+          echo "Expected: $EXPECTED"
+          echo "Got:      $LIVE_SHA"
+          echo "deploy_verified=false" >> "$GITHUB_OUTPUT"
+          echo "| Verify deployment attempt 2 (health check) | ❌ |" >> $GITHUB_STEP_SUMMARY
           exit 1
 
       - name: Final summary
         if: always()
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
+          # Check if verification succeeded on first or second attempt
           if [ "${{ steps.verify.outcome }}" = "success" ]; then
             echo "> ✅ **API deployed and verified** — commit \`${{ github.sha }}\` is live" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ steps.deploy.outcome }}" = "success" ]; then
-            echo "> ⚠️ **API deployed but verification failed** — the app may still be starting" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.verify_retry.outcome }}" = "success" ]; then
+            echo "> ✅ **API deployed and verified on retry** — commit \`${{ github.sha }}\` is live" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.deploy.outcome }}" = "success" ] || [ "${{ steps.retry_deploy.outcome }}" = "success" ]; then
+            echo "> ⚠️ **API deployed but verification failed** — the app may still be starting or experiencing issues" >> $GITHUB_STEP_SUMMARY
           else
             echo "> ❌ **API deployment failed** — see table above for details" >> $GITHUB_STEP_SUMMARY
           fi
@@ -209,6 +282,8 @@ jobs:
             const sha = context.sha.substring(0, 7);
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const apiUrl = `https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health`;
+            const retryAttempted = '${{ steps.retry_deploy.outcome }}' !== '';
+            const retrySucceeded = '${{ steps.retry_deploy.outcome }}' === 'success';
 
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -224,7 +299,13 @@ jobs:
                 `**Timestamp:** ${new Date().toISOString()}`,
                 ``,
                 `### What happened`,
-                `The API deployment to \`${{ env.AZURE_FUNCTIONAPP_NAME }}\` either failed to deploy or did not come up with the expected commit SHA within the timeout window (3 minutes).`,
+                retryAttempted 
+                  ? `The API deployment to \`${{ env.AZURE_FUNCTIONAPP_NAME }}\` failed verification even after an automatic retry. The deployment ${retrySucceeded ? 'succeeded' : 'failed'} on retry, but the health endpoint did not return the expected commit SHA within the timeout window (5 minutes per attempt).`
+                  : `The API deployment to \`${{ env.AZURE_FUNCTIONAPP_NAME }}\` either failed to deploy or did not come up with the expected commit SHA within the timeout window (5 minutes).`,
+                ``,
+                retryAttempted 
+                  ? `**Retry attempted:** Yes (deploy ${retrySucceeded ? 'succeeded' : 'failed'})`
+                  : '',
                 ``,
                 `### Investigation steps`,
                 `1. Check the [workflow run logs](${runUrl}) for build or deployment errors`,
@@ -249,5 +330,6 @@ jobs:
                 `### Expected vs Actual`,
                 `- **Expected commitSha:** \`${context.sha}\``,
                 `- **Health endpoint:** ${apiUrl}`,
+                `- **Timeout window:** 5 minutes (24 attempts at 10-second intervals after 60s warmup)`,
               ].join('\n'),
             });
