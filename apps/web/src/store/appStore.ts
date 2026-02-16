@@ -38,6 +38,10 @@ interface AppState {
   generationResult: GenerationResult | null;
   setGenerationResult: (result: GenerationResult | null) => void;
 
+  // Map screenshots captured during generation (viewpoint -> data URL)
+  mapScreenshots: Record<string, string> | null;
+  setMapScreenshots: (screenshots: Record<string, string> | null) => void;
+
   // Error handling
   error: string | null;
   setError: (error: string | null) => void;
@@ -80,6 +84,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Initial generation result
   generationResult: null,
   setGenerationResult: (generationResult) => set({ generationResult }),
+
+  // Map screenshots
+  mapScreenshots: null,
+  setMapScreenshots: (mapScreenshots) => set({ mapScreenshots }),
 
   // Initial error state
   error: null,

@@ -141,13 +141,19 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.0.0',
+  version: '1.1.0',
   sections: {
-    style: 'A photorealistic photograph of an Australian bushfire. DSLR quality, natural lighting.',
+    style:
+      'A photorealistic photograph of a real location in the Australian landscape during a bushfire. ' +
+      'Shot on a Canon EOS R5 with a 24-70mm lens, natural available lighting. ' +
+      'The image must look like an actual photograph of this specific terrain — not a generic stock fire image. ' +
+      'Preserve the exact landform shape, ridge lines, valley contours, vegetation distribution, and any visible roads or clearings from the reference landscape.',
 
     scene: (data) =>
-      `${data.vegetationDescriptor} on ${data.terrainDescription} in New South Wales, Australia. ` +
-      `Elevation approximately ${data.elevation} metres. ${data.nearbyFeatures}`,
+      `The terrain is ${data.terrainDescription} covered with ${data.vegetationDescriptor}, ` +
+      `at approximately ${data.elevation} metres elevation in New South Wales, Australia. ` +
+      `${data.nearbyFeatures} ` +
+      `Maintain every topographic feature — hills, gullies, flat areas, tree lines, bare earth patches, and man-made features — exactly as they appear in the landscape.`,
 
     fire: (data) => {
       // Use explicit flame height/ROS when provided (from trainer controls)

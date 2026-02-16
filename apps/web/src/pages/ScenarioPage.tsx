@@ -14,6 +14,7 @@ export const ScenarioPage: React.FC = () => {
     perimeter,
     scenarioInputs,
     geoContext,
+    mapScreenshots,
   } = useAppStore();
 
   const renderResults = () => {
@@ -24,6 +25,7 @@ export const ScenarioPage: React.FC = () => {
           perimeter={perimeter || undefined}
           inputs={scenarioInputs || undefined}
           geoContext={geoContext || undefined}
+          mapScreenshots={mapScreenshots}
           totalImages={9}
         />
       );

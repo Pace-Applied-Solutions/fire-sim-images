@@ -188,8 +188,8 @@ describe('Prompt Generator', () => {
     });
 
     it('should have increasing flame heights with intensity', () => {
-      expect(INTENSITY_VISUALS.low.flameHeight).toContain('0.5 to 1.5');
-      expect(INTENSITY_VISUALS.moderate.flameHeight).toContain('1.5 to 3');
+      expect(INTENSITY_VISUALS.low.flameHeight).toContain('0.2 to 0.5');
+      expect(INTENSITY_VISUALS.moderate.flameHeight).toContain('0.5 to 1.5');
       expect(INTENSITY_VISUALS.high.flameHeight).toContain('3 to 10');
       expect(INTENSITY_VISUALS.veryHigh.flameHeight).toContain('10 to 20');
       expect(INTENSITY_VISUALS.extreme.flameHeight).toContain('20+');
@@ -197,7 +197,7 @@ describe('Prompt Generator', () => {
 
     it('should have appropriate smoke descriptions for each level', () => {
       expect(INTENSITY_VISUALS.low.smoke).toContain('light');
-      expect(INTENSITY_VISUALS.moderate.smoke).toContain('grey-white');
+      expect(INTENSITY_VISUALS.moderate.smoke).toContain('light grey');
       expect(INTENSITY_VISUALS.high.smoke).toContain('dense');
       expect(INTENSITY_VISUALS.veryHigh.smoke).toContain('pyrocumulus');
       expect(INTENSITY_VISUALS.extreme.smoke).toContain('pyrocumulonimbus');

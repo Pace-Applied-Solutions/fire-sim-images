@@ -6,6 +6,14 @@ import type {
 } from './imageGenerationProvider.js';
 import type { ImageModelConfig } from '../fluxConfig.js';
 
+/**
+ * Detects whether the config points to an Azure AI serverless endpoint
+ * (e.g., /providers/blackforestlabs/...) vs the OpenAI-compatible format.
+ */
+function isServerlessEndpoint(config: ImageModelConfig): boolean {
+  return Boolean(config.baseUrl?.includes('/providers/'));
+}
+
 export class AzureImageProvider implements ImageGenerationProvider {
   readonly modelId: string;
   readonly maxConcurrent = 2;
@@ -15,16 +23,23 @@ export class AzureImageProvider implements ImageGenerationProvider {
   }
 
   async isAvailable(): Promise<boolean> {
-    return Boolean(this.config.endpoint && this.config.apiKey && this.config.deployment);
+    return Boolean(this.config.apiKey && this.config.deployment &&
+      (this.config.baseUrl || this.config.endpoint));
   }
 
   async generateImage(prompt: string, options?: ImageGenOptions): Promise<ImageGenResult> {
     const startTime = Date.now();
     const size = options?.size ?? '1024x1024';
-    const url = `${this.config.endpoint}/openai/deployments/${this.config.deployment}/images/generations?api-version=${this.config.apiVersion}`;
+    const [width, height] = size.split('x').map(Number);
+
+    const serverless = isServerlessEndpoint(this.config);
+
+    // Build URL — use baseUrl if provided, otherwise construct OpenAI-compatible URL
+    const url = this.config.baseUrl
+      ? this.config.baseUrl
+      : `${this.config.endpoint}/openai/deployments/${this.config.deployment}/images/generations?api-version=${this.config.apiVersion}`;
 
     // If a map screenshot is provided, use image-to-image mode.
-    // Modify the prompt to instruct Flux Kontext to transform the terrain reference.
     const referenceImage = options?.mapScreenshot ?? options?.referenceImage;
     let effectivePrompt = prompt;
     let base64Image: string | undefined;
@@ -34,37 +49,65 @@ export class AzureImageProvider implements ImageGenerationProvider {
       if (Buffer.isBuffer(referenceImage)) {
         base64Data = referenceImage.toString('base64');
       } else if (typeof referenceImage === 'string') {
-        // Strip data URL prefix if present (e.g. "data:image/jpeg;base64,...")
         base64Data = referenceImage.replace(/^data:image\/\w+;base64,/, '');
       } else {
         base64Data = '';
       }
       if (base64Data.length > 0) {
         base64Image = base64Data;
-        // Prefix the prompt to tell Flux Kontext to use the reference as a terrain base
-        effectivePrompt = `Transform this satellite/terrain map view into a photorealistic photograph showing the following fire scenario, keeping the exact same terrain, topography, vegetation layout, and camera angle: ${prompt}`;
+        effectivePrompt =
+          'Using the provided satellite/terrain map as a strict spatial reference, generate a photorealistic photograph of this exact location. ' +
+          'CRITICAL: Preserve every topographic feature — the shape of hills, ridges, valleys, gullies, roads, clearings, tree canopy outlines, bare earth patches, and water bodies — exactly as they appear in the reference image. ' +
+          'Match the same camera angle, field of view, and spatial composition. ' +
+          'Replace the map rendering style with photorealistic textures: real vegetation, real soil, real sky, natural lighting. ' +
+          'Then overlay the following fire scenario onto this faithful landscape rendering: ' +
+          prompt;
       }
     }
 
-    const body = {
-      prompt: effectivePrompt,
-      size,
-      n: 1,
-      response_format: 'b64_json',
-    } as Record<string, unknown>;
+    // Build request body — different shape for serverless vs OpenAI-compatible
+    let body: Record<string, unknown>;
+    let headers: Record<string, string>;
 
-    if (base64Image) {
-      body.image = base64Image;
-    }
-
-    let response: Response;
-    response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(body),
-      headers: {
+    if (serverless) {
+      // Azure AI serverless (Black Forest Labs) format
+      body = {
+        prompt: effectivePrompt,
+        width,
+        height,
+        steps: 25,
+        guidance: 3.5,
+        safety_tolerance: 5,
+        seed: options?.seed,
+      };
+      if (base64Image) {
+        body.image = base64Image;
+      }
+      headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.config.apiKey}`,
+      };
+    } else {
+      // OpenAI-compatible format
+      body = {
+        prompt: effectivePrompt,
+        size,
+        n: 1,
+        response_format: 'b64_json',
+      };
+      if (base64Image) {
+        body.image = base64Image;
+      }
+      headers = {
         'Content-Type': 'application/json',
         'api-key': this.config.apiKey,
-      },
+      };
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers,
     });
 
     if (!response.ok) {
@@ -74,14 +117,13 @@ export class AzureImageProvider implements ImageGenerationProvider {
       );
     }
 
-    const payload = (await response.json()) as {
-      data?: Array<{ b64_json?: string }>;
-    };
+    const payload = await response.json() as Record<string, unknown>;
 
-    const b64 = payload.data?.[0]?.b64_json;
+    // Extract base64 image data — handle both response formats
+    const b64 = this.extractBase64(payload);
     if (!b64) {
       throw new Error(
-        `Image model API returned no image data. Response: ${JSON.stringify(payload).substring(0, 200)}`
+        `Image model API returned no image data. Response: ${JSON.stringify(payload).substring(0, 300)}`
       );
     }
 
@@ -102,10 +144,49 @@ export class AzureImageProvider implements ImageGenerationProvider {
         model: this.modelId,
         promptHash,
         generationTime,
-        width: Number(size.split('x')[0]),
-        height: Number(size.split('x')[1]),
+        width,
+        height,
         seed: options?.seed,
       },
     };
+  }
+
+  /**
+   * Extract base64 image data from various API response formats:
+   * - OpenAI: { data: [{ b64_json: "..." }] }
+   * - BFL serverless: { image: { url: "data:...;base64,..." } }
+   * - BFL serverless alt: { images: [{ bytes: "..." }] }
+   * - BFL serverless alt2: { sample: "base64..." }
+   */
+  private extractBase64(payload: Record<string, unknown>): string | undefined {
+    // OpenAI format
+    const data = payload.data as Array<{ b64_json?: string }> | undefined;
+    if (data?.[0]?.b64_json) {
+      return data[0].b64_json;
+    }
+
+    // BFL serverless: { image: { url: "data:image/...;base64,..." } }
+    const image = payload.image as { url?: string } | undefined;
+    if (image?.url) {
+      const match = image.url.match(/base64,(.+)/);
+      if (match) return match[1];
+      // Might be raw base64
+      return image.url;
+    }
+
+    // BFL alt: { images: [{ bytes: "..." }] }
+    const images = payload.images as Array<{ bytes?: string }> | undefined;
+    if (images?.[0]?.bytes) {
+      return images[0].bytes;
+    }
+
+    // BFL alt: { sample: "base64..." }
+    if (typeof payload.sample === 'string') {
+      const sampleStr = payload.sample as string;
+      const match = sampleStr.match(/base64,(.+)/);
+      return match ? match[1] : sampleStr;
+    }
+
+    return undefined;
   }
 }

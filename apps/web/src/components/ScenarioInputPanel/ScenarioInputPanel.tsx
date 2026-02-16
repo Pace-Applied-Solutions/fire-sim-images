@@ -106,6 +106,7 @@ export const ScenarioInputPanel: React.FC = () => {
     setScenarioInputs,
     setGenerationProgress,
     setGenerationResult,
+    setMapScreenshots,
     setError,
     captureMapScreenshots,
   } = useAppStore();
@@ -262,7 +263,9 @@ export const ScenarioInputPanel: React.FC = () => {
           mapScreenshots = await captureMapScreenshots(requestedViews);
           const count = Object.keys(mapScreenshots).length;
           console.log(`Captured ${count} map screenshots for terrain reference`);
+          // Store screenshots so the comparison view can access them
           if (count > 0) {
+            setMapScreenshots(mapScreenshots);
             setGenerationProgress(`Captured ${count} terrain views. Starting AI generation...`);
           }
         } catch (error) {

@@ -8,6 +8,7 @@ import type { GenerationResult, ScenarioInputs, GeoContext, FirePerimeter } from
 import { ImageLightbox } from './ImageLightbox';
 import { ScenarioSummaryCard } from './ScenarioSummaryCard';
 import { ImageComparison } from '../ImageComparison';
+import { ScreenshotCompare } from '../ScreenshotCompare';
 import styles from './GeneratedImages.module.css';
 
 interface GeneratedImagesProps {
@@ -17,6 +18,7 @@ interface GeneratedImagesProps {
   geoContext?: GeoContext;
   promptVersion?: string;
   totalImages?: number;
+  mapScreenshots?: Record<string, string> | null;
   onRegenerateImage?: (viewpoint: string) => void;
 }
 
@@ -27,11 +29,15 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   geoContext,
   promptVersion,
   totalImages = 9,
+  mapScreenshots,
   onRegenerateImage,
 }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const [showScreenshotCompare, setShowScreenshotCompare] = useState(false);
+
+  const hasScreenshots = mapScreenshots && Object.keys(mapScreenshots).length > 0;
 
   // Download all images as ZIP
   const handleDownloadAll = useCallback(async () => {
@@ -181,6 +187,17 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
     );
   }
 
+  // Show screenshot vs generated comparison
+  if (showScreenshotCompare && hasScreenshots) {
+    return (
+      <ScreenshotCompare
+        images={result.images}
+        mapScreenshots={mapScreenshots}
+        onClose={() => setShowScreenshotCompare(false)}
+      />
+    );
+  }
+
   // Show comparison view if requested
   if (showComparison) {
     return (
@@ -226,6 +243,11 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           )}
         </div>
         <div className={styles.headerActions}>
+          {hasScreenshots && (
+            <button className={styles.compareButton} onClick={() => setShowScreenshotCompare(true)}>
+              Compare with Map
+            </button>
+          )}
           <button className={styles.compareButton} onClick={() => setShowComparison(true)}>
             Compare Views
           </button>

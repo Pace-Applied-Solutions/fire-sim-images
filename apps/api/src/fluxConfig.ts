@@ -7,6 +7,8 @@ export interface ImageModelConfig {
   apiKey: string;
   deployment: string;
   apiVersion: string;
+  /** Optional full URL — overrides endpoint/deployment/apiVersion URL construction */
+  baseUrl?: string;
 }
 
 /** @deprecated Use ImageModelConfig instead */
@@ -21,6 +23,7 @@ const getEnvConfig = (): ImageModelConfig => {
     apiKey: process.env.IMAGE_MODEL_API_KEY ?? process.env.FLUX_API_KEY ?? '',
     deployment: process.env.IMAGE_MODEL_DEPLOYMENT ?? process.env.FLUX_DEPLOYMENT ?? '',
     apiVersion: process.env.IMAGE_MODEL_API_VERSION ?? process.env.FLUX_API_VERSION ?? '2024-12-01-preview',
+    baseUrl: process.env.IMAGE_MODEL_BASE_URL ?? '',
   };
 
   console.log('[ImageModelConfig] Environment configuration loaded:', {
@@ -28,13 +31,14 @@ const getEnvConfig = (): ImageModelConfig => {
     apiKey: config.apiKey ? '***' : 'missing',
     deployment: config.deployment || 'missing',
     apiVersion: config.apiVersion,
+    baseUrl: config.baseUrl ? '***' : 'not set (will construct from endpoint/deployment)',
   });
 
   return config;
 };
 
 const isComplete = (config: ImageModelConfig): boolean =>
-  Boolean(config.endpoint && config.apiKey && config.deployment && config.apiVersion);
+  Boolean(config.apiKey && config.deployment && (config.baseUrl || (config.endpoint && config.apiVersion)));
 
 /**
  * Helper to safely read a Key Vault secret, returning undefined on any error.
@@ -72,11 +76,12 @@ export const getImageModelConfig = async (context: InvocationContext): Promise<I
       const credential = new DefaultAzureCredential();
       const client = new SecretClient(keyVaultUri, credential);
 
-      const [endpoint, apiKey, deployment, apiVersion] = await Promise.all([
+      const [endpoint, apiKey, deployment, apiVersion, baseUrl] = await Promise.all([
         safeGetSecret(client, 'ImageModel--Endpoint').then(v => v ?? safeGetSecret(client, 'Flux--Endpoint')),
         safeGetSecret(client, 'ImageModel--ApiKey').then(v => v ?? safeGetSecret(client, 'Flux--ApiKey')),
         safeGetSecret(client, 'ImageModel--Deployment').then(v => v ?? safeGetSecret(client, 'Flux--Deployment')),
         safeGetSecret(client, 'ImageModel--ApiVersion').then(v => v ?? safeGetSecret(client, 'Flux--ApiVersion')),
+        safeGetSecret(client, 'ImageModel--BaseUrl'),
       ]);
 
       const kvConfig: ImageModelConfig = {
@@ -84,6 +89,7 @@ export const getImageModelConfig = async (context: InvocationContext): Promise<I
         apiKey: apiKey ?? envConfig.apiKey,
         deployment: deployment ?? envConfig.deployment,
         apiVersion: apiVersion ?? envConfig.apiVersion,
+        baseUrl: baseUrl ?? envConfig.baseUrl,
       };
 
       if (isComplete(kvConfig)) {
