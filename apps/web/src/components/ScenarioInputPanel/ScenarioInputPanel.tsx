@@ -229,7 +229,6 @@ export const ScenarioInputPanel: React.FC = () => {
       setScenarioInputs(newInputs);
     }
     // Only re-run when vegetation type changes, not on every inputs change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoContext?.vegetationType]);
 
   const handleGenerate = async () => {
