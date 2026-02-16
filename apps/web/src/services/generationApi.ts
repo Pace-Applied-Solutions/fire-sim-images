@@ -25,6 +25,7 @@ export interface GenerationStatusResponse {
   updatedAt: string;
   results?: {
     images: GenerationResult['images'];
+    anchorImage?: GenerationResult['anchorImage'];
     error?: string;
   };
 }
