@@ -671,6 +671,21 @@ Update this section after each issue or change.
     - Added comprehensive documentation: `docs/current_state/mobile_responsive_layout.md`
     - All builds passing, no horizontal overflow, proper touch interaction ergonomics
     - Acceptance criteria met: functional UI on mobile, no forced zoom, all controls accessible
+  - **Prompt Template v1.3.0 & Workflow Documentation (Feb 16, 2026):**
+    - **Enhanced landscape adherence:** Updated prompt style section to explicitly require matching actual landscape, not artistic interpretation. Added mandate for man-made structures (buildings, roads, fences) to appear in correct positions and scales. Images must be recognizable as specific locations.
+    - **Directional narrative for ground views:** Ground-level viewpoints now include immersive "You're standing on the ground to the [direction] of the fire, looking [direction]..." phrasing. Creates clear tactical context for fire crew training scenarios.
+    - **Scene section strengthening:** Added "strict adherence to reference imagery" language. Explicit requirement that if reference shows a building, road, or clearing, it must appear in the generated image with correct location, scale, and orientation.
+    - **Prompt version bump:** v1.2.0 → v1.3.0 to track landscape realism and directional narrative improvements.
+    - **Comprehensive workflow documentation:** Created `docs/image_generation_workflow.md` documenting:
+      - Multi-perspective capture approach (both top-down and ground-level tactical views)
+      - Directional narrative implementation for all ground viewpoints
+      - Vegetation context integration (SVTM overlay capture and AI model instructions)
+      - Quality assurance checklists for landscape adherence, multi-view consistency, and directional narratives
+      - Step-by-step workflow from perimeter drawing through results storage
+      - Camera parameters and positioning for each viewpoint type
+      - Troubleshooting guide for common issues
+      - Future enhancements roadmap (vegetation label layer, enhanced spatial queries)
+    - **Acceptance criteria met:** Generated images preserve landscape features from reference, directional context clear in ground views, dual viewpoints (top-down aerial + perspective ground views) captured and documented, revised workflow documented.
 
 ## 14. Change Control Process
 
