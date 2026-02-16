@@ -140,9 +140,28 @@ export class GenerationOrchestrator {
 
   /**
    * Get the final results of a completed generation request.
+   * Falls back to blob storage if not in memory (same as getStatus).
    */
   async getResults(scenarioId: string): Promise<GenerationResult | undefined> {
-    const progress = progressStore.get(scenarioId);
+    let progress = progressStore.get(scenarioId);
+
+    if (!progress) {
+      // Fallback: load from blob storage
+      try {
+        const persisted = (await this.blobStorage.loadProgress(scenarioId)) as GenerationProgress | null;
+        if (persisted) {
+          progressStore.set(scenarioId, persisted);
+          this.logger.info('Re-hydrated progress from blob for results', { scenarioId });
+          progress = persisted;
+        }
+      } catch (error) {
+        this.logger.warn('Blob progress lookup for results failed', {
+          scenarioId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     if (!progress) {
       return undefined;
     }
@@ -545,71 +564,9 @@ export class GenerationOrchestrator {
         }
       }
 
-      // Step 7: Store complete scenario metadata for gallery
-      const scenarioMetadata: ScenarioMetadata = {
-        id: scenarioId,
-        perimeter: request.perimeter,
-        inputs: request.inputs,
-        geoContext: request.geoContext,
-        requestedViews: request.requestedViews,
-        result: {
-          id: scenarioId,
-          status: progress.status,
-          images,
-          anchorImage,
-          seed: request.seed,
-          createdAt: progress.createdAt,
-          completedAt: new Date().toISOString(),
-        },
-        promptVersion: promptSet.templateVersion,
-      };
-
-      await this.blobStorage.uploadMetadata(scenarioId, scenarioMetadata);
-
-      // Step 8: Save generation log (prompt, thinking, responses) as markdown
-      // in the same blob container folder as the images for audit/evaluation
-      try {
-        const generationLog = {
-          prompts: promptSet.prompts.map((p) => ({
-            viewpoint: p.viewpoint,
-            promptText: p.promptText,
-          })),
-          thinkingText: progress.thinkingText,
-          modelResponses: modelTextResponses,
-          seed: request.seed,
-          model: images[0]?.metadata.model,
-          generationTimeMs: Date.now() - new Date(progress.createdAt).getTime(),
-          timestamp: new Date().toISOString(),
-          vegetationContext: vegetationContext ?? undefined,
-          hadVegetationScreenshot: !!request.vegetationMapScreenshot,
-        };
-        await this.blobStorage.uploadGenerationLog(scenarioId, generationLog);
-        logger.info('Generation log saved', { scenarioId });
-      } catch (logError) {
-        // Non-fatal — don't fail the generation if logging fails
-        logger.warn('Failed to save generation log', {
-          error: logError instanceof Error ? logError.message : String(logError),
-        });
-      }
-
-      // Calculate and track costs
-      const costBreakdown = globalCostEstimator.estimateScenarioCost({
-        imageCount: progress.completedImages,
-        videoCount: 0, // Videos not yet implemented
-        imageQuality: 'standard',
-        imageProvider: 'stable-image-core',
-        estimatedStorageMB: 10,
-      });
-
-      globalUsageTracker.recordScenario(scenarioId, costBreakdown);
-
-      logger.info('Cost estimated', {
-        totalCost: costBreakdown.totalCost,
-        imageCount: costBreakdown.images.count,
-        costPerImage: costBreakdown.images.costPerImage,
-      });
-
-      // Update progress
+      // ── Mark generation complete BEFORE non-critical post-processing ──
+      // This ensures the status endpoint returns 'completed' to the frontend
+      // even if metadata upload, log upload, or cost tracking hang/fail.
       progress.images = images;
       progress.status = progress.failedImages === progress.totalImages ? 'failed' : 'completed';
       progress.updatedAt = new Date().toISOString();
@@ -618,7 +575,7 @@ export class GenerationOrchestrator {
         progress.error = `Partial success: ${progress.completedImages} succeeded, ${progress.failedImages} failed`;
       }
 
-      // Persist final state to blob immediately
+      // Persist final state to blob immediately so it survives process restarts
       await this.persistProgress(scenarioId, progress, true);
 
       // Track final metrics
@@ -631,8 +588,25 @@ export class GenerationOrchestrator {
         completedImages: progress.completedImages,
         failedImages: progress.failedImages,
         totalDurationMs: totalDuration,
-        estimatedCost: costBreakdown.totalCost,
         seed: request.seed,
+      });
+
+      // ── Non-critical post-processing (fire-and-forget) ──
+      // These steps are important for audit/gallery but must NOT block
+      // the status transition. Failures are logged but do not affect the result.
+      this.postProcessGeneration(
+        scenarioId,
+        request,
+        images,
+        anchorImage,
+        promptSet,
+        modelTextResponses,
+        vegetationContext,
+        logger
+      ).catch((err) => {
+        logger.warn('Post-processing failed (non-fatal)', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       });
     } catch (error) {
       logger.error(
@@ -645,6 +619,99 @@ export class GenerationOrchestrator {
       progress.updatedAt = new Date().toISOString();
       await this.persistProgress(scenarioId, progress, true);
       endToEndTimer.stop();
+    }
+  }
+
+  /**
+   * Non-critical post-processing: metadata upload, generation log, cost tracking.
+   * Runs after the generation status has already been set to 'completed',
+   * so failures here do not block the frontend.
+   */
+  private async postProcessGeneration(
+    scenarioId: string,
+    request: GenerationRequest,
+    images: GeneratedImage[],
+    anchorImage: GeneratedImage | undefined,
+    promptSet: { prompts: Array<{ viewpoint: ViewPoint; promptText: string }>; templateVersion: string },
+    modelTextResponses: Array<{ viewpoint: string; text?: string }>,
+    vegetationContext: VegetationContext | null,
+    logger: ReturnType<typeof createLogger>
+  ): Promise<void> {
+    const progress = progressStore.get(scenarioId);
+
+    // Step 7: Store complete scenario metadata for gallery
+    try {
+      const scenarioMetadata: ScenarioMetadata = {
+        id: scenarioId,
+        perimeter: request.perimeter,
+        inputs: request.inputs,
+        geoContext: request.geoContext,
+        requestedViews: request.requestedViews,
+        result: {
+          id: scenarioId,
+          status: progress?.status ?? 'completed',
+          images,
+          anchorImage,
+          seed: request.seed,
+          createdAt: progress?.createdAt ?? new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+        },
+        promptVersion: promptSet.templateVersion,
+      };
+
+      await this.blobStorage.uploadMetadata(scenarioId, scenarioMetadata);
+      logger.info('Scenario metadata saved', { scenarioId });
+    } catch (metaError) {
+      logger.warn('Failed to save scenario metadata (non-fatal)', {
+        error: metaError instanceof Error ? metaError.message : String(metaError),
+      });
+    }
+
+    // Step 8: Save generation log
+    try {
+      const generationLog = {
+        prompts: promptSet.prompts.map((p) => ({
+          viewpoint: p.viewpoint,
+          promptText: p.promptText,
+        })),
+        thinkingText: progress?.thinkingText,
+        modelResponses: modelTextResponses,
+        seed: request.seed,
+        model: images[0]?.metadata.model,
+        generationTimeMs: Date.now() - new Date(progress?.createdAt ?? Date.now()).getTime(),
+        timestamp: new Date().toISOString(),
+        vegetationContext: vegetationContext ?? undefined,
+        hadVegetationScreenshot: !!request.vegetationMapScreenshot,
+      };
+      await this.blobStorage.uploadGenerationLog(scenarioId, generationLog);
+      logger.info('Generation log saved', { scenarioId });
+    } catch (logError) {
+      logger.warn('Failed to save generation log (non-fatal)', {
+        error: logError instanceof Error ? logError.message : String(logError),
+      });
+    }
+
+    // Step 9: Calculate and track costs
+    try {
+      const costBreakdown = globalCostEstimator.estimateScenarioCost({
+        imageCount: progress?.completedImages ?? images.length,
+        videoCount: 0,
+        imageQuality: 'standard',
+        imageProvider: 'stable-image-core',
+        estimatedStorageMB: 10,
+      });
+
+      globalUsageTracker.recordScenario(scenarioId, costBreakdown);
+
+      logger.info('Cost estimated', {
+        totalCost: costBreakdown.totalCost,
+        imageCount: costBreakdown.images.count,
+        costPerImage: costBreakdown.images.costPerImage,
+      });
+    } catch (costError) {
+      logger.warn('Cost tracking failed (non-fatal)', {
+        error: costError instanceof Error ? costError.message : String(costError),
+      });
     }
   }
 

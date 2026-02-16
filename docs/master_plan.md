@@ -804,6 +804,20 @@ Update this section after each issue or change.
       - `apps/web/src/services/generationApi.ts` (404 retry with backoff)
       - `apps/web/src/utils/mapCapture.ts` (waitForMapReady, waitForSourceLoaded, smooth transitions)
     - **Testing:** All TypeScript builds passing (api, web)
+  - **Generation Pipeline Deadlock & WMS Reliability (Feb 16, 2026):**
+    - **Problem addressed:** Three interrelated issues:
+      1. Generation status stuck on `in_progress` forever (UI shows "Model is thinking…" indefinitely) because the status was only set to `completed` AFTER metadata upload, generation log upload, and cost tracking — any of which could hang or fail, blocking the status transition
+      2. `getResults()` didn't use blob fallback (only `getStatus()` was updated), causing 404s on the final results fetch
+      3. NVIS WMS proxy returned 502 on transient government server failures with no retry, and the vegetation screenshot capture would hang for 12s on source errors
+    - **Solution:**
+      1. **Moved status completion before post-processing:** The `completed`/`failed` status now sets immediately after all images finish. Metadata upload, generation log, and cost tracking are extracted into a separate `postProcessGeneration()` method that runs fire-and-forget — failures are logged but cannot block the frontend
+      2. **`getResults()` blob fallback:** Added the same in-memory → blob fallback pattern from `getStatus()` to `getResults()`
+      3. **NVIS WMS retry + error resilience:** Proxy now retries up to 2 times on transient errors (5xx, DNS, TLS) with backoff. `waitForSourceLoaded()` also resolves on map error events so the vegetation capture doesn't hang when WMS is down
+    - **Files modified:**
+      - `apps/api/src/services/generationOrchestrator.ts` (restructured pipeline, added `postProcessGeneration`, fixed `getResults` fallback)
+      - `apps/api/src/functions/nvisWmsProxy.ts` (retry on transient errors)
+      - `apps/web/src/utils/mapCapture.ts` (error-resilient source loading)
+    - **Testing:** All TypeScript builds passing (api, web)
 
 ## 14. Change Control Process
 

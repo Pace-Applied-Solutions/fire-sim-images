@@ -64,64 +64,94 @@ export async function nvisWmsProxy(
 
   const upstreamUrl = `${upstream}?${forwardParams}`;
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  // Retry for transient failures (DNS, connection reset, TLS errors)
+  const MAX_RETRIES = 2;
+  let lastError: Error | undefined;
 
-    const upstreamResponse = await fetch(upstreamUrl, {
-      signal: controller.signal,
-      headers: {
-        // Identify ourselves politely to the government server
-        'User-Agent': 'FireSimImages/1.0 (Azure Functions WMS proxy)',
-      },
-    });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
-    clearTimeout(timeout);
-
-    if (!upstreamResponse.ok) {
-      context.warn('nvis-wms-proxy upstream error', {
-        status: upstreamResponse.status,
-        url: upstreamUrl.substring(0, 200),
+      const upstreamResponse = await fetch(upstreamUrl, {
+        signal: controller.signal,
+        headers: {
+          // Identify ourselves politely to the government server
+          'User-Agent': 'FireSimImages/1.0 (Azure Functions WMS proxy)',
+        },
       });
+
+      clearTimeout(timeout);
+
+      if (!upstreamResponse.ok) {
+        // 5xx from upstream — retry if attempts remain
+        if (upstreamResponse.status >= 500 && attempt < MAX_RETRIES) {
+          context.warn('nvis-wms-proxy upstream 5xx, retrying', {
+            status: upstreamResponse.status,
+            attempt: attempt + 1,
+          });
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
+        context.warn('nvis-wms-proxy upstream error', {
+          status: upstreamResponse.status,
+          url: upstreamUrl.substring(0, 200),
+        });
+        return {
+          status: upstreamResponse.status,
+          body: `Upstream WMS error: ${upstreamResponse.status} ${upstreamResponse.statusText}`,
+        };
+      }
+
+      // Read the upstream body as a buffer so we can return it as-is
+      const body = Buffer.from(await upstreamResponse.arrayBuffer());
+      const contentType = upstreamResponse.headers.get('content-type') ?? 'application/octet-stream';
+
+      // Determine cache duration: tiles (GetMap) can be cached longer
+      const wmsRequest = (url.searchParams.get('request') ?? '').toLowerCase();
+      const cacheControl =
+        wmsRequest === 'getmap'
+          ? 'public, max-age=3600, s-maxage=86400' // Tiles: 1h client, 24h CDN
+          : 'public, max-age=60'; // FeatureInfo etc.: 1 min
+
       return {
-        status: upstreamResponse.status,
-        body: `Upstream WMS error: ${upstreamResponse.status} ${upstreamResponse.statusText}`,
+        status: 200,
+        body,
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': cacheControl,
+          // CORS headers so the frontend can consume the response
+          'Access-Control-Allow-Origin': '*',
+        },
       };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const isAbort = err instanceof DOMException && err.name === 'AbortError';
+
+      if (isAbort) {
+        context.warn('nvis-wms-proxy upstream timeout', {
+          url: upstreamUrl.substring(0, 200),
+          attempt: attempt + 1,
+        });
+        // Timeouts are unlikely to resolve with immediate retry
+        return { status: 504, body: 'Upstream WMS request timed out' };
+      }
+
+      if (attempt < MAX_RETRIES) {
+        context.warn('nvis-wms-proxy transient error, retrying', {
+          error: lastError.message,
+          attempt: attempt + 1,
+        });
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        continue;
+      }
     }
-
-    // Read the upstream body as a buffer so we can return it as-is
-    const body = Buffer.from(await upstreamResponse.arrayBuffer());
-    const contentType = upstreamResponse.headers.get('content-type') ?? 'application/octet-stream';
-
-    // Determine cache duration: tiles (GetMap) can be cached longer
-    const wmsRequest = (url.searchParams.get('request') ?? '').toLowerCase();
-    const cacheControl =
-      wmsRequest === 'getmap'
-        ? 'public, max-age=3600, s-maxage=86400' // Tiles: 1h client, 24h CDN
-        : 'public, max-age=60'; // FeatureInfo etc.: 1 min
-
-    return {
-      status: 200,
-      body,
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': cacheControl,
-        // CORS headers so the frontend can consume the response
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
-  } catch (err) {
-    const isAbort = err instanceof DOMException && err.name === 'AbortError';
-    if (isAbort) {
-      context.warn('nvis-wms-proxy upstream timeout', {
-        url: upstreamUrl.substring(0, 200),
-      });
-      return { status: 504, body: 'Upstream WMS request timed out' };
-    }
-
-    context.error('nvis-wms-proxy error', { error: (err as Error).message });
-    return { status: 502, body: 'Failed to reach upstream WMS server' };
   }
+
+  context.error('nvis-wms-proxy error after retries', {
+    error: lastError?.message ?? 'Unknown error',
+  });
+  return { status: 502, body: 'Failed to reach upstream WMS server' };
 }
 
 app.http('nvisWmsProxy', {

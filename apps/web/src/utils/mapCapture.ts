@@ -155,6 +155,7 @@ function waitForMapReady(map: MapboxMap, maxWaitMs = 8000): Promise<void> {
 /**
  * Wait for a specific raster source to have loaded its tiles.
  * Useful for WMS layers like NVIS which can take longer than vector tiles.
+ * Also resolves on source errors to avoid hanging when the WMS server is down.
  */
 function waitForSourceLoaded(
   map: MapboxMap,
@@ -179,11 +180,23 @@ function waitForSourceLoaded(
       }
     };
 
+    // Also resolve on source errors so we don't hang when WMS is down
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onError = (e: any) => {
+      console.warn(`Map error during source '${sourceId}' load — proceeding with capture`, e?.error?.message);
+      cleanup();
+      resolve();
+    };
+
     map.on('sourcedata', onSourceData);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    map.on('error', onError as any);
 
     function cleanup() {
       clearTimeout(timeout);
       map.off('sourcedata', onSourceData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      map.off('error', onError as any);
     }
   });
 }
