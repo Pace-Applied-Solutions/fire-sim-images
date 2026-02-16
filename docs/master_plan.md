@@ -221,7 +221,7 @@ These are the 15 implementation issues seeded in GitHub. Each will be assigned t
 
 Update this section after each issue or change.
 
-- **Current focus:** API separation quality audit (BYOF Functions) and documentation sync
+- **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.
@@ -498,6 +498,21 @@ Update this section after each issue or change.
       - Phase 3: Fire spread simulation (progressive injects, time-stepped scenarios)
       - Phase 4: Longer and higher-quality video (30-60 second clips, 1080p+)
       - Phase 5: Advanced features (custom cameras, AR overlay, integrations)
+- **Post-MVP Stability & Consistency Fixes:**
+  - **Health Check Endpoint Reliability (Feb 16, 2026):**
+    - Fixed health check to support both connection strings (local dev) and managed identity/account name (Azure deployment)
+    - Blob Storage health check now tries connection string first, falls back to account name + DefaultAzureCredential
+    - Key Vault health check supports both KEY_VAULT_URL (local) and KEY_VAULT_URI (Azure) env vars
+    - Gracefully handles 403 permission errors from Key Vault (still returns "healthy" if vault is reachable, acknowledging limited identity permissions)
+    - AI Services check now properly detects Azure AI Foundry configuration (FOUNDRY_PROJECT_PATH, FOUNDRY_PROJECT_REGION, FOUNDRY_IMAGE_MODEL)
+    - Fixes "API degraded" status that was appearing in UI despite working services
+  - **Screenshot Perspective Alignment (Feb 16, 2026):**
+    - Changed generation screenshot capture from 5 semi-random views to consistent cardinal directions
+    - Now captures: aerial + NESW for helicopter + NESW for ground = 9 views total
+    - Previously captured: aerial + helicopter_north + ground_north + ground_east + ridge (inconsistent with UI)
+    - Aligns with user-facing perspective toggles where both modes have N/S/E/W + above options
+    - Ensures AI generation receives screenshots that exactly match user-selectable perspectives
+    - Removed "ridge" from default generation (legacy view kept in ViewPoint type for backward compatibility)
       - Long-term vision (2+ years) with priority ranking
   - **Architecture Decision Records (ADRs):**
     - Created docs/adr/ directory structure
