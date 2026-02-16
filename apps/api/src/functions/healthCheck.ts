@@ -122,7 +122,7 @@ async function checkBlobStorage(): Promise<HealthCheck> {
   const startTime = Date.now();
 
   try {
-    const connectionString = process.env.STORAGE_CONNECTION_STRING;
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 
     if (!connectionString) {
       return {
@@ -203,11 +203,12 @@ async function checkAIServices(): Promise<HealthCheck> {
   const startTime = Date.now();
 
   try {
-    // Check if we have Foundry or OpenAI configuration
+    // Check if we have Flux, AI Foundry, or OpenAI configuration
+    const fluxEndpoint = process.env.FLUX_ENDPOINT;
     const foundryEndpoint = process.env.AI_FOUNDRY_ENDPOINT;
     const openaiEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
 
-    if (!foundryEndpoint && !openaiEndpoint) {
+    if (!fluxEndpoint && !foundryEndpoint && !openaiEndpoint) {
       return {
         service: 'AI Services',
         status: 'degraded',
@@ -221,7 +222,11 @@ async function checkAIServices(): Promise<HealthCheck> {
     return {
       service: 'AI Services',
       status: 'healthy',
-      message: foundryEndpoint ? 'Azure AI Foundry configured' : 'Azure OpenAI configured',
+      message: fluxEndpoint
+        ? 'Flux AI configured'
+        : foundryEndpoint
+          ? 'Azure AI Foundry configured'
+          : 'Azure OpenAI configured',
       latencyMs: Date.now() - startTime,
     };
   } catch (error) {
