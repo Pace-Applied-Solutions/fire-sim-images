@@ -93,22 +93,20 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       }
 
       if (base64Data.length > 0) {
-        // Add the descriptive img2img prompt prefix
+        // Gemini best practice: use narrative step-by-step instructions for
+        // complex multi-element scenes rather than keyword lists.
         effectivePrompt =
-          'REFERENCE IMAGE DESCRIPTION: The provided image is a 3D terrain visualisation of a real landscape, rendered from a mapping application. ' +
-          'It shows the actual topography with a satellite/aerial photograph draped over the 3D terrain surface. ' +
-          'In this rendering: grassy paddocks and pasture appear as light brown, tan, or green areas; ' +
-          'tree canopy and bushland appear as darker green textured patches with visible individual tree crowns; ' +
-          'bare earth, fire breaks, and cleared land appear as pale brown or beige; ' +
-          'sealed roads appear as thin grey or dark lines; unsealed roads and tracks appear as lighter dirt-coloured lines; ' +
-          'buildings and structures appear as small rectangular light-coloured shapes, often with visible rooftops and shadows; ' +
-          'water bodies such as dams, creeks, and rivers appear as dark blue or dark patches; ' +
-          'fences and property boundaries may appear as faint straight lines. ' +
-          'YOUR TASK: Using this terrain visualisation as a strict spatial guide, produce a photorealistic photograph of this exact location as if captured by a real camera. ' +
-          'CRITICAL — you must preserve the exact spatial layout: the shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body must remain in the same position and proportion. ' +
-          'Match the same camera angle, field of view, and spatial composition. ' +
-          'Replace the map rendering style with photorealistic textures — real eucalyptus trees, real Australian bush vegetation, real grass, real soil, real sky with natural lighting and atmospheric haze. ' +
-          'Then overlay the following fire scenario onto this faithful landscape rendering: ' +
+          'You are looking at a 3D terrain visualisation of a real Australian landscape, rendered from a mapping application. ' +
+          'It shows the actual topography with a satellite or aerial photograph draped over the 3D terrain surface. ' +
+          'In this rendering, grassy paddocks and pasture appear as light brown, tan, or green areas. ' +
+          'Tree canopy and bushland appear as darker green textured patches with visible individual tree crowns. ' +
+          'Bare earth, fire breaks, and cleared land appear as pale brown or beige. ' +
+          'Roads appear as thin grey or dark lines, and buildings appear as small rectangular light-coloured shapes with visible rooftops.\n\n' +
+          'Step 1: Study the terrain visualisation carefully \u2014 note the exact shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body.\n\n' +
+          'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera from the same angle and field of view. ' +
+          'Replace the map rendering style with photorealistic textures \u2014 real eucalyptus trees, real Australian bush vegetation, real grass, real soil, and a real sky with natural lighting and atmospheric haze. ' +
+          'The spatial layout must be identical to the reference.\n\n' +
+          'Step 3: Overlay the following fire scenario onto this faithful landscape rendering:\n\n' +
           prompt;
 
         // Add the image part first, then text

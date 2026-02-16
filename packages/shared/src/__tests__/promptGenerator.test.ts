@@ -333,8 +333,10 @@ describe('Prompt Generator', () => {
       const result = generatePrompts(mockRequest);
 
       result.prompts.forEach((prompt) => {
-        // Should not have multiple consecutive spaces
-        expect(prompt.promptText).not.toMatch(/\s{2,}/);
+        // Sections are separated by double newlines for Gemini structured prompting.
+        // Check that there are no triple+ newlines or multiple consecutive spaces.
+        expect(prompt.promptText).not.toMatch(/\n{3,}/);
+        expect(prompt.promptText).not.toMatch(/ {2,}/);
       });
     });
   });

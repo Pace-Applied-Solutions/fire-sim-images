@@ -141,46 +141,63 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.1.0',
+  version: '1.2.0',
   sections: {
+    // Step 1 — Establish the photographic style and intent (Gemini best practice:
+    // provide context, use camera/lens language, describe purpose)
     style:
-      'A photorealistic photograph of a real location in the Australian landscape during a bushfire. ' +
-      'Shot on a Canon EOS R5 with a 24-70mm lens, natural available lighting. ' +
-      'The image must look like an actual photograph of this specific terrain — not a generic stock fire image. ' +
-      'Preserve the exact landform shape, ridge lines, valley contours, vegetation distribution, and any visible roads or clearings from the reference landscape.',
+      'Create a photorealistic photograph for a fire service training exercise. ' +
+      'The image should look like it was captured on location by a firefighter with a Canon EOS R5 and a 24-70mm f/2.8 lens. ' +
+      'It depicts a real, specific place in the Australian landscape during a bushfire — not a generic or stock fire image. ' +
+      'Every landform, ridge line, valley contour, vegetation patch, and visible road or clearing in the reference terrain must be faithfully preserved.',
 
+    // Step 2 — Describe the scene narratively (Gemini best practice: hyper-specific,
+    // narrative description over keyword lists)
     scene: (data) =>
-      `The terrain is ${data.terrainDescription} covered with ${data.vegetationDescriptor}, ` +
+      `First, establish the landscape. The terrain is ${data.terrainDescription}, ` +
+      `covered with ${data.vegetationDescriptor}, ` +
       `at approximately ${data.elevation} metres elevation in New South Wales, Australia. ` +
       `${data.nearbyFeatures} ` +
-      `Maintain every topographic feature — hills, gullies, flat areas, tree lines, bare earth patches, and man-made features — exactly as they appear in the landscape.`,
+      `Keep every topographic feature exactly where it appears — hills, gullies, flat paddocks, tree lines, bare earth patches, fence lines, and any built structures.`,
 
+    // Step 3 — Layer the fire behaviour on top (Gemini best practice: step-by-step
+    // instructions for complex multi-element scenes)
     fire: (data) => {
       // Use explicit flame height/ROS when provided (from trainer controls)
       const flameDesc = data.explicitFlameHeightM !== undefined
         ? `Flames are approximately ${data.explicitFlameHeightM} metres high`
         : `Flames are ${data.flameHeight} high`;
       const rosDesc = data.explicitRateOfSpreadKmh !== undefined
-        ? ` Rate of spread is ${data.explicitRateOfSpreadKmh} km/h.`
+        ? ` The fire is advancing at ${data.explicitRateOfSpreadKmh} km/h.`
         : '';
       // Derive a realistic intensity qualifier from explicit flame height
       const qualifier = data.explicitFlameHeightM !== undefined
         ? getFlameHeightQualifier(data.explicitFlameHeightM)
         : data.intensityDescription.descriptor;
       return (
-        `A ${data.fireStage} burning through the vegetation. ` +
+        `Then, add the fire. A ${data.fireStage} is burning through the vegetation. ` +
         `${qualifier}. ` +
         `${flameDesc} with ${data.smokeDescription}.${rosDesc} ` +
-        `The head fire is spreading ${data.spreadDirection} driven by ${data.windDescription}.`
+        `The head fire is spreading ${data.spreadDirection}, driven by ${data.windDescription}.`
       );
     },
 
+    // Step 4 — Set the atmospheric conditions (Gemini best practice: lighting and
+    // mood description integrated into the narrative)
     weather: (data) =>
-      `Temperature is ${data.temperature}°C with ${data.humidity}% relative humidity. ` +
-      `${data.windSpeed} km/h ${data.windDirection} wind. ${data.timeOfDayLighting}.`,
+      `The conditions are ${data.temperature}°C with ${data.humidity}% relative humidity ` +
+      `and a ${data.windSpeed} km/h ${data.windDirection} wind. ` +
+      `${data.timeOfDayLighting}.`,
 
-    perspective: (viewpoint) => `${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
+    // Step 5 — Set the camera (Gemini best practice: control the camera with
+    // photographic/cinematic language — shot type, angle, distance)
+    perspective: (viewpoint) =>
+      `Finally, set the camera position: ${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
 
-    safety: 'No people, no animals, no text, no watermarks. No fantasy elements.',
+    // Gemini best practice: use semantic positive constraints instead of negative
+    // lists. Describe the desired scene positively.
+    safety:
+      'The landscape is uninhabited wilderness — only natural terrain, vegetation, fire, and smoke are present. ' +
+      'The image contains only the natural scene with realistic textures, lighting, and atmospheric haze.',
   },
 };

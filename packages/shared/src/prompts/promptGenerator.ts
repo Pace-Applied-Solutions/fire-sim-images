@@ -204,6 +204,8 @@ function preparePromptData(request: GenerationRequest): PromptData {
  * Composes a complete prompt from template sections and data.
  */
 function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: ViewPoint): string {
+  // Gemini best practice: compose as a flowing narrative with step-by-step
+  // structure separated by line breaks for clarity.
   const sections = [
     template.sections.style,
     template.sections.scene(data),
@@ -213,7 +215,7 @@ function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: Vi
     template.sections.safety,
   ];
 
-  return sections.join(' ').replace(/\s+/g, ' ').trim();
+  return sections.join('\n\n').replace(/[ \t]+/g, ' ').trim();
 }
 
 /**
