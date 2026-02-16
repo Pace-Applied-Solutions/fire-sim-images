@@ -24,6 +24,7 @@ export const ScenarioPage: React.FC = () => {
           perimeter={perimeter || undefined}
           inputs={scenarioInputs || undefined}
           geoContext={geoContext || undefined}
+          totalImages={9}
         />
       );
     }
@@ -41,7 +42,7 @@ export const ScenarioPage: React.FC = () => {
     <Layout sidebar={<ScenarioInputPanel />} main={
       <>
         <MapContainer />
-        {scenarioState === 'generating' && generationProgress && (
+        {scenarioState === 'generating' && generationProgress && !generationResult && (
           <div className={styles.progressOverlay}>
             <div className={styles.progressCard}>
               <div className={styles.spinner} />

@@ -42,9 +42,8 @@ export async function getGenerationStatus(
       totalImages: progress.totalImages,
       createdAt: progress.createdAt,
       updatedAt: progress.updatedAt,
-      ...(progress.status === 'completed' || progress.status === 'failed'
-        ? { results: { images: progress.images, error: progress.error } }
-        : {}),
+      // Always include partial images so frontend can render progressively
+      results: { images: progress.images || [], error: progress.error },
     };
 
     context.log('Status retrieved', {

@@ -16,6 +16,7 @@ interface GeneratedImagesProps {
   inputs?: ScenarioInputs;
   geoContext?: GeoContext;
   promptVersion?: string;
+  totalImages?: number;
   onRegenerateImage?: (viewpoint: string) => void;
 }
 
@@ -25,6 +26,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   inputs,
   geoContext,
   promptVersion,
+  totalImages = 9,
   onRegenerateImage,
 }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -79,12 +81,81 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   }, []);
 
   if (result.status === 'pending' || result.status === 'in_progress') {
+    const remainingCount = Math.max(0, totalImages - result.images.length);
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>
-          <div className={styles.spinner} />
-          <p>Generating images...</p>
+        {/* Scenario Summary Card */}
+        {perimeter && inputs && geoContext && (
+          <ScenarioSummaryCard
+            perimeter={perimeter}
+            inputs={inputs}
+            geoContext={geoContext}
+            imageCount={result.images.length}
+            timestamp={result.createdAt}
+            promptVersion={promptVersion}
+          />
+        )}
+
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <h3 className={styles.title}>Generating Images</h3>
+            <p className={styles.count}>
+              {result.images.length}/{totalImages} complete
+            </p>
+          </div>
         </div>
+
+        <div className={styles.grid}>
+          {result.images.map((image, index) => (
+            <div key={image.viewPoint} className={styles.imageCard}>
+              <div
+                className={styles.imageWrapper}
+                onClick={() => openLightbox(index)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openLightbox(index);
+                  }
+                }}
+              >
+                <img
+                  src={image.url}
+                  alt={`${image.viewPoint} view`}
+                  className={styles.image}
+                />
+                <div className={styles.imageOverlay}>
+                  <span className={styles.viewIcon}>🔍</span>
+                </div>
+              </div>
+              <div className={styles.imageInfo}>
+                <h4 className={styles.viewpoint}>{formatViewpoint(image.viewPoint)}</h4>
+                <p className={styles.metadata}>
+                  {image.metadata.width} × {image.metadata.height} • {image.metadata.model}
+                </p>
+              </div>
+            </div>
+          ))}
+          {/* Placeholder cards for images still generating */}
+          {Array.from({ length: remainingCount }).map((_, i) => (
+            <div key={`placeholder-${i}`} className={`${styles.imageCard} ${styles.placeholderCard}`}>
+              <div className={styles.placeholderWrapper}>
+                <div className={styles.spinner} />
+                <p className={styles.placeholderText}>Generating...</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Lightbox */}
+        {lightboxIndex !== null && (
+          <ImageLightbox
+            images={result.images}
+            initialIndex={lightboxIndex}
+            onClose={closeLightbox}
+          />
+        )}
       </div>
     );
   }

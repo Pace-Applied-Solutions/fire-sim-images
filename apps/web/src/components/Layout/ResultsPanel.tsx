@@ -10,12 +10,16 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
   const { isResultsPanelOpen, toggleResultsPanel, scenarioState, setResultsPanelOpen } =
     useAppStore();
 
+  const { generationResult } = useAppStore();
+
   useEffect(() => {
-    // Only open panel when generation is complete (not during — map needs full width for screenshots)
+    // Open panel when AI generation starts producing results, or when complete
     if (scenarioState === 'complete') {
       setResultsPanelOpen(true);
+    } else if (scenarioState === 'generating' && generationResult) {
+      setResultsPanelOpen(true);
     }
-  }, [scenarioState, setResultsPanelOpen]);
+  }, [scenarioState, generationResult, setResultsPanelOpen]);
 
   return (
     <aside className={`${styles.panel} ${isResultsPanelOpen ? styles.open : styles.closed}`}>

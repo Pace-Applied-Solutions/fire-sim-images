@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
-import type { ScenarioInputs, FireDangerRating, ViewPoint } from '@fire-sim/shared';
+import type { ScenarioInputs, FireDangerRating, ViewPoint, GenerationResult } from '@fire-sim/shared';
 import {
   getWeatherProfileForRating,
   validateWeatherParameters,
@@ -251,7 +251,7 @@ export const ScenarioInputPanel: React.FC = () => {
       addToast({ type: 'success', message: 'Generation started' });
       console.log('Generation started:', startResponse);
 
-      // Poll for completion
+      // Poll for completion — update partial results progressively
       const result = await generationApi.pollForCompletion(startResponse.scenarioId, (status) => {
         const progressMsg = status.status === 'in_progress'
           ? `Generating images... ${status.completedImages}/${status.totalImages} complete`
@@ -260,9 +260,19 @@ export const ScenarioInputPanel: React.FC = () => {
             : status.progress;
         setGenerationProgress(progressMsg);
         console.log('Generation progress:', status.progress);
+
+        // Set partial results so images appear as they complete
+        if (status.results?.images && status.results.images.length > 0) {
+          setGenerationResult({
+            id: startResponse.scenarioId,
+            status: status.status as GenerationResult['status'],
+            images: status.results.images,
+            createdAt: status.createdAt,
+          });
+        }
       });
 
-      // Handle completion
+      // Handle final completion
       setGenerationResult(result);
       setScenarioState('complete');
       setGenerationProgress(null);
