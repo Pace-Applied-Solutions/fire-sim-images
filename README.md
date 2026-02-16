@@ -162,9 +162,21 @@ The project uses GitHub Actions for continuous integration and deployment:
   - Runs unit tests
   - Generates coverage reports
 
-- **Deploy Web** (`.github/workflows/deploy-web.yml`): Deploys front-end to Azure Static Web Apps on merge to main
+- **Deploy Web** (`.github/workflows/deploy-swa.yml`): Deploys front-end to Azure Static Web Apps on merge to main
 - **Deploy API** (`.github/workflows/deploy-api.yml`): Deploys Azure Functions API on merge to main
 - **Deploy Infrastructure** (`.github/workflows/deploy-infra.yml`): Manual deployment of Azure resources
+
+### Troubleshooting Deployments
+
+If you encounter deployment failures (especially "ContainerNotFound" errors for SWA):
+
+- See [SWA Deployment Troubleshooting](docs/TROUBLESHOOTING_SWA_DEPLOYMENT.md) for common issues and fixes
+- Most issues are resolved by updating the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret with the current deployment token from Azure
+
+Run the verification script to check SWA health:
+```bash
+./scripts/verify-swa-health.sh firesim-dev-web firesim-rg-dev
+```
 
 ### Environment Configuration
 
