@@ -189,11 +189,40 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
   );
 
   /**
+   * Handle expanding the search box
+   */
+  const handleExpand = useCallback(() => {
+    setIsExpanded(true);
+    // Focus the input after expansion animation
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150);
+  }, []);
+
+  /**
+   * Handle collapsing the search box
+   */
+  const handleCollapse = useCallback(() => {
+    setIsExpanded(false);
+    setIsOpen(false);
+    setQuery('');
+    setResults([]);
+    setError(null);
+    setSelectedIndex(-1);
+  }, []);
+
+  /**
    * Handle keyboard navigation
    */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!isOpen || results.length === 0) {
+        // If Escape pressed, collapse the search box
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          handleCollapse();
+          return;
+        }
         // If Enter pressed with no dropdown, try to geocode the query directly
         if (e.key === 'Enter' && query.trim()) {
           fetchGeocodingResults(query.trim());
@@ -223,38 +252,20 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
           e.preventDefault();
           setIsOpen(false);
           setSelectedIndex(-1);
-          inputRef.current?.blur();
+          // If query is empty, collapse the search box
+          if (!query.trim()) {
+            handleCollapse();
+          } else {
+            inputRef.current?.blur();
+          }
           break;
 
         default:
           break;
       }
     },
-    [isOpen, results, selectedIndex, query, handleSelectResult, fetchGeocodingResults]
+    [isOpen, results, selectedIndex, query, handleSelectResult, fetchGeocodingResults, handleCollapse]
   );
-
-  /**
-   * Handle expanding the search box
-   */
-  const handleExpand = useCallback(() => {
-    setIsExpanded(true);
-    // Focus the input after expansion animation
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 150);
-  }, []);
-
-  /**
-   * Handle collapsing the search box
-   */
-  const handleCollapse = useCallback(() => {
-    setIsExpanded(false);
-    setIsOpen(false);
-    setQuery('');
-    setResults([]);
-    setError(null);
-    setSelectedIndex(-1);
-  }, []);
 
   /**
    * Handle click outside to close dropdown and collapse if empty
