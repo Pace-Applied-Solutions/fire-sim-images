@@ -86,21 +86,13 @@ export const MapContainer = () => {
     if (!drawRef.current) return;
     drawRef.current.changeMode('draw_polygon');
     setMapCursor('crosshair');
-    addToast({
-      type: 'info',
-      message: 'Polygon draw mode enabled',
-    });
-  }, [addToast, setMapCursor]);
+  }, [setMapCursor]);
 
   const clearPerimeter = useCallback(() => {
     if (!drawRef.current) return;
     drawRef.current.deleteAll();
     setMapCursor(null);
-    addToast({
-      type: 'info',
-      message: 'Perimeter cleared',
-    });
-  }, [addToast, setMapCursor]);
+  }, [setMapCursor]);
 
   // Initialize Mapbox map
   useEffect(() => {
@@ -109,10 +101,6 @@ export const MapContainer = () => {
     // Check for token
     if (!MAPBOX_TOKEN) {
       setMapError('Mapbox token not configured. Add VITE_MAPBOX_TOKEN to your .env file.');
-      addToast({
-        type: 'error',
-        message: 'Mapbox token not configured. Please set VITE_MAPBOX_TOKEN environment variable.',
-      });
       return;
     }
 
@@ -132,10 +120,6 @@ export const MapContainer = () => {
               center: [longitude, latitude],
               zoom: 12,
               duration: 2000,
-            });
-            addToast({
-              type: 'success',
-              message: 'Map centered on your location',
             });
           }
         },
@@ -212,20 +196,12 @@ export const MapContainer = () => {
 
       setIsMapLoaded(true);
       setMapError(null);
-      addToast({
-        type: 'success',
-        message: '3D map loaded successfully',
-      });
     });
 
     // Handle map errors
     map.on('error', (e) => {
       console.error('Map error:', e);
       setMapError('Map failed to load. Check your Mapbox token and network access.');
-      addToast({
-        type: 'error',
-        message: 'Map error occurred. Check console for details.',
-      });
     });
 
     // Cleanup
@@ -242,7 +218,7 @@ export const MapContainer = () => {
       mapRef.current = null;
       setIsMapLoaded(false);
     };
-  }, [addToast]);
+  }, []);
 
   // Initialize MapboxDraw for polygon drawing
   useEffect(() => {
@@ -404,13 +380,8 @@ export const MapContainer = () => {
 
       // Update app state to configuring
       setState('configuring');
-
-      addToast({
-        type: 'success',
-        message: `Fire perimeter drawn: ${areaHectares.toFixed(1)} hectares`,
-      });
     },
-    [setAppPerimeter, setState, addToast]
+    [setAppPerimeter, setState]
   );
 
   // Handle polygon deletion
@@ -419,12 +390,7 @@ export const MapContainer = () => {
     setMetadata(null);
     setAppPerimeter(null);
     setState('idle');
-
-    addToast({
-      type: 'info',
-      message: 'Fire perimeter deleted',
-    });
-  }, [setAppPerimeter, setState, addToast]);
+  }, [setAppPerimeter, setState]);
 
   // Capture map view as PNG
   const captureMapView = useCallback(() => {
@@ -434,11 +400,6 @@ export const MapContainer = () => {
     try {
       const canvas = map.getCanvas();
       const dataURL = canvas.toDataURL('image/png');
-
-      addToast({
-        type: 'success',
-        message: 'Map view captured',
-      });
 
       // Store captured view in app state or return for processing
       console.log('Map view captured:', dataURL.substring(0, 50) + '...');
@@ -458,10 +419,6 @@ export const MapContainer = () => {
     (preset: ViewpointPreset) => {
       const map = mapRef.current;
       if (!map || !metadata) {
-        addToast({
-          type: 'warning',
-          message: 'Draw a fire perimeter first',
-        });
         return;
       }
 
@@ -563,13 +520,8 @@ export const MapContainer = () => {
         duration: 2000,
         essential: true,
       });
-
-      addToast({
-        type: 'info',
-        message: `View: ${preset.charAt(0).toUpperCase() + preset.slice(1)}`,
-      });
     },
-    [metadata, addToast]
+    [metadata]
   );
 
   const toggleViewMode = useCallback(() => {
@@ -602,13 +554,8 @@ export const MapContainer = () => {
         duration: 2000,
         essential: true,
       });
-
-      addToast({
-        type: 'success',
-        message: `Navigated to: ${placeName}`,
-      });
     },
-    [addToast]
+    []
   );
 
   /**
@@ -626,11 +573,6 @@ export const MapContainer = () => {
     const map = mapRef.current;
     if (!map) return;
 
-    addToast({
-      type: 'info',
-      message: 'Requesting location...',
-    });
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -638,10 +580,6 @@ export const MapContainer = () => {
           center: [longitude, latitude],
           zoom: 14,
           duration: 2000,
-        });
-        addToast({
-          type: 'success',
-          message: 'Map centered on your location',
         });
       },
       (error) => {
