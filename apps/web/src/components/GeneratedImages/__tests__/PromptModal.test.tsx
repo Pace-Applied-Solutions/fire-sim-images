@@ -9,7 +9,7 @@ import { PromptModal } from '../PromptModal';
 describe('PromptModal', () => {
   const mockPrompt = 'Test prompt for bushfire scenario with detailed instructions';
   const mockViewpoint = 'aerial';
-  let mockOnClose: ReturnType<typeof vi.fn>;
+  let mockOnClose: () => void;
 
   beforeEach(() => {
     mockOnClose = vi.fn();
