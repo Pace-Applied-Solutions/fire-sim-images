@@ -94,6 +94,12 @@ jobs:
           mkdir -p node_modules/@fire-sim/shared
           cp -R ../../packages/shared/dist   node_modules/@fire-sim/shared/dist
           cp    ../../packages/shared/package.json node_modules/@fire-sim/shared/package.json
+          
+          # Install shared package dependencies
+          cd node_modules/@fire-sim/shared
+          npm install --omit=dev
+          cd ../..
+          
           echo "| Assemble deployment package | ✅ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Record assemble failure
