@@ -46,7 +46,7 @@ export class GenerationOrchestrator {
   private consistencyValidator: ConsistencyValidator;
   private logger;
 
-  constructor(private context: InvocationContext) {
+  constructor(context: InvocationContext) {
     this.imageGenerator = new ImageGeneratorService(context);
     this.blobStorage = new BlobStorageService(context);
     this.consistencyValidator = new ConsistencyValidator();
@@ -525,7 +525,7 @@ export class GenerationOrchestrator {
       const batchResults = await Promise.allSettled(batch);
       results.push(...batchResults);
 
-      this.context.log('Batch completed', {
+      console.log('Batch completed', {
         scenarioId,
         batchIndex: Math.floor(i / maxConcurrent) + 1,
         totalBatches: Math.ceil(tasks.length / maxConcurrent),
