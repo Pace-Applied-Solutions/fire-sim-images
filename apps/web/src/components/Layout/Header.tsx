@@ -1,31 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useHealthCheck, type HealthStatus } from '../../hooks/useHealthCheck';
+import { useHealthCheck } from '../../hooks/useHealthCheck';
 import styles from './Header.module.css';
 
 /**
- * Map health status to color for the status indicator.
- * Shows API health with three states:
- * - green (healthy): API fully operational
- * - yellow (degraded): API working but some services have issues
- * - red (unhealthy): API unavailable or critical issues
+ * Map individual service health status to color.
+ * - green: healthy service
+ * - yellow: degraded service
+ * - red: unhealthy service
+ * - grey: unknown/checking status
  */
-const HEALTH_COLORS: Record<HealthStatus, string> = {
+const SERVICE_STATUS_COLORS: Record<string, string> = {
   healthy: 'var(--color-status-ready)', // Green
   degraded: 'var(--color-status-loading)', // Yellow/Amber
   unhealthy: 'var(--color-status-error)', // Red
-  checking: 'var(--color-status-idle)', // Grey while checking
-};
-
-const HEALTH_LABELS: Record<HealthStatus, string> = {
-  healthy: 'API Healthy',
-  degraded: 'API Degraded',
-  unhealthy: 'API Down',
-  checking: 'Checking...',
 };
 
 export const Header: React.FC = () => {
-  const { status: healthStatus, message: healthMessage } = useHealthCheck();
+  const { status: healthStatus, checks } = useHealthCheck();
+  const [showServiceDetails, setShowServiceDetails] = useState(false);
 
   return (
     <header className={styles.header}>
@@ -49,14 +42,65 @@ export const Header: React.FC = () => {
       <div className={styles.right}>
         <div
           className={styles.statusIndicator}
-          title={healthMessage ? `${HEALTH_LABELS[healthStatus]}: ${healthMessage}` : HEALTH_LABELS[healthStatus]}
+          onMouseEnter={() => setShowServiceDetails(true)}
+          onMouseLeave={() => setShowServiceDetails(false)}
+          title={healthStatus === 'healthy' ? 'All services healthy' : 'Click to see details'}
         >
-          <div
-            className={styles.statusDot}
-            style={{ backgroundColor: HEALTH_COLORS[healthStatus] }}
-            aria-hidden="true"
-          />
-          <span className={styles.statusText}>{HEALTH_LABELS[healthStatus]}</span>
+          {/* Service dots */}
+          <div className={styles.serviceDots}>
+            {checks && checks.length > 0 ? (
+              checks.map((check) => (
+                <div
+                  key={check.service}
+                  className={styles.serviceDot}
+                  style={{
+                    backgroundColor: SERVICE_STATUS_COLORS[check.status] || 'var(--color-status-idle)',
+                  }}
+                  title={`${check.service}: ${check.status}`}
+                  aria-label={`${check.service} status: ${check.status}`}
+                />
+              ))
+            ) : (
+              <div
+                className={styles.serviceDot}
+                style={{ backgroundColor: 'var(--color-status-idle)' }}
+                title="Checking..."
+              />
+            )}
+          </div>
+
+          {/* Detailed popup on hover */}
+          {showServiceDetails && checks && checks.length > 0 && (
+            <div className={styles.healthDetailsPopup}>
+              <div className={styles.healthDetailsHeader}>
+                API Status: <strong>{healthStatus.toUpperCase()}</strong>
+              </div>
+              <div className={styles.healthServicesList}>
+                {checks.map((check) => (
+                  <div key={check.service} className={styles.healthServiceItem}>
+                    <div
+                      className={styles.healthServiceDot}
+                      style={{
+                        backgroundColor: SERVICE_STATUS_COLORS[check.status] || 'var(--color-status-idle)',
+                      }}
+                    />
+                    <div className={styles.healthServiceInfo}>
+                      <div className={styles.healthServiceName}>{check.service}</div>
+                      <div className={styles.healthServiceStatus}>
+                        {check.status}
+                        {check.message && ` — ${check.message}`}
+                      </div>
+                      {check.latencyMs !== undefined && (
+                        <div className={styles.healthServiceLatency}>
+                          {check.latencyMs}ms
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

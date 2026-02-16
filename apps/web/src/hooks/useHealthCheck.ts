@@ -7,15 +7,18 @@ import { useEffect, useState } from 'react';
 
 export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'checking';
 
+export interface HealthCheck {
+  service: string;
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  message?: string;
+  latencyMs?: number;
+}
+
 interface HealthCheckResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
   version: string;
-  checks: Array<{
-    service: string;
-    status: string;
-    message?: string;
-  }>;
+  checks: HealthCheck[];
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -29,10 +32,12 @@ export function useHealthCheck(): {
   status: HealthStatus;
   lastChecked?: Date;
   message?: string;
+  checks?: HealthCheck[];
 } {
   const [status, setStatus] = useState<HealthStatus>('checking');
   const [lastChecked, setLastChecked] = useState<Date>();
   const [message, setMessage] = useState<string>();
+  const [checks, setChecks] = useState<HealthCheck[]>();
 
   useEffect(() => {
     // Initial check
@@ -67,6 +72,7 @@ export function useHealthCheck(): {
 
       const data: HealthCheckResponse = await response.json();
       setStatus(data.status as HealthStatus);
+      setChecks(data.checks);
       setLastChecked(new Date());
 
       // Build a message showing which services are degraded/unhealthy
@@ -88,5 +94,5 @@ export function useHealthCheck(): {
     }
   };
 
-  return { status, lastChecked, message };
+  return { status, lastChecked, message, checks };
 }
