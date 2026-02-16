@@ -28,7 +28,8 @@ export class FluxImageProvider implements ImageGenerationProvider {
       response_format: 'b64_json',
     } as Record<string, unknown>;
 
-    const response = await fetch(url, {
+    let response: Response;
+    response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
@@ -39,7 +40,9 @@ export class FluxImageProvider implements ImageGenerationProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`Flux image generation failed (${response.status}): ${text}`);
+      throw new Error(
+        `Flux API error ${response.status}: ${text.substring(0, 500)}`
+      );
     }
 
     const payload = (await response.json()) as {
@@ -48,12 +51,20 @@ export class FluxImageProvider implements ImageGenerationProvider {
 
     const b64 = payload.data?.[0]?.b64_json;
     if (!b64) {
-      throw new Error('Flux response missing image data');
+      throw new Error(
+        `Flux API returned no image data. Response: ${JSON.stringify(payload).substring(0, 200)}`
+      );
     }
 
     const imageData = Buffer.from(b64, 'base64');
     const generationTime = Date.now() - startTime;
     const promptHash = crypto.createHash('sha256').update(prompt).digest('hex').substring(0, 16);
+
+    if (imageData.length < 100) {
+      throw new Error(
+        `Flux generated image is suspiciously small (${imageData.length} bytes). This may indicate an API error or placeholder response.`
+      );
+    }
 
     return {
       imageData,

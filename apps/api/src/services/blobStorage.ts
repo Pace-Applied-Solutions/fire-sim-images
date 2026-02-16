@@ -39,6 +39,16 @@ export class BlobStorageService {
     // Dev mode when no storage credentials are configured
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     this.devMode = !connectionString && !this.accountName;
+    
+    // Log configuration for debugging
+    this.context.log('[BlobStorage] Configuration:', {
+      accountName: this.accountName ? '***' : 'not set',
+      accountKeyPresent: !!this.accountKey,
+      connectionStringPresent: !!connectionString,
+      containerName: this.containerName,
+      devMode: this.devMode,
+    });
+
     if (this.devMode) {
       this.context.log(
         '[BlobStorage] Running in dev mode — images returned as data URLs, no Azure Storage required'
@@ -100,10 +110,27 @@ export class BlobStorageService {
     const containerClient = client.getContainerClient(this.containerName);
 
     // Ensure container exists (private access - storage account has public access disabled)
-    await containerClient.createIfNotExists();
+    // This is safe with connection strings/account keys
+    try {
+      await containerClient.createIfNotExists({ access: 'None' as any });
+      this.context.log('[BlobStorage] Container ensured', { container: this.containerName });
+    } catch (error) {
+      this.context.warn('[BlobStorage] Could not ensure container exists (may already exist)', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Continue - container may already exist or we may not have permission
+      // The actual upload will fail if the container truly doesn't exist
+    }
 
     const blobName = `${scenarioId}/${viewpoint}.png`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    this.context.log('[BlobStorage] Uploading image', {
+      scenarioId,
+      viewpoint,
+      blobName,
+      imageSizeBytes: imageData.length,
+    });
 
     await blockBlobClient.upload(imageData, imageData.length, {
       blobHTTPHeaders: {
@@ -159,7 +186,15 @@ export class BlobStorageService {
 
     if (!this.accountKey) {
       // If using managed identity, return the URL as-is (container must be public)
-      this.context.warn('No storage account key available for SAS generation, returning blob URL');
+      this.context.error('Storage account key not available for SAS generation. This will cause 409 errors if blob access is not public.', {
+        accountKeyPresent: false,
+        blobUrl: blobUrl.substring(0, 50) + '...',
+        environmentVariables: {
+          AZURE_STORAGE_ACCOUNT_KEY: !!process.env.AZURE_STORAGE_ACCOUNT_KEY,
+          AZURE_STORAGE_ACCOUNT_NAME: !!process.env.AZURE_STORAGE_ACCOUNT_NAME,
+          AZURE_STORAGE_CONNECTION_STRING: !!process.env.AZURE_STORAGE_CONNECTION_STRING,
+        },
+      });
       return blobUrl;
     }
 

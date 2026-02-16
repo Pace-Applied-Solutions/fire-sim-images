@@ -11,12 +11,23 @@ export interface FluxConfig {
 
 const cache: { config?: FluxConfig } = {};
 
-const getEnvConfig = (): FluxConfig => ({
-  endpoint: process.env.FLUX_ENDPOINT ?? '',
-  apiKey: process.env.FLUX_API_KEY ?? '',
-  deployment: process.env.FLUX_DEPLOYMENT ?? '',
-  apiVersion: process.env.FLUX_API_VERSION ?? '2024-12-01-preview',
-});
+const getEnvConfig = (): FluxConfig => {
+  const config = {
+    endpoint: process.env.FLUX_ENDPOINT ?? '',
+    apiKey: process.env.FLUX_API_KEY ?? '',
+    deployment: process.env.FLUX_DEPLOYMENT ?? '',
+    apiVersion: process.env.FLUX_API_VERSION ?? '2024-12-01-preview',
+  };
+  
+  console.log('[FluxConfig] Environment configuration loaded:', {
+    endpoint: config.endpoint ? '***' : 'missing',
+    apiKey: config.apiKey ? '***' : 'missing',
+    deployment: config.deployment,
+    apiVersion: config.apiVersion,
+  });
+  
+  return config;
+};
 
 const isComplete = (config: FluxConfig): boolean =>
   Boolean(config.endpoint && config.apiKey && config.deployment && config.apiVersion);
@@ -30,11 +41,17 @@ export const getFluxConfig = async (context: InvocationContext): Promise<FluxCon
 
   // If no Key Vault configured, rely on env vars
   if (!process.env.KEY_VAULT_URI) {
+    console.log('[FluxConfig] No Key Vault configured, checking environment variables');
     if (!isComplete(envConfig)) {
-      context.warn('Flux config missing env vars and Key Vault is not configured.');
+      context.warn('[FluxConfig] Flux config incomplete in environment variables.', {
+        endpoint: !!envConfig.endpoint,
+        apiKey: !!envConfig.apiKey,
+        deployment: !!envConfig.deployment,
+      });
       return null;
     }
     cache.config = envConfig;
+    console.log('[FluxConfig] Using Flux config from environment variables');
     return envConfig;
   }
 
@@ -61,11 +78,13 @@ export const getFluxConfig = async (context: InvocationContext): Promise<FluxCon
     }
 
     cache.config = config;
+    console.log('[FluxConfig] Using Flux config from Key Vault');
     return config;
   } catch (error) {
     context.error('Failed to read Flux config from Key Vault.', error);
     if (isComplete(envConfig)) {
       cache.config = envConfig;
+      console.log('[FluxConfig] Fell back to environment variables after Key Vault error');
       return envConfig;
     }
     return null;

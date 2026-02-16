@@ -209,6 +209,13 @@ export class GenerationOrchestrator {
             permissions: 'r',
           });
 
+          logger.info('Generated SAS URL for anchor image', {
+            viewpoint: anchorViewpoint,
+            blobUrl: blobUrl.substring(0, 60) + '...',
+            sasUrl: sasUrl.substring(0, 60) + '...',
+            hasSasToken: sasUrl.includes('?'),
+          });
+
           anchorImage = {
             viewPoint: anchorViewpoint,
             url: sasUrl,
@@ -228,16 +235,19 @@ export class GenerationOrchestrator {
           progress.anchorImage = anchorImage;
           progress.seed = request.seed;
         } catch (error) {
-          const anchorError = error instanceof Error ? error : new Error(String(error));
+          const errorMsg = error instanceof Error ? error.message : String(error);
           logger.error(
-            `Anchor image generation failed: ${anchorError.message}`,
-            anchorError,
+            'Anchor image generation failed',
+            error instanceof Error ? error : undefined,
             {
               viewpoint: anchorViewpoint,
+              errorMessage: errorMsg,
+              errorStack: error instanceof Error ? error.stack : undefined,
             }
           );
           GenerationMetrics.trackGenerationError({ scenarioId, viewpoint: anchorViewpoint });
           progress.failedImages++;
+          progress.error = `Anchor image generation failed: ${errorMsg}`;
         }
       }
 
@@ -301,6 +311,13 @@ export class GenerationOrchestrator {
             const sasUrl = await this.blobStorage.generateSASUrl(blobUrl, {
               expiresInHours: 24,
               permissions: 'r',
+            });
+
+            logger.info('Generated SAS URL for image', {
+              viewpoint,
+              blobUrl: blobUrl.substring(0, 60) + '...',
+              sasUrl: sasUrl.substring(0, 60) + '...',
+              hasSasToken: sasUrl.includes('?'),
             });
 
             const generatedImage: GeneratedImage = {

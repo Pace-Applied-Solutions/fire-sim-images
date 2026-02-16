@@ -48,8 +48,10 @@ export class ImageGeneratorService {
     if (this.provider instanceof StableDiffusionProvider) {
       const fluxConfig = await getFluxConfig(this.context);
       if (fluxConfig) {
-        this.context.log('Using Flux image provider');
+        this.context.log('[ImageGenerator] Switching to Flux provider from StableDiffusion fallback');
         this.provider = new FluxImageProvider(fluxConfig);
+      } else {
+        this.context.warn('[ImageGenerator] Flux config not available, using StableDiffusion mock provider. This will generate placeholder images.');
       }
     }
 
@@ -70,6 +72,7 @@ export class ImageGeneratorService {
         this.context.log('Generating image', {
           attempt,
           maxRetries: this.config.maxRetries,
+          provider: this.provider.constructor.name,
           model: this.provider.modelId,
           size: mergedOptions.size,
           promptLength: prompt.length,
@@ -83,8 +86,10 @@ export class ImageGeneratorService {
 
         this.context.log('Image generation successful', {
           attempt,
+          provider: this.provider.constructor.name,
           model: result.metadata.model,
           generationTime: result.metadata.generationTime,
+          imageSizeBytes: (result.imageData instanceof Buffer) ? result.imageData.length : result.imageData.length,
           promptHash: result.metadata.promptHash,
         });
 
@@ -94,6 +99,7 @@ export class ImageGeneratorService {
 
         this.context.warn('Image generation failed', {
           attempt,
+          provider: this.provider.constructor.name,
           error: lastError.message,
           willRetry: attempt < this.config.maxRetries,
         });

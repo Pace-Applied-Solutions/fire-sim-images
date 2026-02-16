@@ -150,6 +150,24 @@ function generateWindDescription(windSpeed: number, windDirection: string): stri
 function preparePromptData(request: GenerationRequest): PromptData {
   const { inputs, geoContext } = request;
 
+  if (!geoContext.vegetationType) {
+    throw new Error(
+      `Invalid geoContext: vegetationType is required. Received: ${JSON.stringify(geoContext)}`
+    );
+  }
+
+  if (!INTENSITY_VISUALS[inputs.intensity]) {
+    throw new Error(
+      `Invalid intensity: "${inputs.intensity}". Valid values are: ${Object.keys(INTENSITY_VISUALS).join(', ')}`
+    );
+  }
+
+  if (!FIRE_STAGE_DESCRIPTIONS[inputs.fireStage]) {
+    throw new Error(
+      `Invalid fireStage: "${inputs.fireStage}". Valid values are: spotFire, developing, established, major`
+    );
+  }
+
   const vegetationDescriptor =
     VEGETATION_DESCRIPTORS[geoContext.vegetationType] || geoContext.vegetationType.toLowerCase();
 
