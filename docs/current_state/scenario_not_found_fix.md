@@ -17,9 +17,11 @@ Fixed multiple issues related to "Scenario not found" errors, results panel timi
 **Impact**: Intermittent 404 "Scenario not found" errors when the frontend polls too quickly after receiving the scenarioId.
 
 **Files Modified**:
+
 - `apps/api/src/services/generationOrchestrator.ts:78-102`
 
 **Fix Applied**:
+
 1. Ensured `progressStore.set()` happens synchronously before `executeGeneration()` starts
 2. Added seed to initial progress object immediately (line 78)
 3. Added explicit comment about preventing 404 race condition (line 83)
@@ -49,6 +51,7 @@ this.executeGeneration(scenarioId, { ...request, seed }).catch((error) => {
 **Impact**: Empty results panel appears before any content is available, creating a poor user experience.
 
 **Files Modified**:
+
 - `apps/web/src/components/Layout/ResultsPanel.tsx:15-26`
 
 **Fix Applied**:
@@ -62,7 +65,10 @@ useEffect(() => {
   } else if (scenarioState === 'generating') {
     // Only open when Gemini thinking stream has started OR images are available
     // This prevents opening before the model begins processing
-    if (generationResult?.thinkingText || (generationResult?.images && generationResult.images.length > 0)) {
+    if (
+      generationResult?.thinkingText ||
+      (generationResult?.images && generationResult.images.length > 0)
+    ) {
       setResultsPanelOpen(true);
     }
   }
@@ -76,9 +82,11 @@ useEffect(() => {
 **Impact**: Generation could start without terrain screenshots, leading to poor quality results or failures.
 
 **Files Modified**:
+
 - `apps/web/src/components/ScenarioInputPanel/ScenarioInputPanel.tsx:299-339`
 
 **Fix Applied**:
+
 1. Added validation to ensure at least one screenshot was captured
 2. Show warning toast when some screenshots fail (but at least one succeeded)
 3. Throw fatal error and abort generation if all screenshots fail
@@ -103,6 +111,7 @@ if (count < requestedViews.length) {
 **Status**: ✅ Already implemented correctly
 
 **Verification**:
+
 - **Vegetation screenshots**: Explicitly use 10% padding on all sides, ensuring perimeter fills 80% of viewport (`apps/web/src/utils/mapCapture.ts:236-259`)
 - **Viewpoint screenshots**: Use calculated camera positioning based on perimeter bounding box to ensure proper framing (`apps/web/src/utils/mapCapture.ts:23-113`)
 
@@ -112,7 +121,10 @@ const paddingX = Math.round(canvas.clientWidth * 0.1);
 const paddingY = Math.round(canvas.clientHeight * 0.1);
 
 map.fitBounds(
-  [[minLng, minLat], [maxLng, maxLat]],
+  [
+    [minLng, minLat],
+    [maxLng, maxLat],
+  ],
   {
     padding: {
       top: paddingY,
@@ -129,6 +141,7 @@ map.fitBounds(
 ## Testing
 
 ### Build Verification
+
 - ✅ TypeScript compilation: `npm run build` succeeds with no errors
 - ✅ All workspaces build successfully: shared, api, web
 - ✅ No new type errors introduced

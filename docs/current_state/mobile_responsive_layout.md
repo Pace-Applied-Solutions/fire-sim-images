@@ -24,17 +24,20 @@ The application now provides a fully functional mobile experience for viewports 
 Location: Fixed at bottom of viewport (64px height)
 
 Three tabs provide navigation:
+
 - **Inputs (⚙️)**: Opens scenario input panel
 - **Map (🗺️)**: Shows full map view (default)
 - **Results (🖼️)**: Opens generated results panel
 
 **Features:**
+
 - Touch-optimized 44px+ tap targets
 - Active tab indicator (top border + highlighted color)
 - Fixed z-index above all panels
 - Always visible for quick navigation
 
 **Implementation:**
+
 - Component: `apps/web/src/components/Layout/MobileTabBar.tsx`
 - Styles: `apps/web/src/components/Layout/MobileTabBar.module.css`
 - Only renders on ≤768px viewports
@@ -44,12 +47,14 @@ Three tabs provide navigation:
 Both Sidebar (Inputs) and ResultsPanel transform into bottom drawers on mobile:
 
 **Sidebar (Inputs Panel)**
+
 - Max height: 60vh
 - Positioned: 64px from bottom (above tab bar)
 - When closed: Completely hidden (translateY(100%))
 - Header: Tappable to collapse/expand
 
 **ResultsPanel**
+
 - Max height: 70vh (slightly taller for viewing images)
 - Positioned: 64px from bottom (above tab bar)
 - When closed: Completely hidden (translateY(100%))
@@ -57,6 +62,7 @@ Both Sidebar (Inputs) and ResultsPanel transform into bottom drawers on mobile:
 - Higher z-index than inputs panel
 
 **Shared Mobile Features:**
+
 - Rounded top corners (border-radius: var(--radius-lg))
 - Smooth slide animations (transform transitions)
 - Touch-optimized headers with user-select: none
@@ -67,18 +73,22 @@ Both Sidebar (Inputs) and ResultsPanel transform into bottom drawers on mobile:
 ## Interaction Patterns
 
 ### Opening Panels
+
 1. Tap tab in mobile tab bar
 2. Previous panel closes automatically
 3. Selected panel slides up from bottom
 4. Map remains partially visible above panel
 
 ### Closing Panels
+
 1. Tap Map tab to view full map
 2. Tap close button (✕) in panel header
 3. Tap panel header (anywhere outside close button)
 
 ### Panel Priority
+
 When both panels programmatically open:
+
 - Results panel takes precedence (higher z-index)
 - Used when generation completes to show results immediately
 
@@ -87,13 +97,21 @@ When both panels programmatically open:
 ### CSS Architecture
 
 **Sidebar.module.css**
+
 ```css
 /* Desktop/Tablet: 769px+ */
-.sidebar { width: 320px; position: relative; }
+.sidebar {
+  width: 320px;
+  position: relative;
+}
 
 /* Tablet Overlay: 769-1024px */
 @media (max-width: 1024px) {
-  .sidebar { position: fixed; top: 64px; left: 0; }
+  .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+  }
 }
 
 /* Mobile Bottom Drawer: ≤768px */
@@ -114,6 +132,7 @@ When both panels programmatically open:
 ```
 
 **Key CSS Properties:**
+
 - `transform: translateY()` for smooth slide animations
 - `max-height: 60vh/70vh` prevents panels from covering entire screen
 - `bottom: 64px` reserves space for tab bar
@@ -123,6 +142,7 @@ When both panels programmatically open:
 ### State Management
 
 **appStore.ts** provides panel state:
+
 ```typescript
 isSidebarOpen: boolean
 isResultsPanelOpen: boolean
@@ -131,16 +151,18 @@ setResultsPanelOpen: (open: boolean) => void
 ```
 
 **MobileTabBar.tsx** coordinates mutual exclusivity:
+
 ```typescript
 handleInputsClick: () => {
   setSidebarOpen(true);
   setResultsPanelOpen(false);
-}
+};
 ```
 
 ### Component Integration
 
 **Layout.tsx** includes MobileTabBar:
+
 ```tsx
 <div className={styles.layout}>
   <Header />
@@ -156,12 +178,15 @@ handleInputsClick: () => {
 ## Touch Optimization
 
 ### Minimum Touch Targets
+
 All interactive elements meet or exceed 44x44px:
+
 - Mobile tab bar buttons: 44px+ height
 - Panel close buttons: 44x44px minimum
 - Panel headers: 56px minimum height
 
 ### Touch Feedback
+
 - Active states on button press
 - Smooth animations (250ms cubic-bezier easing)
 - No visual flash: `-webkit-tap-highlight-color: transparent`
@@ -170,12 +195,14 @@ All interactive elements meet or exceed 44x44px:
 ## Accessibility
 
 ### Keyboard Navigation
+
 - Tab bar buttons: keyboard focusable
 - Focus indicators: 2px outline offset
 - ARIA labels: "Show scenario inputs", "Show map", "Show generated results"
 - ARIA pressed states: aria-pressed={activeTab === 'inputs'}
 
 ### Screen Readers
+
 - Semantic button elements throughout
 - Descriptive aria-labels on icon-only buttons
 - Panel headers announce collapse/expand state
@@ -183,6 +210,7 @@ All interactive elements meet or exceed 44x44px:
 ## Map Interaction on Mobile
 
 Map controls adjusted for mobile drawers:
+
 - Viewpoint controls: Positioned to avoid panel overlap
 - Draw controls: Remain accessible when panels open
 - Address search: Full-width on mobile
@@ -195,11 +223,13 @@ See `docs/current_state/map_ui_controls_layout.md` for details.
 ### Portrait Orientation Testing
 
 **Test Viewports:**
+
 - 375x667px (iPhone SE)
 - 390x844px (iPhone 13/14)
 - 360x800px (Android standard)
 
 **Test Cases:**
+
 1. Default state shows map with tab bar
 2. Tap Inputs tab → drawer slides up, map visible above
 3. Tap Map tab → drawer closes, full map visible
@@ -211,10 +241,12 @@ See `docs/current_state/map_ui_controls_layout.md` for details.
 ### Landscape Orientation Testing
 
 **Test Viewports:**
+
 - 667x375px (iPhone SE landscape)
 - 844x390px (iPhone 13/14 landscape)
 
 **Test Cases:**
+
 1. Panels use same 60vh/70vh max height (more absolute pixels)
 2. Tab bar remains at bottom
 3. Map controls don't overlap with drawer
@@ -223,6 +255,7 @@ See `docs/current_state/map_ui_controls_layout.md` for details.
 ### Critical Control Verification
 
 **Scenario Input Panel:**
+
 - [ ] Fire danger rating dropdown accessible
 - [ ] Weather sliders usable
 - [ ] Preset buttons tappable
@@ -230,6 +263,7 @@ See `docs/current_state/map_ui_controls_layout.md` for details.
 - [ ] Panel scrolls smoothly when content exceeds max-height
 
 **Map View:**
+
 - [ ] Address search functional
 - [ ] Draw polygon on map
 - [ ] Viewpoint controls (N/S/E/W/Above) accessible
@@ -237,6 +271,7 @@ See `docs/current_state/map_ui_controls_layout.md` for details.
 - [ ] No horizontal scroll or overflow
 
 **Results Panel:**
+
 - [ ] Images display correctly
 - [ ] Scroll through multiple images
 - [ ] Thinking text readable
@@ -252,12 +287,14 @@ See `docs/current_state/map_ui_controls_layout.md` for details.
 ## Browser Support
 
 Tested on:
+
 - Safari iOS 15+
 - Chrome Android 100+
 - Chrome iOS 100+
 - Firefox Android 100+
 
 Required features:
+
 - CSS transforms
 - CSS viewport units (vh)
 - Touch events
@@ -266,6 +303,7 @@ Required features:
 ## Future Enhancements
 
 Potential improvements (not in current scope):
+
 1. Swipe gestures to close panels
 2. Drag handle on panel headers for visual affordance
 3. Adjustable drawer height (snap points at 40%, 60%, 90vh)
@@ -282,11 +320,13 @@ Potential improvements (not in current scope):
 ## Files Changed
 
 ### New Files
+
 - `apps/web/src/components/Layout/MobileTabBar.tsx`
 - `apps/web/src/components/Layout/MobileTabBar.module.css`
 - `docs/current_state/mobile_responsive_layout.md` (this file)
 
 ### Modified Files
+
 - `apps/web/src/components/Layout/Sidebar.tsx` - Added mobile header tap handler
 - `apps/web/src/components/Layout/Sidebar.module.css` - Added mobile drawer styles
 - `apps/web/src/components/Layout/ResultsPanel.tsx` - Added mobile header tap handler

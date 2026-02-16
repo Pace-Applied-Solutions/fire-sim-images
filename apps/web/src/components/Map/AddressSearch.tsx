@@ -270,7 +270,15 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
           break;
       }
     },
-    [isOpen, results, selectedIndex, query, handleSelectResult, fetchGeocodingResults, handleCollapse]
+    [
+      isOpen,
+      results,
+      selectedIndex,
+      query,
+      handleSelectResult,
+      fetchGeocodingResults,
+      handleCollapse,
+    ]
   );
 
   /**

@@ -161,10 +161,10 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     // Step 2 — Describe the scene narratively (Gemini best practice: hyper-specific,
     // narrative description over keyword lists)
     scene: (data) => {
-      const localityContext = data.locality 
-        ? ` This location is ${data.locality}, Australia.` 
+      const localityContext = data.locality
+        ? ` This location is ${data.locality}, Australia.`
         : ' This location is in New South Wales, Australia.';
-      
+
       return (
         `First, establish the landscape with strict adherence to the reference imagery.${localityContext} ` +
         `The terrain is ${data.terrainDescription}, ` +
@@ -193,11 +193,11 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
         data.explicitFlameHeightM !== undefined
           ? getFlameHeightQualifier(data.explicitFlameHeightM)
           : data.intensityDescription.descriptor;
-      
+
       // Format fire size information
       const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares`;
       const extentDesc = `spanning ${data.fireExtentNorthSouthKm.toFixed(2)} kilometres from north to south and ${data.fireExtentEastWestKm.toFixed(2)} kilometres from east to west`;
-      
+
       return (
         `Then, add the fire. A ${data.fireStage} is burning through the vegetation. ` +
         `${qualifier}. ` +

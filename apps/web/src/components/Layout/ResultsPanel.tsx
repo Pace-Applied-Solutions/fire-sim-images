@@ -19,7 +19,10 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
     } else if (scenarioState === 'generating') {
       // Only open when Gemini thinking stream has started OR images are available
       // This prevents opening before the model begins processing
-      if (generationResult?.thinkingText || (generationResult?.images && generationResult.images.length > 0)) {
+      if (
+        generationResult?.thinkingText ||
+        (generationResult?.images && generationResult.images.length > 0)
+      ) {
         setResultsPanelOpen(true);
       }
     }

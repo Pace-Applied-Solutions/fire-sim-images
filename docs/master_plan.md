@@ -699,7 +699,7 @@ Update this section after each issue or change.
     - **Problem addressed:** Generated images showed smaller fires than mapped area; AI lacked understanding of incident scale; red polygon sometimes visible
     - **Fire dimension calculation:** Added `calculateFireDimensions()` function to compute area (hectares), N-S extent (km), and E-W extent (km) from perimeter bounding box
     - **PromptData enhancement:** Added `fireAreaHectares`, `fireExtentNorthSouthKm`, `fireExtentEastWestKm` fields
-    - **Fire section updates:** 
+    - **Fire section updates:**
       - Includes explicit dimensions: "The fire covers approximately X hectares, spanning Y km from north to south and Z km from east to west"
       - Added critical instruction: "The fire must fill the entire mapped area — this is not a small fire, but an incident of this specific scale"
       - Emphasizes active fire edge, smoke, and burned areas should occupy full extent
@@ -722,7 +722,7 @@ Update this section after each issue or change.
   - **Vegetation Expansion Issue Package (Feb 16, 2026):**
     - Created comprehensive GitHub issue (27KB documentation) for interactive vegetation labels and national coverage expansion
     - **Problem:** No way to identify vegetation types (colors only); NSW-only coverage blocks scenarios in other states
-    - **Solution proposed:** 
+    - **Solution proposed:**
       - Part 1: Click-to-identify functionality (query at coordinates, display formation/fire characteristics)
       - Part 2: NVIS integration (National Vegetation Information System) for nationwide coverage via WMS
       - Hybrid approach: Keep NSW SVTM (5m high-res) + add NVIS (25-100m national baseline)

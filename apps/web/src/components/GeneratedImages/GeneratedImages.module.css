@@ -397,11 +397,16 @@
 /* ─── Thinking Panel (chat-like) ─── */
 
 .thinkingPanel {
+  position: sticky;
+  top: 0;
   margin-bottom: 1.5rem;
   border: 1px solid var(--color-border);
   border-radius: 0.75rem;
   overflow: hidden;
   background: var(--color-bg-secondary, #1a1a2e);
+  z-index: 10;
+  /* Subtle shadow to indicate sticky positioning */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .thinkingHeader {

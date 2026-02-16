@@ -151,7 +151,8 @@ export const useAppStore = create<AppState>((set) => ({
   isSidebarOpen: true,
   isResultsPanelOpen: false,
   toggleSidebar: () => set((state: AppState) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  toggleResultsPanel: () => set((state: AppState) => ({ isResultsPanelOpen: !state.isResultsPanelOpen })),
+  toggleResultsPanel: () =>
+    set((state: AppState) => ({ isResultsPanelOpen: !state.isResultsPanelOpen })),
   setSidebarOpen: (open: boolean) => set({ isSidebarOpen: open }),
   setResultsPanelOpen: (open: boolean) => set({ isResultsPanelOpen: open }),
 }));
