@@ -625,6 +625,12 @@ Update this section after each issue or change.
     - ScenarioInputPanel calls capture function during generation, passing screenshots in the request
   - **Flux image-to-image:** Updated `fluxImageProvider.ts` to include an `image` field (base64 reference screenshot) in the Flux Kontext API body when a map screenshot or reference image is provided, grounding generated fire imagery in actual terrain.
   - **Terrain source timing fix:** Deferred `map.setTerrain()` until the DEM source is verified loaded, avoiding the "Couldn't find terrain source" console error.
+  - **SSE CRLF parsing fix & thinking text UI improvements:**
+    - **Root cause fix:** Gemini SSE stream uses `\r\n\r\n` (CRLF) event delimiters, but the SSE parser split on `\n\n` only — all data accumulated in a buffer and was never parsed. Added `\r\n` → `\n` normalisation in `readSSEStream()`.
+    - **camelCase field fix:** Gemini API returns `inlineData` (camelCase) but code checked for `inline_data` (snake_case) — images were never extracted. Updated `GeminiPart` interface and `extractResponse()` to handle both.
+    - **Immediate progress UI:** `generationResult` is now set immediately when generation starts (with `in_progress` status, empty images), so Results Panel shows progress from the start. Previously only set when thinkingText or images arrived, leaving a dead placeholder.
+    - **"Model is thinking" indicator:** When no thinking text has arrived yet, the ThinkingPanel shows a spinner with "Model is thinking… this can take 30–90 seconds for complex fire scenarios" instead of being hidden.
+    - **Results Panel auto-open:** Panel now opens as soon as `scenarioState` becomes `'generating'`, not just when results arrive.
 
 ## 14. Change Control Process
 

@@ -267,14 +267,19 @@ export class GeminiImageProvider implements ImageGenerationProvider {
         ]);
 
         if (readResult.done) {
-          console.log(`[GeminiSSE] Stream ended. Total parts: ${allParts.length}, thinking parts: ${thinkingParts.length}, remaining buffer: ${buffer.length} chars`);
+          console.log(`[GeminiSSE] Stream ended. Parts: ${allParts.length}, thinking chunks: ${thinkingParts.length}`);
+          if (buffer.length > 0) {
+            console.log(`[GeminiSSE] Warning: ${buffer.length} chars left in buffer (data may be lost)`);
+          }
           break;
         }
 
         const chunk = decoder.decode(readResult.value, { stream: true });
         buffer += chunk;
 
-        // SSE events are separated by double newlines
+        // SSE events are separated by double newlines.
+        // Gemini API uses \r\n\r\n (CRLF) — normalise to \n to handle both.
+        buffer = buffer.replace(/\r\n/g, '\n');
         const events = buffer.split('\n\n');
         buffer = events.pop() || ''; // keep trailing incomplete event
 
@@ -294,16 +299,6 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
               for (const part of parts) {
                 allParts.push(part);
-
-                // Log each part for diagnostics
-                const partType = part.thought
-                  ? (part.text ? 'thinking-text' : part.inline_data || (part as Record<string, unknown>).inlineData ? 'thinking-image' : 'thinking-other')
-                  : (part.text ? 'text' : part.inline_data || (part as Record<string, unknown>).inlineData ? 'image' : 'other');
-                if (partType === 'thinking-text') {
-                  console.log(`[GeminiSSE] Thinking chunk: ${(part.text || '').substring(0, 120)}...`);
-                } else {
-                  console.log(`[GeminiSSE] Part type: ${partType}`);
-                }
 
                 // Accumulate thinking text and notify caller
                 if (part.text && part.thought) {
