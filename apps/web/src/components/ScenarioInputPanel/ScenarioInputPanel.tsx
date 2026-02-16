@@ -241,18 +241,10 @@ export const ScenarioInputPanel: React.FC = () => {
 
       // Default viewpoints: capture cardinal directions at each perspective for consistency
       // This matches the perspective toggles in the UI (NESW for helicopter and ground, plus aerial)
+      // Single perspective for initial testing — additional perspectives can be
+      // enabled later or offered as user-selectable options
       const requestedViews: ViewPoint[] = [
         'aerial',
-        // Helicopter views: wide-area situational awareness
-        'helicopter_north',
-        'helicopter_south',
-        'helicopter_east',
-        'helicopter_west',
-        // Ground views: truck/vehicle perspective
-        'ground_north',
-        'ground_south',
-        'ground_east',
-        'ground_west',
       ];
 
       // Capture map screenshots from each viewpoint for terrain reference
@@ -303,6 +295,16 @@ export const ScenarioInputPanel: React.FC = () => {
             status: status.status as GenerationResult['status'],
             images: status.results.images,
             createdAt: status.createdAt,
+            thinkingText: status.thinkingText,
+          });
+        } else if (status.thinkingText) {
+          // Even without images yet, show thinking text so user sees progress
+          setGenerationResult({
+            id: startResponse.scenarioId,
+            status: status.status as GenerationResult['status'],
+            images: [],
+            createdAt: status.createdAt,
+            thinkingText: status.thinkingText,
           });
         }
       });

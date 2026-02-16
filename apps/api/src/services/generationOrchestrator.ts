@@ -30,6 +30,8 @@ export interface GenerationProgress {
   anchorImage?: GeneratedImage;
   seed?: number;
   error?: string;
+  /** Model thinking/reasoning text (latest) */
+  thinkingText?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +122,7 @@ export class GenerationOrchestrator {
           ? progress.updatedAt
           : undefined,
       error: progress.error,
+      thinkingText: progress.thinkingText,
     };
 
     return result;
@@ -234,8 +237,18 @@ export class GenerationOrchestrator {
           progress.completedImages++;
           progress.anchorImage = anchorImage;
           progress.seed = request.seed;
+
+          // Capture model thinking text if available
+          if (result.thinkingText) {
+            progress.thinkingText = result.thinkingText;
+          }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
+          // Capture thinking text from the error if available
+          const thinkingText = (error as { thinkingText?: string })?.thinkingText;
+          if (thinkingText) {
+            progress.thinkingText = thinkingText;
+          }
           logger.error(
             'Anchor image generation failed',
             error instanceof Error ? error : undefined,

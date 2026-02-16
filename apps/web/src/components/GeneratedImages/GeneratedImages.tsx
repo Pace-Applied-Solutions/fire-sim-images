@@ -2,14 +2,40 @@
  * Component to display generated images from the generation results.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
 import type { GenerationResult, ScenarioInputs, GeoContext, FirePerimeter } from '@fire-sim/shared';
 import { ImageLightbox } from './ImageLightbox';
 import { ScenarioSummaryCard } from './ScenarioSummaryCard';
-import { ImageComparison } from '../ImageComparison';
 import { ScreenshotCompare } from '../ScreenshotCompare';
 import styles from './GeneratedImages.module.css';
+
+/**
+ * Renders model thinking text in a chat-like scrollable panel.
+ */
+const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({ text, isStreaming }) => {
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [text]);
+
+  return (
+    <div className={styles.thinkingPanel}>
+      <div className={styles.thinkingHeader}>
+        <span className={styles.thinkingIcon}>💭</span>
+        <span className={styles.thinkingLabel}>Model Reasoning</span>
+        {isStreaming && <span className={styles.thinkingDot} />}
+      </div>
+      <div className={styles.thinkingBody}>
+        <div className={styles.thinkingBubble}>
+          {text}
+        </div>
+        <div ref={endRef} />
+      </div>
+    </div>
+  );
+};
 
 interface GeneratedImagesProps {
   result: GenerationResult;
@@ -34,7 +60,6 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
 }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
-  const [showComparison, setShowComparison] = useState(false);
   const [showScreenshotCompare, setShowScreenshotCompare] = useState(false);
 
   const hasScreenshots = mapScreenshots && Object.keys(mapScreenshots).length > 0;
@@ -111,6 +136,11 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           </div>
         </div>
 
+        {/* Show model thinking text while generating */}
+        {result.thinkingText && (
+          <ThinkingPanel text={result.thinkingText} isStreaming />
+        )}
+
         <div className={styles.grid}>
           {result.images.map((image, index) => (
             <div key={image.viewPoint} className={styles.imageCard}>
@@ -173,6 +203,10 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           <h3>Generation Failed</h3>
           <p>{result.error || 'An unknown error occurred'}</p>
         </div>
+        {/* Show thinking text even on failure — helps debug what the model was doing */}
+        {result.thinkingText && (
+          <ThinkingPanel text={result.thinkingText} />
+        )}
       </div>
     );
   }
@@ -195,24 +229,6 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
         mapScreenshots={mapScreenshots}
         onClose={() => setShowScreenshotCompare(false)}
       />
-    );
-  }
-
-  // Show comparison view if requested
-  if (showComparison) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.comparisonHeader}>
-          <button className={styles.backButton} onClick={() => setShowComparison(false)}>
-            ← Back to Grid
-          </button>
-        </div>
-        <ImageComparison
-          images={result.images}
-          anchorImage={result.anchorImage}
-          seed={result.seed}
-        />
-      </div>
     );
   }
 
@@ -248,9 +264,6 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
               Compare with Map
             </button>
           )}
-          <button className={styles.compareButton} onClick={() => setShowComparison(true)}>
-            Compare Views
-          </button>
           <button
             className={styles.downloadAllButton}
             onClick={handleDownloadAll}
@@ -343,6 +356,11 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Show thinking text in completed state too */}
+      {result.thinkingText && (
+        <ThinkingPanel text={result.thinkingText} />
+      )}
 
       {result.completedAt && (
         <div className={styles.footer}>

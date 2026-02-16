@@ -165,11 +165,22 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
     const payload = await response.json() as Record<string, unknown>;
 
-    // Extract the final (non-thought) base64 image data from the response
+    // Extract image data + thinking/response text from the Gemini response
     const extracted = this.extractResponse(payload);
+
+    // Collect all thinking text (thought: true parts) for UI display
+    const thinkingText = this.extractThinkingText(payload);
+
     if (!extracted.imageBase64) {
-      throw new Error(
-        `Image model API returned no image data. Response: ${JSON.stringify(payload).substring(0, 500)}`
+      // Include thinking text in the error so it can be surfaced to the user
+      const thinkingPreview = thinkingText
+        ? `\n\nModel thinking:\n${thinkingText}`
+        : '';
+      throw Object.assign(
+        new Error(
+          `Image model API returned no image data — the model may still be processing.${thinkingPreview}`
+        ),
+        { thinkingText: thinkingText || extracted.text }
       );
     }
 
@@ -191,6 +202,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     return {
       imageData,
       format: 'png',
+      thinkingText: thinkingText || extracted.text,
       metadata: {
         model: this.modelId,
         promptHash,
@@ -278,6 +290,36 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       imageBase64: undefined,
       text: textParts.length > 0 ? textParts.join('\n') : undefined,
     };
+  }
+
+  /**
+   * Extract thinking/reasoning text from the Gemini response.
+   * These are parts with `thought: true` — the model's internal reasoning
+   * before producing the final image. Useful for showing progress to the user.
+   */
+  private extractThinkingText(payload: Record<string, unknown>): string | undefined {
+    const candidates = payload.candidates as Array<{
+      content?: {
+        parts?: Array<{
+          text?: string;
+          thought?: boolean;
+        }>;
+      };
+    }> | undefined;
+
+    if (!candidates?.length) return undefined;
+
+    const parts = candidates[0].content?.parts;
+    if (!parts?.length) return undefined;
+
+    const thoughts: string[] = [];
+    for (const part of parts) {
+      if (part.text && part.thought) {
+        thoughts.push(part.text);
+      }
+    }
+
+    return thoughts.length > 0 ? thoughts.join('\n') : undefined;
   }
 }
 

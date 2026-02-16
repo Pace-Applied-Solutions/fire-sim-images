@@ -128,6 +128,8 @@ export interface GenerationResult {
   createdAt: string; // ISO 8601 timestamp
   completedAt?: string; // ISO 8601 timestamp
   error?: string;
+  /** Model thinking/reasoning text from Gemini 3 Pro (interleaved output) */
+  thinkingText?: string;
 }
 
 /**

@@ -16,6 +16,8 @@ export interface ImageGenOptions {
 export interface ImageGenResult {
   imageData: Buffer | string; // Buffer for binary data or base64 string
   format: 'png' | 'jpeg' | 'webp';
+  /** Model thinking/reasoning text (from Gemini 3 Pro interleaved output) */
+  thinkingText?: string;
   metadata: {
     model: string;
     promptHash: string;

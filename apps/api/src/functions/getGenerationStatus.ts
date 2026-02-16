@@ -40,6 +40,7 @@ export async function getGenerationStatus(
       completedImages: progress.completedImages,
       failedImages: progress.failedImages,
       totalImages: progress.totalImages,
+      thinkingText: progress.thinkingText,
       createdAt: progress.createdAt,
       updatedAt: progress.updatedAt,
       // Always include partial images so frontend can render progressively

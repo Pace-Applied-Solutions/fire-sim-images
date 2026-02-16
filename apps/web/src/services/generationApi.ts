@@ -19,6 +19,8 @@ export interface GenerationStatusResponse {
   completedImages: number;
   failedImages: number;
   totalImages: number;
+  /** Model thinking/reasoning text from Gemini 3 Pro */
+  thinkingText?: string;
   createdAt: string;
   updatedAt: string;
   results?: {

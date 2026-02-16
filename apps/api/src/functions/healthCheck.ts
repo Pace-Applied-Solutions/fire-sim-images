@@ -10,6 +10,30 @@ const { app } = functions;
 // Health check timeout for external services (in milliseconds)
 const EXTERNAL_SERVICE_TIMEOUT_MS = 5000;
 
+/**
+ * Race a health check against a timeout.
+ */
+function withTimeout(
+  checkFn: () => Promise<HealthCheck>,
+  service: string,
+  timeoutMs: number = EXTERNAL_SERVICE_TIMEOUT_MS
+): Promise<HealthCheck> {
+  return Promise.race([
+    checkFn(),
+    new Promise<HealthCheck>((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            service,
+            status: 'degraded',
+            message: `Check timed out after ${timeoutMs}ms`,
+          }),
+        timeoutMs
+      )
+    ),
+  ]);
+}
+
 interface HealthCheck {
   service: string;
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -38,19 +62,19 @@ export async function healthCheck(
   const checks: HealthCheck[] = [];
 
   // Check Application Insights
-  checks.push(await checkApplicationInsights());
+  checks.push(await withTimeout(checkApplicationInsights, 'Application Insights'));
 
   // Check Blob Storage
-  checks.push(await checkBlobStorage());
+  checks.push(await withTimeout(checkBlobStorage, 'Blob Storage'));
 
   // Check Key Vault
-  checks.push(await checkKeyVault());
+  checks.push(await withTimeout(checkKeyVault, 'Key Vault'));
 
   // Check Azure AI Foundry / Azure OpenAI
-  checks.push(await checkAIServices());
+  checks.push(await withTimeout(checkAIServices, 'AI Services'));
 
   // Check external data endpoints (NSW data)
-  checks.push(await checkExternalData());
+  checks.push(await withTimeout(checkExternalData, 'External Data'));
 
   // Determine overall status
   const hasUnhealthy = checks.some((c) => c.status === 'unhealthy');

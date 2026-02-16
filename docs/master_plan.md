@@ -606,6 +606,16 @@ Update this section after each issue or change.
   - Prioritize Phase 2 enhancements based on real-world usage
   - Begin SDXL + ControlNet integration for enhanced spatial control
   - Plan fire spread simulation architecture
+- **Gemini 3 Pro Migration & UI Refinements (post-MVP):**
+  - **Image model migration to Gemini:** Replaced FLUX.2-pro (Azure 500 errors) with Google Gemini API. Created `geminiImageProvider.ts` with text-to-image and image-to-image support.
+  - **Config simplification:** Collapsed 5+ env vars to 3 clean ones (`IMAGE_MODEL`, `IMAGE_MODEL_KEY`, `IMAGE_MODEL_URL`) with backward-compatible fallbacks in `imageModelConfig.ts`.
+  - **Gemini 3 Pro with thinking:** Upgraded to `gemini-3-pro-image-preview` with interleaved `['TEXT', 'IMAGE']` response modalities and `thinkingConfig` enabled. Increased generation timeout from 60s to 180s.
+  - **Prompt template v1.2.0:** Narrative style with step-by-step instructions, semantic positive constraints, camera language, `\n\n` section separators — aligned with Gemini best practices.
+  - **Thinking text UI:** Added `thinkingText` field through full stack (ImageGenResult → GenerationProgress → status API → frontend API client → Zustand store). Built chat-like `ThinkingPanel` component in GeneratedImages that shows model reasoning during and after generation — visible in pending, failed, and completed states.
+  - **Removed Compare Views UI:** Kept only "Compare with Map" for screenshot comparisons.
+  - **Single perspective mode:** Reduced `requestedViews` to `['aerial']` only for testing. Other perspectives deferred for user-selected expansion.
+  - **Health endpoint reliability:** Added `withTimeout()` guard to all health checks (Blob Storage, Key Vault, AI Services, External Data) to prevent indefinite hangs from Azure SDK calls in local dev.
+  - All 213 tests passing, all builds clean.
 - **Flex Consumption + SAS + Map Screenshots (post-MVP hardening):**
   - **SAS URL fix:** Implemented User Delegation SAS in `blobStorage.ts` so deployed Function Apps (managed identity, no account key) can generate time-limited read-only blob URLs. Previously returned raw URLs which caused 409 errors (public access disabled).
   - **Storage Blob Delegator role:** Added RBAC role assignment in `infra/modules/functionApp.bicep` for the managed identity to call `getUserDelegationKey()`.
