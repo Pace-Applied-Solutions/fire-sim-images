@@ -6,7 +6,6 @@ import centroid from '@turf/centroid';
 import bbox from '@turf/bbox';
 import type { Feature, Polygon } from 'geojson';
 import type { FirePerimeter, ViewPoint } from '@fire-sim/shared';
-import { NVIS_WMS_MVS_URL } from '@fire-sim/shared';
 import { useAppStore } from '../../store/appStore';
 import { useToastStore } from '../../store/toastStore';
 import { captureViewpointScreenshots, captureVegetationScreenshot } from '../../utils/mapCapture';
@@ -153,7 +152,7 @@ export const MapContainer = () => {
         J: '50',
       });
 
-      const url = `${NVIS_WMS_MVS_URL}?${params}`;
+      const url = `/api/nvis-wms-proxy?${params}`;
       setVegIdentifyLoading(true);
 
       try {
@@ -485,9 +484,10 @@ export const MapContainer = () => {
       }
 
       // Add NVIS (National Vegetation Information System) as a WMS raster overlay
-      // CC-BY 4.0 — Australian Government DCCEEW, CORS enabled
+      // CC-BY 4.0 — Australian Government DCCEEW. Proxied through /api/nvis-wms-proxy
+      // because gis.environment.gov.au does not send CORS headers.
       if (!map.getSource('nvis-vegetation')) {
-        const wmsUrl = `${NVIS_WMS_MVS_URL}?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
+        const wmsUrl = `/api/nvis-wms-proxy?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
         map.addSource('nvis-vegetation', {
           type: 'raster',
           tiles: [wmsUrl],
