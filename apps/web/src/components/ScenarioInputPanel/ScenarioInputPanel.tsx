@@ -204,6 +204,23 @@ export const ScenarioInputPanel: React.FC = () => {
     }
   };
 
+  // Compute perimeter metadata from the GeoJSON feature
+  const perimeterMeta = useMemo(() => {
+    if (!perimeter) return null;
+    try {
+      const areaM2 = area(perimeter);
+      const center = centroid(perimeter);
+      const bounds = bbox(perimeter);
+      return {
+        areaHectares: areaM2 / 10_000,
+        centroid: center.geometry.coordinates as [number, number],
+        bbox: bounds as [number, number, number, number],
+      };
+    } catch {
+      return null;
+    }
+  }, [perimeter]);
+
   // Initialize store with default inputs on mount
   useEffect(() => {
     setScenarioInputs(DEFAULT_INPUTS);
@@ -390,23 +407,6 @@ export const ScenarioInputPanel: React.FC = () => {
 
   const isValid = Object.keys(errors).length === 0;
   const canGenerate = isValid && perimeter !== null;
-
-  // Compute perimeter metadata from the GeoJSON feature
-  const perimeterMeta = useMemo(() => {
-    if (!perimeter) return null;
-    try {
-      const areaM2 = area(perimeter);
-      const center = centroid(perimeter);
-      const bounds = bbox(perimeter);
-      return {
-        areaHectares: areaM2 / 10_000,
-        centroid: center.geometry.coordinates as [number, number],
-        bbox: bounds as [number, number, number, number],
-      };
-    } catch {
-      return null;
-    }
-  }, [perimeter]);
 
   const getSummaryText = (): string => {
     const stageMap = {
