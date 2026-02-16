@@ -84,6 +84,10 @@ export interface GeoContext {
   confidence: 'low' | 'medium' | 'high';
   /** Locality description from reverse geocoding (e.g., "Bungendore, New South Wales") */
   locality?: string;
+  /** Manually overridden vegetation type (takes precedence over auto-detected vegetationType) */
+  manualVegetationType?: string;
+  /** Flag indicating if vegetation type was manually set by user */
+  isVegetationManuallySet?: boolean;
 }
 
 /**

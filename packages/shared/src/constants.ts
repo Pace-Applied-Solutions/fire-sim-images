@@ -291,3 +291,14 @@ export function getNvisDescriptor(mvsName: string): string {
 
   return `${mvsName} (vegetation type with uncharacterised fire behaviour)`;
 }
+
+/**
+ * Get the effective vegetation type from GeoContext.
+ * Returns manual override if set, otherwise returns auto-detected type.
+ */
+export function getEffectiveVegetationType(
+  geoContext: { vegetationType: string; manualVegetationType?: string } | null | undefined
+): string {
+  if (!geoContext) return 'Dry Sclerophyll Forest'; // Default fallback
+  return geoContext.manualVegetationType || geoContext.vegetationType;
+}
