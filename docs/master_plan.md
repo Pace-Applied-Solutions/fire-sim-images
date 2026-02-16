@@ -223,6 +223,7 @@ Update this section after each issue or change.
 
 - **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
+  - **Address zoom refinement:** Fit bounds to occupy ~70% of the viewport and draw a subtle bbox overlay for address search results.
   - **Vegetation tooltip visibility:** Docked the NVIS info panel to a fixed on-map position so it never renders off-screen; added location display and scrollable body.
   - **NVIS visible legend:** Legend now samples visible map area and lists only the vegetation subgroups present in view.
   - **Address search fix:** Store `handleLocationSelect` and `handleGeolocationRequest` directly in the app store (not as thunks) so Header results pan/zoom correctly.

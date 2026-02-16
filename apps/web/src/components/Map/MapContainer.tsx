@@ -84,6 +84,10 @@ interface PerimeterMetadata {
   bbox: [number, number, number, number];
 }
 
+const ADDRESS_BOUNDS_SOURCE_ID = 'address-search-bounds';
+const ADDRESS_BOUNDS_LINE_ID = 'address-search-bounds-line';
+const ADDRESS_BOUNDS_FILL_ID = 'address-search-bounds-fill';
+
 export const MapContainer = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -1026,18 +1030,81 @@ export const MapContainer = () => {
       const map = mapRef.current;
       if (!map) return;
 
+      const ensureAddressBoundsLayer = () => {
+        if (!map.getSource(ADDRESS_BOUNDS_SOURCE_ID)) {
+          map.addSource(ADDRESS_BOUNDS_SOURCE_ID, {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: [],
+            },
+          });
+        }
+
+        if (!map.getLayer(ADDRESS_BOUNDS_FILL_ID)) {
+          map.addLayer({
+            id: ADDRESS_BOUNDS_FILL_ID,
+            type: 'fill',
+            source: ADDRESS_BOUNDS_SOURCE_ID,
+            paint: {
+              'fill-color': '#ff9f3f',
+              'fill-opacity': 0.08,
+            },
+          });
+        }
+
+        if (!map.getLayer(ADDRESS_BOUNDS_LINE_ID)) {
+          map.addLayer({
+            id: ADDRESS_BOUNDS_LINE_ID,
+            type: 'line',
+            source: ADDRESS_BOUNDS_SOURCE_ID,
+            paint: {
+              'line-color': '#ffb866',
+              'line-width': 2,
+              'line-dasharray': [2, 2],
+            },
+          });
+        }
+      };
+
       // If bbox is available, use fitBounds for better framing
       if (bbox && bbox.length === 4) {
         const [minLng, minLat, maxLng, maxLat] = bbox;
-        
-        // Calculate the size to determine appropriate padding
-        const lngDiff = maxLng - minLng;
-        const latDiff = maxLat - minLat;
-        const maxDiff = Math.max(lngDiff, latDiff);
-        
-        // Use less padding for smaller areas, more for larger areas
-        // Scale padding from 50px (for small areas) to 100px (for large areas)
-        const padding = Math.min(100, Math.max(50, maxDiff * 5000));
+
+        ensureAddressBoundsLayer();
+
+        const source = map.getSource(ADDRESS_BOUNDS_SOURCE_ID) as mapboxgl.GeoJSONSource;
+        source.setData({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [minLng, minLat],
+                    [maxLng, minLat],
+                    [maxLng, maxLat],
+                    [minLng, maxLat],
+                    [minLng, minLat],
+                  ],
+                ],
+              },
+              properties: {},
+            },
+          ],
+        });
+
+        const canvas = map.getCanvas();
+        const paddingX = Math.round(canvas.clientWidth * 0.15);
+        const paddingY = Math.round(canvas.clientHeight * 0.15);
+        const padding = {
+          top: paddingY,
+          bottom: paddingY,
+          left: paddingX,
+          right: paddingX,
+        };
 
         map.fitBounds(
           [
@@ -1052,10 +1119,17 @@ export const MapContainer = () => {
           }
         );
       } else {
+        ensureAddressBoundsLayer();
+        const source = map.getSource(ADDRESS_BOUNDS_SOURCE_ID) as mapboxgl.GeoJSONSource;
+        source.setData({
+          type: 'FeatureCollection',
+          features: [],
+        });
+
         // Fallback to center point with fixed zoom for point-only results
         map.flyTo({
           center: [longitude, latitude],
-          zoom: 14,
+          zoom: 16,
           duration: 2000,
           essential: true,
         });
