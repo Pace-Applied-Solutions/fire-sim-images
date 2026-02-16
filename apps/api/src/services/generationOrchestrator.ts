@@ -142,6 +142,7 @@ export class GenerationOrchestrator {
 
     const logger = this.logger.child({ scenarioId });
     const endToEndTimer = startTimer('generation', { scenarioId });
+    import type { VegetationLegendItem } from '@fire-sim/shared'; // Assuming this type is defined in the shared module
 
     try {
       // Step 1: Generate prompts for all viewpoints
@@ -152,7 +153,8 @@ export class GenerationOrchestrator {
 
       logger.info('Prompts generated', {
         promptCount: promptSet.prompts.length,
-        templateVersion: promptSet.templateVersion,
+        vegetationPromptText?: string,
+        vegetationLegendItems?: Array<{ name: string; color: string }>,
       });
 
       // Step 1b: Query NVIS vegetation context at the fire perimeter
@@ -346,6 +348,7 @@ export class GenerationOrchestrator {
         anchorImageData,
         request.mapScreenshots,
         request.vegetationMapScreenshot,
+        request.vegetationLegendItems,
         vegetationPromptText || undefined
       );
 
@@ -586,6 +589,7 @@ export class GenerationOrchestrator {
     anchorImage?: Buffer,
     mapScreenshots?: Record<ViewPoint, string>,
     vegetationMapScreenshot?: string,
+    vegetationLegendItems?: Array<{ name: string; color: string }>,
     vegetationPromptText?: string
   ): Promise<
     Array<
@@ -621,6 +625,7 @@ export class GenerationOrchestrator {
           referenceStrength: 0.5, // 50% adherence to reference
           mapScreenshot,
           vegetationMapScreenshot,
+          vegetationLegendItems,
           vegetationPromptText,
         });
         return {

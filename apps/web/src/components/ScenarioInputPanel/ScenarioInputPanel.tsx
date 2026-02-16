@@ -119,6 +119,7 @@ export const ScenarioInputPanel: React.FC = () => {
     setError,
     captureMapScreenshots,
     captureVegetationScreenshot,
+    vegetationLegendItems,
   } = useAppStore();
   const { addToast } = useToastStore();
   const [inputs, setInputs] = useState<ScenarioInputs>(DEFAULT_INPUTS);
@@ -338,6 +339,7 @@ export const ScenarioInputPanel: React.FC = () => {
         requestedViews,
         mapScreenshots: mapScreenshots as Record<ViewPoint, string>,
         vegetationMapScreenshot,
+        vegetationLegendItems: vegetationLegendItems ?? undefined,
       });
 
       addToast({ type: 'success', message: 'Generation started' });

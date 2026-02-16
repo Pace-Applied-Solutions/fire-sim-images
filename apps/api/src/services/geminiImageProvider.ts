@@ -177,6 +177,17 @@ export class GeminiImageProvider implements ImageGenerationProvider {
         options.vegetationPromptText;
     }
 
+    if (options?.vegetationLegendItems && options.vegetationLegendItems.length > 0) {
+      const legendLines = options.vegetationLegendItems
+        .map((item) => `- ${item.color}: ${item.name}`)
+        .join('\n');
+
+      effectivePrompt +=
+        '\n\nVISIBLE VEGETATION LEGEND (color -> subgroup):\n' +
+        legendLines +
+        '\nUse these color labels to match the vegetation regions in the reference overlay.';
+    }
+
     parts.push({ text: effectivePrompt });
 
     // Generation config

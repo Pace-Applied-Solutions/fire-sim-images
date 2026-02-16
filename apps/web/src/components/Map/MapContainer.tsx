@@ -121,6 +121,7 @@ export const MapContainer = () => {
   const setState = useAppStore((s) => s.setState);
   const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
   const setCaptureVegetationScreenshot = useAppStore((s) => s.setCaptureVegetationScreenshot);
+  const setVegetationLegendItems = useAppStore((s) => s.setVegetationLegendItems);
   const setHandleLocationSelect = useAppStore((s) => s.setHandleLocationSelect);
   const setHandleGeolocationRequest = useAppStore((s) => s.setHandleGeolocationRequest);
   const { addToast } = useToastStore();
@@ -365,16 +366,18 @@ export const MapContainer = () => {
         .sort((a, b) => a.name.localeCompare(b.name));
 
       setVegLegendItems(nextItems);
+      setVegetationLegendItems(nextItems);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setVegLegendError('Unable to load visible legend items');
       setVegLegendItems([]);
+      setVegetationLegendItems(null);
     } finally {
       if (!controller.signal.aborted) {
         setVegLegendLoading(false);
       }
     }
-  }, [fetchLegendItemAt, showVegetation]);
+  }, [fetchLegendColorAt, fetchLegendItemAt, setVegetationLegendItems, showVegetation]);
 
   // Dismiss the vegetation tooltip
   const handleDismissVegTooltip = useCallback(() => {

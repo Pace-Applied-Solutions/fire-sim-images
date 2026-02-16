@@ -20,6 +20,10 @@ export type CaptureMapScreenshotsFn = (viewpoints: ViewPoint[]) => Promise<Recor
 
 /** Function type for capturing the vegetation overlay screenshot */
 export type CaptureVegetationScreenshotFn = () => Promise<string | null>;
+export interface VegetationLegendItem {
+  name: string;
+  color: string;
+}
 
 /** Function type for handling location selection from address search */
 export type HandleLocationSelectFn = (
@@ -73,6 +77,8 @@ interface AppState {
   // Vegetation overlay screenshot capture (registered by MapContainer)
   captureVegetationScreenshot: CaptureVegetationScreenshotFn | null;
   setCaptureVegetationScreenshot: (fn: CaptureVegetationScreenshotFn | null) => void;
+  vegetationLegendItems: VegetationLegendItem[] | null;
+  setVegetationLegendItems: (items: VegetationLegendItem[] | null) => void;
 
   // Map location handlers (registered by MapContainer)
   handleLocationSelect: HandleLocationSelectFn | null;
@@ -131,6 +137,8 @@ export const useAppStore = create<AppState>((set) => ({
   // Vegetation overlay screenshot capture
   captureVegetationScreenshot: null,
   setCaptureVegetationScreenshot: (fn) => set({ captureVegetationScreenshot: fn }),
+  vegetationLegendItems: null,
+  setVegetationLegendItems: (items) => set({ vegetationLegendItems: items }),
 
   // Map location handlers
   handleLocationSelect: null,

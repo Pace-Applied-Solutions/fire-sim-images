@@ -76,6 +76,7 @@ export class ImageGeneratorService {
       referenceStrength: options?.referenceStrength,
       vegetationMapScreenshot: options?.vegetationMapScreenshot,
       vegetationPromptText: options?.vegetationPromptText,
+      vegetationLegendItems: options?.vegetationLegendItems,
     };
 
     let lastError: Error | undefined;

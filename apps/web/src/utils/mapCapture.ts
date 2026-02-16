@@ -231,28 +231,36 @@ export async function captureVegetationScreenshot(
   // Turn vegetation layer ON
   map.setLayoutProperty('nvis-vegetation-layer', 'visibility', 'visible');
 
-  // Move to flat aerial view showing the full perimeter with buffer
-  const [centerLng, centerLat] = perimeterInfo.centroid;
+  // Move to flat aerial view and fit perimeter to ~80% of the viewport
   const [minLng, minLat, maxLng, maxLat] = perimeterInfo.bbox;
-  const lngDiff = maxLng - minLng;
-  const latDiff = maxLat - minLat;
-  const maxDiff = Math.max(lngDiff, latDiff);
-  // Zoom out a bit more than the terrain views so the vegetation context
-  // covers a wider area around the fire
-  const vegZoom = 14 - Math.log2(maxDiff * 100) - 2;
+  map.setBearing(0);
+  map.setPitch(0);
+  const canvas = map.getCanvas();
+  const paddingX = Math.round(canvas.clientWidth * 0.1);
+  const paddingY = Math.round(canvas.clientHeight * 0.1);
 
-  map.jumpTo({
-    center: [centerLng, centerLat],
-    zoom: vegZoom,
-    bearing: 0,
-    pitch: 0, // Top-down
-  });
+  map.fitBounds(
+    [
+      [minLng, minLat],
+      [maxLng, maxLat],
+    ],
+    {
+      padding: {
+        top: paddingY,
+        bottom: paddingY,
+        left: paddingX,
+        right: paddingX,
+      },
+      duration: 0,
+      maxZoom: 16,
+    }
+  );
 
   // Wait for WMS tiles to load (may be slower than Mapbox tiles)
   await waitForMapIdle(map, 8000);
 
   // Capture
-  const dataUrl = captureCanvas(map);
+  const dataUrl = map.getCanvas().toDataURL('image/png');
 
   // Restore vegetation layer visibility
   if (!wasVisible) {

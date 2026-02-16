@@ -13,6 +13,7 @@ export interface ImageGenOptions {
   mapScreenshot?: string | Buffer; // Map view screenshot for terrain grounding
   vegetationMapScreenshot?: string | Buffer; // NSW SVTM vegetation overlay screenshot
   vegetationPromptText?: string; // Spatial vegetation context text from SVTM queries
+  vegetationLegendItems?: Array<{ name: string; color: string }>; // Visible legend items with color swatches
   /**
    * Called whenever new thinking/reasoning text arrives during streaming.
    * The callback receives the full accumulated thinking text so far.
