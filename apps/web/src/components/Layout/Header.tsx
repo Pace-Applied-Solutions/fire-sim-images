@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useHealthCheck } from '../../hooks/useHealthCheck';
+import { useAppStore } from '../../store/appStore';
+import { AddressSearch } from '../Map/AddressSearch';
 import styles from './Header.module.css';
 
 /**
@@ -19,6 +21,8 @@ const SERVICE_STATUS_COLORS: Record<string, string> = {
 export const Header: React.FC = () => {
   const { status: healthStatus, checks } = useHealthCheck();
   const [showServiceDetails, setShowServiceDetails] = useState(false);
+  const handleLocationSelect = useAppStore((s) => s.handleLocationSelect);
+  const handleGeolocationRequest = useAppStore((s) => s.handleGeolocationRequest);
 
   return (
     <header className={styles.header}>
@@ -38,6 +42,15 @@ export const Header: React.FC = () => {
             Settings
           </Link>
         </nav>
+      </div>
+      <div className={styles.center}>
+        {handleLocationSelect && (
+          <AddressSearch
+            onLocationSelect={handleLocationSelect}
+            onGeolocationRequest={handleGeolocationRequest || undefined}
+            className={styles.headerSearch}
+          />
+        )}
       </div>
       <div className={styles.right}>
         <div

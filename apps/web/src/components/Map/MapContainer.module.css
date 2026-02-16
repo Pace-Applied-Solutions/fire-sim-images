@@ -61,11 +61,6 @@
 	box-shadow: none;
 }
 
-.toolbarSearch {
-	flex: 0 1 420px;
-	min-width: 220px;
-}
-
 .toolbarHint {
 	position: absolute;
 	top: 16px;
@@ -125,10 +120,6 @@
 	.mapToolbar {
 		left: 12px;
 		right: auto;
-	}
-
-	.toolbarSearch {
-		max-width: 340px;
 	}
 }
 

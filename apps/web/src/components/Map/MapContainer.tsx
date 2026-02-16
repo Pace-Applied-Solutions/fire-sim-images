@@ -18,7 +18,6 @@ import {
   MAX_PITCH,
   TERRAIN_EXAGGERATION,
 } from '../../config/mapbox';
-import { AddressSearch } from './AddressSearch';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import styles from './MapContainer.module.css';
@@ -85,6 +84,8 @@ export const MapContainer = () => {
   const setState = useAppStore((s) => s.setState);
   const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
   const setCaptureVegetationScreenshot = useAppStore((s) => s.setCaptureVegetationScreenshot);
+  const setHandleLocationSelect = useAppStore((s) => s.setHandleLocationSelect);
+  const setHandleGeolocationRequest = useAppStore((s) => s.setHandleGeolocationRequest);
   const { addToast } = useToastStore();
 
   const setMapCursor = useCallback((cursor: string | null) => {
@@ -806,6 +807,23 @@ export const MapContainer = () => {
     flyToLocation(userLocation);
   }, [flyToLocation, isMapLoaded, userLocation]);
 
+  // Register location handlers in store for Header's AddressSearch to use
+  useEffect(() => {
+    if (!isMapLoaded) {
+      setHandleLocationSelect(null);
+      setHandleGeolocationRequest(null);
+      return;
+    }
+
+    setHandleLocationSelect(() => handleLocationSelect);
+    setHandleGeolocationRequest(() => handleGeolocationRequest);
+
+    return () => {
+      setHandleLocationSelect(null);
+      setHandleGeolocationRequest(null);
+    };
+  }, [isMapLoaded, handleLocationSelect, handleGeolocationRequest, setHandleLocationSelect, setHandleGeolocationRequest]);
+
   const showToolbarHint = isMapLoaded && !perimeter && !hintDismissed;
 
   return (
@@ -856,89 +874,81 @@ export const MapContainer = () => {
       )}
 
       {/* Map Toolbar */}
-      {isMapLoaded && (
+      {isMapLoaded && metadata && (
         <div className={styles.mapToolbar}>
-          <div className={styles.toolbarSearch}>
-            <AddressSearch
-              onLocationSelect={handleLocationSelect}
-              onGeolocationRequest={handleGeolocationRequest}
-            />
-          </div>
-          {metadata && (
-            <div className={styles.viewpointControls}>
-              <div className={styles.viewpointButtons}>
-                <button
-                  onClick={toggleViewMode}
-                  className={styles.viewpointToggle}
-                  aria-pressed={viewMode === 'ground'}
-                  aria-label={
-                    viewMode === 'helicopter'
-                      ? 'Switch to fire truck perspective'
-                      : 'Switch to helicopter perspective'
-                  }
-                  title={
-                    viewMode === 'helicopter'
-                      ? 'Switch to fire truck perspective'
-                      : 'Switch to helicopter perspective'
-                  }
-                  type="button"
-                >
-                  {viewMode === 'helicopter' ? '🚁' : '🚒'}
-                </button>
-                {(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
-                  (direction) => (
-                    <button
-                      key={direction}
-                      onClick={() => handleDirectionSelect(direction)}
-                      className={`${styles.viewpointBtn} ${
-                        currentDirection === direction ? styles.viewpointBtnActive : ''
-                      }`}
-                      title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
-                        direction === 'above' ? 'above' : `from ${direction}`
-                      }`}
-                      aria-pressed={currentDirection === direction}
-                      type="button"
-                    >
-                      {direction === 'north'
-                        ? 'N'
-                        : direction === 'south'
-                          ? 'S'
-                          : direction === 'east'
-                            ? 'E'
-                            : direction === 'west'
-                              ? 'W'
-                              : '⬆'}
-                    </button>
-                  )
-                )}
-                <button
-                  onClick={captureMapView}
-                  className={styles.viewpointCapture}
-                  title="Capture current view"
-                  aria-label="Capture current view"
-                  type="button"
-                >
-                  📷
-                </button>
-                <button
-                  onClick={toggleVegetationOverlay}
-                  className={`${styles.viewpointBtn} ${showVegetation ? styles.viewpointBtnActive : ''}`}
-                  aria-pressed={showVegetation}
-                  title={
-                    showVegetation
-                      ? 'Hide vegetation overlay (NSW SVTM)'
-                      : 'Show vegetation overlay (NSW SVTM)'
-                  }
-                  aria-label={
-                    showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'
-                  }
-                  type="button"
-                >
-                  🌿
-                </button>
-              </div>
+          <div className={styles.viewpointControls}>
+            <div className={styles.viewpointButtons}>
+              <button
+                onClick={toggleViewMode}
+                className={styles.viewpointToggle}
+                aria-pressed={viewMode === 'ground'}
+                aria-label={
+                  viewMode === 'helicopter'
+                    ? 'Switch to fire truck perspective'
+                    : 'Switch to helicopter perspective'
+                }
+                title={
+                  viewMode === 'helicopter'
+                    ? 'Switch to fire truck perspective'
+                    : 'Switch to helicopter perspective'
+                }
+                type="button"
+              >
+                {viewMode === 'helicopter' ? '🚁' : '🚒'}
+              </button>
+              {(['north', 'south', 'east', 'west', 'above'] as ViewDirection[]).map(
+                (direction) => (
+                  <button
+                    key={direction}
+                    onClick={() => handleDirectionSelect(direction)}
+                    className={`${styles.viewpointBtn} ${
+                      currentDirection === direction ? styles.viewpointBtnActive : ''
+                    }`}
+                    title={`${viewMode === 'helicopter' ? 'Helicopter' : 'Truck'} view ${
+                      direction === 'above' ? 'above' : `from ${direction}`
+                    }`}
+                    aria-pressed={currentDirection === direction}
+                    type="button"
+                  >
+                    {direction === 'north'
+                      ? 'N'
+                      : direction === 'south'
+                        ? 'S'
+                        : direction === 'east'
+                          ? 'E'
+                          : direction === 'west'
+                            ? 'W'
+                            : '⬆'}
+                  </button>
+                )
+              )}
+              <button
+                onClick={captureMapView}
+                className={styles.viewpointCapture}
+                title="Capture current view"
+                aria-label="Capture current view"
+                type="button"
+              >
+                📷
+              </button>
+              <button
+                onClick={toggleVegetationOverlay}
+                className={`${styles.viewpointBtn} ${showVegetation ? styles.viewpointBtnActive : ''}`}
+                aria-pressed={showVegetation}
+                title={
+                  showVegetation
+                    ? 'Hide vegetation overlay (NSW SVTM)'
+                    : 'Show vegetation overlay (NSW SVTM)'
+                }
+                aria-label={
+                  showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'
+                }
+                type="button"
+              >
+                🌿
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
