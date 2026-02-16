@@ -23,23 +23,70 @@ jobs:
           node-version: '22.x'
           cache: 'npm'
 
+      - name: Begin summary
+        run: |
+          echo "## 🔍 CI — Continuous Integration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Checkout code | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup Node.js | ✅ |" >> $GITHUB_STEP_SUMMARY
+
       - name: Install dependencies
-        run: npm ci
+        id: install
+        run: |
+          npm ci
+          echo "| Install dependencies | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record install failure
+        if: failure() && steps.install.outcome == 'failure'
+        run: echo "| Install dependencies | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Build shared package
-        run: npm run build --workspace=packages/shared
+        id: build_shared
+        run: |
+          npm run build --workspace=packages/shared
+          echo "| Build shared package | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record build shared failure
+        if: failure() && steps.build_shared.outcome == 'failure'
+        run: echo "| Build shared package | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Lint code
-        run: npm run lint
+        id: lint
+        run: |
+          npm run lint
+          echo "| Lint code | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record lint failure
+        if: failure() && steps.lint.outcome == 'failure'
+        run: echo "| Lint code | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Type check
-        run: npm run typecheck
+        id: typecheck
+        run: |
+          npm run typecheck
+          echo "| Type check | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record typecheck failure
+        if: failure() && steps.typecheck.outcome == 'failure'
+        run: echo "| Type check | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Run unit tests
-        run: npm run test:unit
+        id: tests
+        run: |
+          npm run test:unit
+          echo "| Unit tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record tests failure
+        if: failure() && steps.tests.outcome == 'failure'
+        run: echo "| Unit tests | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Generate coverage report
-        run: npm run test:coverage
+        id: coverage
+        run: |
+          npm run test:coverage
+          echo "| Coverage report | ✅ |" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
 
       - name: Upload coverage reports
@@ -58,16 +105,15 @@ jobs:
       - name: CI Summary
         if: always()
         run: |
-          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Upload coverage | ✅ |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Shared package built" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Linting completed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Type checking completed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Unit tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Coverage report generated" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.tests.outcome }}" = "success" ] && [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.typecheck.outcome }}" = "success" ]; then
+            echo "> ✅ **All CI checks passed**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> ❌ **CI checks failed** — see table above for details" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Note: Coverage thresholds are non-blocking during MVP development" >> $GITHUB_STEP_SUMMARY
+          echo "_Coverage thresholds are non-blocking during MVP development_" >> $GITHUB_STEP_SUMMARY
 
   integration-test:
     name: Integration Tests
@@ -88,21 +134,37 @@ jobs:
           node-version: '22.x'
           cache: 'npm'
 
+      - name: Begin summary
+        run: |
+          echo "## 🧪 Integration Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Checkout code | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup Node.js | ✅ |" >> $GITHUB_STEP_SUMMARY
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          echo "| Install dependencies | ✅ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Build shared package
-        run: npm run build --workspace=packages/shared
+        run: |
+          npm run build --workspace=packages/shared
+          echo "| Build shared package | ✅ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Run integration tests
-        run: npm run test:integration
+        id: integration
+        run: |
+          npm run test:integration
+          echo "| Integration tests | ✅ |" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
 
       - name: Integration test summary
         if: always()
         run: |
-          echo "## Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.integration.outcome }}" != "success" ]; then
+            echo "| Integration tests | ⚠️ |" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Integration tests require Azure resources and are run manually via workflow_dispatch" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Integration tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "_Integration tests require Azure resources and are run manually via workflow\_dispatch_" >> $GITHUB_STEP_SUMMARY

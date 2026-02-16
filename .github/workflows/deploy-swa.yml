@@ -31,23 +31,54 @@ jobs:
           node-version: '22.x'
           cache: 'npm'
 
+      - name: Begin summary
+        run: |
+          echo "## 🚀 Deploy Static Web App" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Checkout repository | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup Node.js | ✅ |" >> $GITHUB_STEP_SUMMARY
+
       - name: Install dependencies
-        run: npm ci
+        id: install
+        run: |
+          npm ci
+          echo "| Install dependencies | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record install failure
+        if: failure() && steps.install.outcome == 'failure'
+        run: echo "| Install dependencies | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Build shared package
-        run: npm run build --workspace=packages/shared
+        id: build_shared
+        run: |
+          npm run build --workspace=packages/shared
+          echo "| Build shared package | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record build shared failure
+        if: failure() && steps.build_shared.outcome == 'failure'
+        run: echo "| Build shared package | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Build web app
-        run: npm run build --workspace=apps/web
+        id: build_web
+        run: |
+          npm run build --workspace=apps/web
+          echo "| Build web app | ✅ |" >> $GITHUB_STEP_SUMMARY
         env:
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
           VITE_APPINSIGHTS_CONNECTION_STRING: ${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }}
           VITE_COMMIT_SHA: ${{ github.sha }}
 
+      - name: Record build web failure
+        if: failure() && steps.build_web.outcome == 'failure'
+        run: echo "| Build web app | ❌ |" >> $GITHUB_STEP_SUMMARY
+
       # Front-end only — no api_location.
       # The API is a standalone Azure Functions app linked via SWA "Bring Your Own Functions".
       # SWA automatically proxies /api/* to the linked backend.
       - name: Deploy to Azure Static Web Apps
+        id: deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
@@ -57,6 +88,15 @@ jobs:
           output_location: ''
           skip_app_build: true
           production_branch: main
+
+      - name: Record deploy status
+        if: always()
+        run: |
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            echo "| Deploy to Azure Static Web Apps | ✅ |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.deploy.outcome }}" = "failure" ]; then
+            echo "| Deploy to Azure Static Web Apps | ❌ |" >> $GITHUB_STEP_SUMMARY
+          fi
 
       # Verify the deployed page contains the expected commit SHA in a build-time meta tag
       - name: Verify deployment
@@ -79,6 +119,7 @@ jobs:
             if echo "$PAGE" | grep -q "app-version.*$EXPECTED"; then
               echo "✅ Deployment verified — commit $SHORT_SHA found in <meta name=app-version>"
               echo "deploy_verified=true" >> "$GITHUB_OUTPUT"
+              echo "| Verify deployment (commit SHA) | ✅ |" >> $GITHUB_STEP_SUMMARY
               exit 0
             fi
 
@@ -93,7 +134,20 @@ jobs:
           echo "❌ Deployment verification failed after $MAX_ATTEMPTS attempts"
           echo "Expected commit SHA: $EXPECTED"
           echo "deploy_verified=false" >> "$GITHUB_OUTPUT"
+          echo "| Verify deployment (commit SHA) | ❌ |" >> $GITHUB_STEP_SUMMARY
           exit 1
+
+      - name: Final summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.verify.outcome }}" = "success" ]; then
+            echo "> ✅ **Front-end deployed and verified** — commit \`${{ github.sha }}\` is live at ${{ env.SWA_URL }}" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            echo "> ⚠️ **Front-end deployed but verification failed** — the app may still be propagating" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> ❌ **Front-end deployment failed** — see table above for details" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Create issue on failure
         if: failure()

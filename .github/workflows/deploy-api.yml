@@ -32,16 +32,47 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Begin summary
+        run: |
+          echo "## 🚀 Deploy API — \`${{ env.AZURE_FUNCTIONAPP_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Checkout repository | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup Node.js ${{ env.NODE_VERSION }} | ✅ |" >> $GITHUB_STEP_SUMMARY
+
       - name: Install dependencies
-        run: npm ci
+        id: install
+        run: |
+          npm ci
+          echo "| Install dependencies | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record install failure
+        if: failure() && steps.install.outcome == 'failure'
+        run: echo "| Install dependencies | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Build shared package
-        run: npm run build --workspace=packages/shared
+        id: build_shared
+        run: |
+          npm run build --workspace=packages/shared
+          echo "| Build shared package | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record build shared failure
+        if: failure() && steps.build_shared.outcome == 'failure'
+        run: echo "| Build shared package | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Build API
-        run: npm run build --workspace=apps/api
+        id: build_api
+        run: |
+          npm run build --workspace=apps/api
+          echo "| Build API | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record build API failure
+        if: failure() && steps.build_api.outcome == 'failure'
+        run: echo "| Build API | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Assemble deployment package
+        id: assemble
         run: |
           set -e
           mkdir -p .deploy/api
@@ -63,6 +94,11 @@ jobs:
           mkdir -p node_modules/@fire-sim/shared
           cp -R ../../packages/shared/dist   node_modules/@fire-sim/shared/dist
           cp    ../../packages/shared/package.json node_modules/@fire-sim/shared/package.json
+          echo "| Assemble deployment package | ✅ |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record assemble failure
+        if: failure() && steps.assemble.outcome == 'failure'
+        run: echo "| Assemble deployment package | ❌ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Verify module resolution
         run: |
@@ -73,6 +109,7 @@ jobs:
             const funcs = require.resolve('@azure/functions');
             console.log('✓ @azure/functions →', funcs);
           "
+          echo "| Verify module resolution | ✅ |" >> $GITHUB_STEP_SUMMARY
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -80,19 +117,33 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Functions
+        id: deploy
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
           package: .deploy/api
 
+      - name: Record deploy status
+        if: always()
+        run: |
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            echo "| Azure Login | ✅ |" >> $GITHUB_STEP_SUMMARY
+            echo "| Deploy to Azure Functions | ✅ |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.deploy.outcome }}" = "failure" ]; then
+            echo "| Azure Login | ✅ |" >> $GITHUB_STEP_SUMMARY
+            echo "| Deploy to Azure Functions | ❌ |" >> $GITHUB_STEP_SUMMARY
+          fi
+
       # Stamp the commit SHA as an app setting so /api/health reports it
       - name: Set DEPLOY_COMMIT_SHA app setting
+        id: commit_sha
         run: |
           az functionapp config appsettings set \
             --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
             --resource-group firesim-rg-dev \
             --settings "DEPLOY_COMMIT_SHA=${{ github.sha }}" \
             -o none
+          echo "| Set DEPLOY_COMMIT_SHA | ✅ |" >> $GITHUB_STEP_SUMMARY
 
       # Wait for the app to restart and verify the new version is live
       - name: Verify deployment
@@ -117,6 +168,7 @@ jobs:
             if [ "$LIVE_SHA" = "$EXPECTED" ]; then
               echo "✅ Deployment verified — correct commit is live"
               echo "deploy_verified=true" >> "$GITHUB_OUTPUT"
+              echo "| Verify deployment (health check) | ✅ |" >> $GITHUB_STEP_SUMMARY
               exit 0
             fi
           done
@@ -125,7 +177,20 @@ jobs:
           echo "Expected: $EXPECTED"
           echo "Got:      $LIVE_SHA"
           echo "deploy_verified=false" >> "$GITHUB_OUTPUT"
+          echo "| Verify deployment (health check) | ❌ |" >> $GITHUB_STEP_SUMMARY
           exit 1
+
+      - name: Final summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.verify.outcome }}" = "success" ]; then
+            echo "> ✅ **API deployed and verified** — commit \`${{ github.sha }}\` is live" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            echo "> ⚠️ **API deployed but verification failed** — the app may still be starting" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> ❌ **API deployment failed** — see table above for details" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Create issue on failure
         if: failure()
