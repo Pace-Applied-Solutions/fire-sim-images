@@ -544,7 +544,7 @@ export const MapContainer = () => {
    * Handle location selection from address search
    */
   const handleLocationSelect = useCallback(
-    (longitude: number, latitude: number, placeName: string) => {
+    (longitude: number, latitude: number, _placeName: string) => {
       const map = mapRef.current;
       if (!map) return;
 
