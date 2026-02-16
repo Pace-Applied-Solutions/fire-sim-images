@@ -63,6 +63,14 @@ export interface PromptData {
   explicitFlameHeightM?: number;
   /** Explicit rate of spread in km/h (from trainer input) */
   explicitRateOfSpreadKmh?: number;
+  /** Fire area in hectares */
+  fireAreaHectares: number;
+  /** Fire extent north to south in kilometres */
+  fireExtentNorthSouthKm: number;
+  /** Fire extent east to west in kilometres */
+  fireExtentEastWestKm: number;
+  /** Locality description (e.g., "near Bungendore, New South Wales") */
+  locality?: string;
 }
 
 /**

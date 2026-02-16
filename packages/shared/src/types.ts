@@ -82,6 +82,8 @@ export interface GeoContext {
   nearbyFeatures?: string[];
   dataSource: string;
   confidence: 'low' | 'medium' | 'high';
+  /** Locality description from reverse geocoding (e.g., "Bungendore, New South Wales") */
+  locality?: string;
 }
 
 /**

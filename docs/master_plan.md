@@ -671,6 +671,55 @@ Update this section after each issue or change.
     - Added comprehensive documentation: `docs/current_state/mobile_responsive_layout.md`
     - All builds passing, no horizontal overflow, proper touch interaction ergonomics
     - Acceptance criteria met: functional UI on mobile, no forced zoom, all controls accessible
+  - **Prompt Template v1.3.0 & Workflow Documentation (Feb 16, 2026):**
+    - **Enhanced landscape adherence:** Updated prompt style section to explicitly require matching actual landscape, not artistic interpretation. Added mandate for man-made structures (buildings, roads, fences) to appear in correct positions and scales. Images must be recognizable as specific locations.
+    - **Directional narrative for ground views:** Ground-level viewpoints now include immersive "You're standing on the ground to the [direction] of the fire, looking [direction]..." phrasing. Creates clear tactical context for fire crew training scenarios.
+    - **Scene section strengthening:** Added "strict adherence to reference imagery" language. Explicit requirement that if reference shows a building, road, or clearing, it must appear in the generated image with correct location, scale, and orientation.
+    - **Prompt version bump:** v1.2.0 → v1.3.0 to track landscape realism and directional narrative improvements.
+    - **Comprehensive workflow documentation:** Created `docs/image_generation_workflow.md` documenting:
+      - Multi-perspective capture approach (both top-down and ground-level tactical views)
+      - Directional narrative implementation for all ground viewpoints
+      - Vegetation context integration (SVTM overlay capture and AI model instructions)
+      - Quality assurance checklists for landscape adherence, multi-view consistency, and directional narratives
+      - Step-by-step workflow from perimeter drawing through results storage
+      - Camera parameters and positioning for each viewpoint type
+      - Troubleshooting guide for common issues
+      - Future enhancements roadmap (vegetation label layer, enhanced spatial queries)
+    - **Acceptance criteria met:** Generated images preserve landscape features from reference, directional context clear in ground views, dual viewpoints (top-down aerial + perspective ground views) captured and documented, revised workflow documented.
+  - **Prompt Template v1.4.0: Fire Size & Scale (Feb 16, 2026):**
+    - **Problem addressed:** Generated images showed smaller fires than mapped area; AI lacked understanding of incident scale; red polygon sometimes visible
+    - **Fire dimension calculation:** Added `calculateFireDimensions()` function to compute area (hectares), N-S extent (km), and E-W extent (km) from perimeter bounding box
+    - **PromptData enhancement:** Added `fireAreaHectares`, `fireExtentNorthSouthKm`, `fireExtentEastWestKm` fields
+    - **Fire section updates:** 
+      - Includes explicit dimensions: "The fire covers approximately X hectares, spanning Y km from north to south and Z km from east to west"
+      - Added critical instruction: "The fire must fill the entire mapped area — this is not a small fire, but an incident of this specific scale"
+      - Emphasizes active fire edge, smoke, and burned areas should occupy full extent
+      - Explicit red polygon removal: "Do NOT show any red polygon outline or boundary markers — the fire itself replaces any drawn perimeter lines"
+    - **Technical implementation:** Uses turf/area and turf/bbox for accurate calculations; accounts for latitude variation in longitude-to-km conversion (cosine correction)
+    - **Prompt version bump:** v1.3.0 → v1.4.0
+    - **Testing:** All 120 tests passing, no breaking changes
+    - **Documentation:** Created `docs/PROMPT_V1.4.0_FIRE_SIZE.md` with examples, technical details, and validation
+  - **Prompt Template v1.5.0: Locality Context (Feb 16, 2026):**
+    - **Problem addressed:** Generic "New South Wales, Australia" context didn't help AI understand regional landscape characteristics
+    - **Mapbox reverse geocoding:** Created geocoding utility (`apps/web/src/utils/geocoding.ts`) to automatically determine locality from fire perimeter centroid
+    - **Smart formatting:** Place type-based formatting (locality: "near {town}, {state}", district: "in the {area} area, {state}", region: "in {state}")
+    - **Frontend integration:** ScenarioInputPanel queries locality when perimeter changes, adds to geoContext; non-fatal error handling
+    - **Scene section enhancement:** Includes locality context at start of landscape description ("This location is near Bungendore, New South Wales, Australia")
+    - **Fallback strategy:** Generic state-level context if reverse geocoding unavailable or fails
+    - **Examples:** "near Bungendore, New South Wales" (tablelands), "in the Blue Mountains area, New South Wales" (escarpment), "near Bendigo, Victoria" (goldfields plains)
+    - **Prompt version bump:** v1.4.0 → v1.5.0
+    - **Testing:** All 120 tests passing, locality optional (no breaking changes)
+    - **Documentation:** Created `docs/PROMPT_V1.5.0_LOCALITY.md` with geographic context examples, API details, regional characteristics
+  - **Vegetation Expansion Issue Package (Feb 16, 2026):**
+    - Created comprehensive GitHub issue (27KB documentation) for interactive vegetation labels and national coverage expansion
+    - **Problem:** No way to identify vegetation types (colors only); NSW-only coverage blocks scenarios in other states
+    - **Solution proposed:** 
+      - Part 1: Click-to-identify functionality (query at coordinates, display formation/fire characteristics)
+      - Part 2: NVIS integration (National Vegetation Information System) for nationwide coverage via WMS
+      - Hybrid approach: Keep NSW SVTM (5m high-res) + add NVIS (25-100m national baseline)
+    - **Files created:** `.github/ISSUE_VEGETATION_LABELS_NATIONAL.md` (full specification), `.github/ISSUE_TEMPLATE_VEGETATION.md` (copy-paste ready), `docs/VEGETATION_ISSUE_QUICK_REF.md` (visual guide)
+    - **Implementation phases:** Click-to-identify (1-2d) → NVIS integration (3-5d) → Optional labels (2-3d)
+    - **NVIS details:** Australian Government DCCEEW, CC-BY 4.0 license, 85 vegetation subgroups (MVS), CORS-enabled WMS endpoints
 
 ## 14. Change Control Process
 

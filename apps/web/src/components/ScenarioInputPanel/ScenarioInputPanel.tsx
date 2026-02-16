@@ -17,6 +17,7 @@ import {
 } from '@fire-sim/shared';
 import { generationApi } from '../../services/generationApi';
 import { useToastStore } from '../../store/toastStore';
+import { getPerimeterLocality } from '../../utils/geocoding';
 import styles from './ScenarioInputPanel.module.css';
 
 const PRESETS: Record<string, ScenarioInputs> = {
@@ -203,6 +204,23 @@ export const ScenarioInputPanel: React.FC = () => {
     }
   };
 
+  // Compute perimeter metadata from the GeoJSON feature
+  const perimeterMeta = useMemo(() => {
+    if (!perimeter) return null;
+    try {
+      const areaM2 = area(perimeter);
+      const center = centroid(perimeter);
+      const bounds = bbox(perimeter);
+      return {
+        areaHectares: areaM2 / 10_000,
+        centroid: center.geometry.coordinates as [number, number],
+        bbox: bounds as [number, number, number, number],
+      };
+    } catch {
+      return null;
+    }
+  }, [perimeter]);
+
   // Initialize store with default inputs on mount
   useEffect(() => {
     setScenarioInputs(DEFAULT_INPUTS);
@@ -214,6 +232,20 @@ export const ScenarioInputPanel: React.FC = () => {
       if (perimeter && perimeter.geometry) {
         try {
           const context = await generationApi.getGeoContext(perimeter.geometry);
+          
+          // Get locality information from reverse geocoding
+          try {
+            if (perimeterMeta?.centroid) {
+              const locality = await getPerimeterLocality(perimeterMeta.centroid);
+              if (locality) {
+                context.locality = locality;
+              }
+            }
+          } catch (localityError) {
+            console.warn('Failed to fetch locality, continuing without:', localityError);
+            // Non-fatal: continue without locality information
+          }
+          
           setGeoContext(context);
         } catch (error) {
           console.error('Failed to fetch geo context:', error);
@@ -223,7 +255,7 @@ export const ScenarioInputPanel: React.FC = () => {
     };
 
     fetchGeoContext();
-  }, [perimeter, setGeoContext, addToast]);
+  }, [perimeter, perimeterMeta, setGeoContext, addToast]);
 
   // Update flame height and ROS when vegetation type changes (from geo context)
   useEffect(() => {
@@ -375,23 +407,6 @@ export const ScenarioInputPanel: React.FC = () => {
 
   const isValid = Object.keys(errors).length === 0;
   const canGenerate = isValid && perimeter !== null;
-
-  // Compute perimeter metadata from the GeoJSON feature
-  const perimeterMeta = useMemo(() => {
-    if (!perimeter) return null;
-    try {
-      const areaM2 = area(perimeter);
-      const center = centroid(perimeter);
-      const bounds = bbox(perimeter);
-      return {
-        areaHectares: areaM2 / 10_000,
-        centroid: center.geometry.coordinates as [number, number],
-        bbox: bounds as [number, number, number, number],
-      };
-    } catch {
-      return null;
-    }
-  }, [perimeter]);
 
   const getSummaryText = (): string => {
     const stageMap = {
