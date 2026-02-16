@@ -22,6 +22,7 @@ interface HealthCheckResponse {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const FALLBACK_API_BASE_URL = '/api';
 const HEALTH_CHECK_INTERVAL = 30000; // Poll every 30 seconds
 const HEALTH_CHECK_TIMEOUT = 5000; // 5 second timeout per request
 
@@ -53,35 +54,59 @@ export function useHealthCheck(): {
 
   const checkHealth = async () => {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT);
+      const baseUrls = [API_BASE_URL, FALLBACK_API_BASE_URL].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
 
-      const response = await fetch(`${API_BASE_URL}/health`, {
-        method: 'GET',
-        signal: controller.signal,
-      });
+      let lastError: Error | null = null;
 
-      clearTimeout(timeoutId);
+      for (const baseUrl of baseUrls) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT);
 
-      if (!response.ok) {
-        setStatus('unhealthy');
-        setMessage('API returned an error');
-        setLastChecked(new Date());
-        return;
+        try {
+          const response = await fetch(`${baseUrl}/health`, {
+            method: 'GET',
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            lastError = new Error(`API returned ${response.status}`);
+            continue;
+          }
+
+          const data: HealthCheckResponse = await response.json();
+          setStatus(data.status as HealthStatus);
+          setChecks(data.checks);
+          setLastChecked(new Date());
+
+          // Build a message showing which services are degraded/unhealthy
+          const problemServices = data.checks
+            .filter((c) => c.status !== 'healthy')
+            .map((c) => `${c.service} (${c.status})`)
+            .join(', ');
+
+          setMessage(problemServices || undefined);
+          return;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          if (error instanceof Error) {
+            lastError = error;
+          }
+        }
       }
 
-      const data: HealthCheckResponse = await response.json();
-      setStatus(data.status as HealthStatus);
-      setChecks(data.checks);
+      if (lastError?.name === 'AbortError') {
+        setStatus('unhealthy');
+        setMessage('Health check timeout - API not responding');
+      } else {
+        setStatus('unhealthy');
+        setMessage('Unable to reach API');
+      }
       setLastChecked(new Date());
-
-      // Build a message showing which services are degraded/unhealthy
-      const problemServices = data.checks
-        .filter((c) => c.status !== 'healthy')
-        .map((c) => `${c.service} (${c.status})`)
-        .join(', ');
-
-      setMessage(problemServices || undefined);
+      return;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         setStatus('unhealthy');

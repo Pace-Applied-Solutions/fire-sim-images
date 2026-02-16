@@ -223,6 +223,7 @@ Update this section after each issue or change.
 
 - **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
+  - **Health indicator fallback:** Added same-origin `/api` fallback for the UI health check when a configured API base URL fails.
   - **NVIS legend colors:** Visible legend now samples raster colors and shows a swatch beside each vegetation subgroup.
   - **Results panel overlay:** Results panel now overlays the map instead of shrinking layout width, eliminating the black rectangle when hidden.
   - **Address zoom refinement:** Fit bounds to occupy ~70% of the viewport and draw a subtle bbox overlay for address search results.
