@@ -67,6 +67,8 @@ export const MapContainer = () => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const drawRef = useRef<MapboxDraw | null>(null);
   const mapLoadedRef = useRef(false);
+  const locationRequestInFlightRef = useRef(false);
+  const locationErrorRef = useRef<string | null>(null);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [perimeter, setPerimeter] = useState<FirePerimeter | null>(null);
@@ -75,6 +77,7 @@ export const MapContainer = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('helicopter');
   const [currentDirection, setCurrentDirection] = useState<ViewDirection>('north');
   const [showVegetation, setShowVegetation] = useState(false);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
@@ -97,6 +100,70 @@ export const MapContainer = () => {
     setShowVegetation(next);
   }, [showVegetation]);
 
+  const flyToLocation = useCallback((coords: [number, number]) => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    map.flyTo({
+      center: coords,
+      zoom: 13,
+      pitch: 45,
+      duration: 1800,
+      essential: true,
+    });
+  }, []);
+
+  const requestUserLocation = useCallback(
+    (showToastOnError = true) => {
+      if (!navigator.geolocation) {
+        if (showToastOnError) {
+          addToast({
+            type: 'info',
+            message: 'Geolocation not supported; staying on Australia view.',
+          });
+        }
+        return;
+      }
+
+      if (locationRequestInFlightRef.current) {
+        return;
+      }
+
+      locationRequestInFlightRef.current = true;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          locationRequestInFlightRef.current = false;
+          locationErrorRef.current = null;
+          setUserLocation([position.coords.longitude, position.coords.latitude]);
+        },
+        (error) => {
+          locationRequestInFlightRef.current = false;
+          let message = 'Showing Australia view while we confirm your location.';
+          if (error.code === error.PERMISSION_DENIED) {
+            message = 'Location permission denied; staying on Australia view.';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            message = 'Location unavailable; staying on Australia view.';
+          } else if (error.code === error.TIMEOUT) {
+            message = 'Location timed out; staying on Australia view.';
+          }
+
+          if (locationErrorRef.current !== message && showToastOnError) {
+            locationErrorRef.current = message;
+            addToast({
+              type: 'info',
+              message,
+            });
+          } else {
+            locationErrorRef.current = message;
+          }
+        },
+        { timeout: 8000, enableHighAccuracy: true }
+      );
+    },
+    [addToast]
+  );
+
   const startPolygonDraw = useCallback(() => {
     if (!drawRef.current) return;
     drawRef.current.changeMode('draw_polygon');
@@ -108,6 +175,10 @@ export const MapContainer = () => {
     drawRef.current.deleteAll();
     setMapCursor(null);
   }, [setMapCursor]);
+
+  useEffect(() => {
+    requestUserLocation(true);
+  }, [requestUserLocation]);
 
   // Initialize Mapbox map
   useEffect(() => {
@@ -701,44 +772,18 @@ export const MapContainer = () => {
    * Handle geolocation request from search component
    */
   const handleGeolocationRequest = useCallback(() => {
-    if (!navigator.geolocation) {
-      addToast({
-        type: 'error',
-        message: 'Geolocation not supported by your browser',
-      });
+    if (userLocation) {
+      flyToLocation(userLocation);
       return;
     }
 
-    const map = mapRef.current;
-    if (!map) return;
+    requestUserLocation(true);
+  }, [flyToLocation, requestUserLocation, userLocation]);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        map.flyTo({
-          center: [longitude, latitude],
-          zoom: 14,
-          duration: 2000,
-        });
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        let message = 'Failed to get your location';
-        if (error.code === error.PERMISSION_DENIED) {
-          message = 'Location permission denied';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = 'Location information unavailable';
-        } else if (error.code === error.TIMEOUT) {
-          message = 'Location request timed out';
-        }
-        addToast({
-          type: 'error',
-          message,
-        });
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
-  }, [addToast]);
+  useEffect(() => {
+    if (!isMapLoaded || !userLocation) return;
+    flyToLocation(userLocation);
+  }, [flyToLocation, isMapLoaded, userLocation]);
 
   return (
     <div className={styles.container}>

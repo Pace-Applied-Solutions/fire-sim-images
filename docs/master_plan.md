@@ -398,6 +398,7 @@ Update this section after each issue or change.
 - **Next milestone:** Phase 3 - Results Gallery & Scenario History (Issue 10)
   - **Address Search & Location Navigation:** Fast address search with autocomplete and geolocation support
     - Created `AddressSearch` component with Mapbox Geocoding API integration
+    - Map now starts with a continent-wide Australia view and auto-requests geolocation on load, smoothly flying to the user when permission is granted while falling back to Australia with an unobtrusive notice on denial
     - Real-time autocomplete with 300ms debouncing to minimize API calls
     - In-memory caching of up to 20 recent queries for instant results
     - Support for addresses, places, localities, neighborhoods, and postcodes (up to 5 results)
