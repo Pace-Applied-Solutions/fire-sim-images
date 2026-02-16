@@ -37,7 +37,7 @@ export class ImageGeneratorService {
       defaultQuality: config?.defaultQuality || 'high',
       defaultStyle: config?.defaultStyle || 'natural',
       maxRetries: config?.maxRetries || 3,
-      timeoutMs: config?.timeoutMs || 180000, // 180 seconds — Gemini 3 Pro thinking takes longer
+      timeoutMs: config?.timeoutMs || 600000, // 10 min safety net — primary timeout is inactivity-based in the streaming provider
     };
   }
 
@@ -66,6 +66,7 @@ export class ImageGeneratorService {
       quality: options?.quality || this.config.defaultQuality,
       style: options?.style || this.config.defaultStyle,
       seed: options?.seed,
+      onThinkingUpdate: options?.onThinkingUpdate,
     };
 
     let lastError: Error | undefined;

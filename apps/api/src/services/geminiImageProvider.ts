@@ -13,6 +13,14 @@ import type { ImageModelConfig } from '../imageModelConfig.js';
 const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 /**
+ * Inactivity timeout for streaming: if no new data arrives for this long,
+ * assume the model has stalled and stop waiting.  This replaces the old hard
+ * wall-clock timeout — as long as thinking chunks keep arriving, we keep
+ * waiting indefinitely.
+ */
+const INACTIVITY_TIMEOUT_MS = 60_000; // 60 seconds
+
+/**
  * Map our size strings to Gemini aspect ratios.
  */
 function sizeToAspectRatio(size: string): string {
@@ -35,22 +43,26 @@ function isGemini3Pro(model: string): boolean {
   return model.toLowerCase().includes('gemini-3');
 }
 
+/** Shape of a single part inside a Gemini response candidate. */
+interface GeminiPart {
+  text?: string;
+  inline_data?: { mime_type?: string; data?: string };
+  thought?: boolean;
+  thought_signature?: string;
+}
+
 /**
- * Image generation provider using Google's Gemini (Nano Banana) API.
- * Supports both text-to-image and image-to-image (editing) via the
- * generateContent REST endpoint with interleaved text + image output.
+ * Image generation provider using Google's Gemini API.
+ *
+ * Uses the **streaming** endpoint (`streamGenerateContent?alt=sse`) so that
+ * thinking text is delivered incrementally.  An inactivity-based timeout
+ * replaces the old hard wall-clock cap: as long as new chunks keep arriving
+ * (indicating the model is still reasoning), we keep waiting.  If no data
+ * arrives for {@link INACTIVITY_TIMEOUT_MS} we abort.
  *
  * Models:
- * - gemini-2.5-flash-image    (Nano Banana)     — fast, 1024px
- * - gemini-3-pro-image-preview (Nano Banana Pro) — professional, thinking, up to 4K
- *
- * Gemini 3 Pro features:
- * - Thinking enabled by default — produces interim "thought" images during
- *   reasoning. The final rendered image is the last non-thought image part.
- * - Interleaved text + image output via responseModalities: ['TEXT', 'IMAGE']
- * - imageSize: '1K' | '2K' | '4K' (uppercase K required)
- * - thought_signature fields preserved for multi-turn continuity
- * - Up to 14 reference images
+ * - gemini-2.5-flash-image      — fast, 1024px
+ * - gemini-3-pro-image-preview   — professional, thinking, up to 4K
  */
 export class GeminiImageProvider implements ImageGenerationProvider {
   readonly modelId: string;
@@ -71,15 +83,15 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     const aspectRatio = sizeToAspectRatio(size);
     const isProModel = isGemini3Pro(this.config.model);
 
-    // Build URL: {url}/models/{model}:generateContent?key={key}
+    // ── Build URL ──────────────────────────────────────────────
     const baseUrl = this.config.url || DEFAULT_GEMINI_BASE_URL;
-    const url = `${baseUrl}/models/${this.config.model}:generateContent?key=${this.config.key}`;
+    // Use streaming endpoint with SSE format so we get incremental chunks
+    const url = `${baseUrl}/models/${this.config.model}:streamGenerateContent?alt=sse&key=${this.config.key}`;
 
-    // Prepare the reference image for img2img, if provided
+    // ── Prepare request body ───────────────────────────────────
     const referenceImage = options?.mapScreenshot ?? options?.referenceImage;
     let effectivePrompt = prompt;
 
-    // Build the content parts array
     const parts: Array<Record<string, unknown>> = [];
 
     if (referenceImage) {
@@ -93,8 +105,6 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       }
 
       if (base64Data.length > 0) {
-        // Gemini best practice: use narrative step-by-step instructions for
-        // complex multi-element scenes rather than keyword lists.
         effectivePrompt =
           'You are looking at a 3D terrain visualisation of a real Australian landscape, rendered from a mapping application. ' +
           'It shows the actual topography with a satellite or aerial photograph draped over the 3D terrain surface. ' +
@@ -109,7 +119,6 @@ export class GeminiImageProvider implements ImageGenerationProvider {
           'Step 3: Overlay the following fire scenario onto this faithful landscape rendering:\n\n' +
           prompt;
 
-        // Add the image part first, then text
         parts.push({
           inline_data: {
             mime_type: 'image/png',
@@ -119,37 +128,29 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       }
     }
 
-    // Add the text prompt part
     parts.push({ text: effectivePrompt });
 
-    // Build generationConfig — differ by model capabilities
+    // Generation config
     const imageConfig: Record<string, string> = { aspectRatio };
     if (isProModel) {
-      // Gemini 3 Pro supports imageSize — use 2K for good quality/speed balance
       imageConfig.imageSize = '2K';
     }
 
     const generationConfig: Record<string, unknown> = {
-      // Interleaved text + image output — the model returns descriptive text
-      // alongside the generated image, giving insight into its reasoning.
       responseModalities: ['TEXT', 'IMAGE'],
       imageConfig,
     };
 
-    // Gemini 3 Pro has thinking enabled by default and it cannot be disabled.
-    // We explicitly include thoughts so response parsing can filter them.
     if (isProModel) {
-      generationConfig.thinkingConfig = {
-        includeThoughts: true,
-      };
+      generationConfig.thinkingConfig = { includeThoughts: true };
     }
 
-    // Build the request body per Gemini generateContent API
     const body = {
       contents: [{ parts }],
       generationConfig,
     };
 
+    // ── Make the streaming request ──────────────────────────────
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -163,16 +164,21 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       );
     }
 
-    const payload = await response.json() as Record<string, unknown>;
+    // ── Read SSE stream with inactivity timeout ─────────────────
+    const { parts: allParts, thinkingText } = await this.readSSEStream(
+      response,
+      INACTIVITY_TIMEOUT_MS,
+      options?.onThinkingUpdate,
+    );
 
-    // Extract image data + thinking/response text from the Gemini response
+    // Reconstruct canonical payload for extractResponse()
+    const payload: Record<string, unknown> = {
+      candidates: [{ content: { parts: allParts } }],
+    };
+
     const extracted = this.extractResponse(payload);
 
-    // Collect all thinking text (thought: true parts) for UI display
-    const thinkingText = this.extractThinkingText(payload);
-
     if (!extracted.imageBase64) {
-      // Include thinking text in the error so it can be surfaced to the user
       const thinkingPreview = thinkingText
         ? `\n\nModel thinking:\n${thinkingText}`
         : '';
@@ -194,7 +200,6 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       );
     }
 
-    // Log any accompanying text from the model (useful for debugging)
     if (extracted.text) {
       console.log(`[GeminiImageProvider] Model text response: ${extracted.text.substring(0, 300)}`);
     }
@@ -214,37 +219,103 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     };
   }
 
+  // ─── SSE stream reader ────────────────────────────────────────
+
   /**
-   * Extract the final image and any accompanying text from the Gemini
-   * generateContent response.
+   * Read a `text/event-stream` response from Gemini's `streamGenerateContent`
+   * endpoint, accumulating all content parts.  Resets an inactivity timer on
+   * every received chunk — as long as the model keeps producing data we keep
+   * listening.
    *
-   * Response shape (with thinking / interleaved):
-   * {
-   *   candidates: [{
-   *     content: {
-   *       parts: [
-   *         { inline_data: { ... }, thought: true },           // interim thought image
-   *         { text: "reasoning...", thought: true },            // thought text
-   *         { text: "Here is the image...", thought_signature: "..." },  // final text
-   *         { inline_data: { mime_type: "image/png", data: "b64..." }, thought_signature: "..." } // final image
-   *       ]
-   *     }
-   *   }]
-   * }
+   * Calls `onThinkingUpdate` whenever a new thinking text part is received so
+   * callers can surface progress in real time.
+   */
+  private async readSSEStream(
+    response: Response,
+    inactivityTimeoutMs: number,
+    onThinkingUpdate?: (text: string) => void,
+  ): Promise<{ parts: GeminiPart[]; thinkingText: string | undefined }> {
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const allParts: GeminiPart[] = [];
+    const thinkingParts: string[] = [];
+
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        // Race the next chunk against an inactivity timeout
+        const readResult = await Promise.race([
+          reader.read(),
+          new Promise<{ done: true; value: undefined }>((resolve) =>
+            setTimeout(
+              () => resolve({ done: true, value: undefined }),
+              inactivityTimeoutMs,
+            ),
+          ),
+        ]);
+
+        if (readResult.done) break;
+
+        buffer += decoder.decode(readResult.value, { stream: true });
+
+        // SSE events are separated by double newlines
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || ''; // keep trailing incomplete event
+
+        for (const event of events) {
+          for (const line of event.split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            const jsonStr = line.slice(6).trim();
+            if (!jsonStr || jsonStr === '[DONE]') continue;
+
+            try {
+              const chunk = JSON.parse(jsonStr);
+              const candidates = chunk.candidates as Array<{
+                content?: { parts?: GeminiPart[] };
+              }> | undefined;
+              const parts = candidates?.[0]?.content?.parts;
+              if (!parts) continue;
+
+              for (const part of parts) {
+                allParts.push(part);
+
+                // Accumulate thinking text and notify caller
+                if (part.text && part.thought) {
+                  thinkingParts.push(part.text);
+                  if (onThinkingUpdate) {
+                    onThinkingUpdate(thinkingParts.join('\n'));
+                  }
+                }
+              }
+            } catch {
+              // Malformed JSON in a chunk — skip
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return {
+      parts: allParts,
+      thinkingText: thinkingParts.length > 0 ? thinkingParts.join('\n') : undefined,
+    };
+  }
+
+  // ─── Response extraction helpers ──────────────────────────────
+
+  /**
+   * Extract the final image and any accompanying text from the accumulated
+   * Gemini response parts.
    */
   private extractResponse(payload: Record<string, unknown>): {
     imageBase64: string | undefined;
     text: string | undefined;
   } {
     const candidates = payload.candidates as Array<{
-      content?: {
-        parts?: Array<{
-          text?: string;
-          inline_data?: { mime_type?: string; data?: string };
-          thought?: boolean;
-          thought_signature?: string;
-        }>;
-      };
+      content?: { parts?: GeminiPart[] };
     }> | undefined;
 
     if (!candidates?.length) {
@@ -256,7 +327,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       return { imageBase64: undefined, text: undefined };
     }
 
-    // Collect non-thought text parts (model's descriptive response)
+    // Non-thought text parts (the model's descriptive response)
     const textParts: string[] = [];
     for (const part of parts) {
       if (part.text && !part.thought) {
@@ -264,8 +335,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       }
     }
 
-    // Find the last non-thought image part — Gemini 3 Pro produces interim
-    // "thought" images during reasoning; the final rendered image is what we want
+    // Find the last non-thought image part
     for (let i = parts.length - 1; i >= 0; i--) {
       const part = parts[i];
       if (part.inline_data?.data && !part.thought) {
@@ -276,7 +346,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       }
     }
 
-    // Fallback: any image part (including thought images if no final image found)
+    // Fallback: any image (including thought images)
     for (const part of parts) {
       if (part.inline_data?.data) {
         return {
@@ -291,41 +361,10 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       text: textParts.length > 0 ? textParts.join('\n') : undefined,
     };
   }
-
-  /**
-   * Extract thinking/reasoning text from the Gemini response.
-   * These are parts with `thought: true` — the model's internal reasoning
-   * before producing the final image. Useful for showing progress to the user.
-   */
-  private extractThinkingText(payload: Record<string, unknown>): string | undefined {
-    const candidates = payload.candidates as Array<{
-      content?: {
-        parts?: Array<{
-          text?: string;
-          thought?: boolean;
-        }>;
-      };
-    }> | undefined;
-
-    if (!candidates?.length) return undefined;
-
-    const parts = candidates[0].content?.parts;
-    if (!parts?.length) return undefined;
-
-    const thoughts: string[] = [];
-    for (const part of parts) {
-      if (part.text && part.thought) {
-        thoughts.push(part.text);
-      }
-    }
-
-    return thoughts.length > 0 ? thoughts.join('\n') : undefined;
-  }
 }
 
 /**
  * Returns true if the config looks like it should use the Gemini provider.
- * Checks for 'gemini-' prefix in deployment or 'googleapis.com' in baseUrl.
  */
 export function isGeminiConfig(config: ImageModelConfig): boolean {
   if (config.model?.toLowerCase().startsWith('gemini-')) {

@@ -180,6 +180,12 @@ export class GenerationOrchestrator {
           });
           const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
             seed: request.seed,
+            // Surface thinking text to the progress store in real time so the
+            // frontend poll picks it up while the model is still working.
+            onThinkingUpdate: (thinkingText: string) => {
+              progress.thinkingText = thinkingText;
+              progress.updatedAt = new Date().toISOString();
+            },
           });
           const imageGenDuration = imageGenTimer.stop();
 
