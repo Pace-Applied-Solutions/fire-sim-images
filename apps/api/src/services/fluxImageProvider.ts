@@ -55,8 +55,7 @@ export class FluxImageProvider implements ImageGenerationProvider {
       body.image = base64Image;
     }
 
-    let response: Response;
-    response = await fetch(url, {
+    const response: Response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
