@@ -176,17 +176,51 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
         )}
 
         <div className={styles.grid}>
-          {result.images.map((image, index) => (
-            <div key={image.viewPoint} className={styles.imageCard}>
+          {/* Show anchor image with badge if available */}
+          {result.anchorImage && (
+            <div key={result.anchorImage.viewPoint} className={`${styles.imageCard} ${styles.anchorCard}`}>
               <div
                 className={styles.imageWrapper}
-                onClick={() => openLightbox(index)}
+                onClick={() => openLightbox(0)} // Anchor is always at index 0 in result.images
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    openLightbox(index);
+                    openLightbox(0);
+                  }
+                }}
+              >
+                <img src={result.anchorImage.url} alt={`${result.anchorImage.viewPoint} view (anchor)`} className={styles.image} />
+                <div className={styles.imageOverlay}>
+                  <span className={styles.viewIcon}>🔍</span>
+                </div>
+                <div className={styles.anchorBadge}>⚓ Anchor</div>
+              </div>
+              <div className={styles.imageInfo}>
+                <h4 className={styles.viewpoint}>{formatViewpoint(result.anchorImage.viewPoint)}</h4>
+                <p className={styles.metadata}>
+                  {result.anchorImage.metadata.width} × {result.anchorImage.metadata.height} • {result.anchorImage.metadata.model}
+                </p>
+              </div>
+            </div>
+          )}
+          {/* Show remaining images, filtering out anchor if present */}
+          {result.images
+            .filter((image) => !result.anchorImage || image.viewPoint !== result.anchorImage.viewPoint)
+            .map((image, index) => (
+            <div key={image.viewPoint} className={styles.imageCard}>
+              <div
+                className={styles.imageWrapper}
+                // Map filtered array index back to position in result.images
+                // Anchor is at index 0, so non-anchor images start at index 1
+                onClick={() => openLightbox(index + (result.anchorImage ? 1 : 0))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openLightbox(index + (result.anchorImage ? 1 : 0));
                   }
                 }}
               >

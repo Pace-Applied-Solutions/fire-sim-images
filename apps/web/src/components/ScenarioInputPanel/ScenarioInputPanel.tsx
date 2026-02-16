@@ -405,6 +405,7 @@ export const ScenarioInputPanel: React.FC = () => {
           id: startResponse.scenarioId,
           status: status.status as GenerationResult['status'],
           images: status.results?.images || [],
+          anchorImage: status.results?.anchorImage,
           createdAt: status.createdAt,
           thinkingText: status.thinkingText,
         });

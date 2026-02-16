@@ -43,8 +43,12 @@ export async function getGenerationStatus(
       thinkingText: progress.thinkingText,
       createdAt: progress.createdAt,
       updatedAt: progress.updatedAt,
-      // Always include partial images so frontend can render progressively
-      results: { images: progress.images || [], error: progress.error },
+      // Always include partial images AND anchorImage so frontend can render progressively
+      results: { 
+        images: progress.images || [], 
+        anchorImage: progress.anchorImage,
+        error: progress.error 
+      },
     };
 
     context.log('Status retrieved', {
