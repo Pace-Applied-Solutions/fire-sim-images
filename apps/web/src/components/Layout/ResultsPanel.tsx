@@ -13,12 +13,15 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
   const { generationResult } = useAppStore();
 
   useEffect(() => {
-    // Open panel when AI generation starts, producing results, or when complete
+    // Open panel when thinking text arrives, images are generated, or generation completes
     if (scenarioState === 'complete') {
       setResultsPanelOpen(true);
     } else if (scenarioState === 'generating') {
-      // Open as soon as generation starts so user sees progress/thinking
-      setResultsPanelOpen(true);
+      // Only open when Gemini thinking stream has started OR images are available
+      // This prevents opening before the model begins processing
+      if (generationResult?.thinkingText || (generationResult?.images && generationResult.images.length > 0)) {
+        setResultsPanelOpen(true);
+      }
     }
   }, [scenarioState, generationResult, setResultsPanelOpen]);
 

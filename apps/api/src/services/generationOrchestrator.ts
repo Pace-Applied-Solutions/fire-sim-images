@@ -67,7 +67,7 @@ export class GenerationOrchestrator {
     // Generate seed if not provided (for consistency across viewpoints)
     const seed = request.seed ?? Math.floor(Math.random() * MAX_SEED_VALUE);
 
-    // Initialize progress tracking
+    // Initialize progress tracking with seed stored immediately
     const progress: GenerationProgress = {
       scenarioId,
       status: 'pending',
@@ -75,10 +75,12 @@ export class GenerationOrchestrator {
       completedImages: 0,
       failedImages: 0,
       images: [],
+      seed, // Store seed immediately so it's available in status responses
       createdAt: timestamp,
       updatedAt: timestamp,
     };
 
+    // Store progress BEFORE starting async execution to prevent 404 race condition
     progressStore.set(scenarioId, progress);
 
     this.logger.info('Generation request received', {
@@ -91,6 +93,13 @@ export class GenerationOrchestrator {
     // Start generation asynchronously (don't await)
     this.executeGeneration(scenarioId, { ...request, seed }).catch((error) => {
       this.logger.error('Generation orchestration failed', error, { scenarioId });
+      // Update progress store with error to prevent scenario not found
+      const failedProgress = progressStore.get(scenarioId);
+      if (failedProgress) {
+        failedProgress.status = 'failed';
+        failedProgress.error = error instanceof Error ? error.message : String(error);
+        failedProgress.updatedAt = new Date().toISOString();
+      }
     });
 
     return scenarioId;

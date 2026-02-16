@@ -768,6 +768,27 @@ Update this section after each issue or change.
     - **Documentation updated:** `docs/current_state/address_search.md` updated to reflect new fitBounds behavior and dual-mode navigation
     - **Files modified:** `apps/web/src/components/Map/AddressSearch.tsx`, `apps/web/src/components/Map/MapContainer.tsx`, `docs/current_state/address_search.md`
     - **Acceptance criteria met:** Map pans and zooms to show full address area when available, suitable zoom for all result types, no regression on default map controls
+  - **Scenario Not Found Error Fix (Feb 16, 2026):**
+    - **Problem addressed:** Multiple issues affecting generation reliability and UX:
+      1. Race condition causing "Scenario not found" 404 errors when frontend polled status endpoint too quickly
+      2. Results panel opening before Gemini thinking stream started (empty panel with no content)
+      3. Screenshot capture failures treated as non-fatal warnings, allowing generation without terrain reference images
+      4. Need to verify 80% viewport framing requirement for all screenshot captures
+    - **Solution:**
+      1. **Race condition fix:** Enhanced `generationOrchestrator.ts` to ensure `progressStore.set()` completes synchronously before `executeGeneration()` starts; added catch block to update progressStore with failed status to prevent orphaned scenarios
+      2. **Results panel timing:** Modified `ResultsPanel.tsx` useEffect to only open panel when `thinkingText` exists OR images are available, preventing premature opening
+      3. **Screenshot validation:** Updated `ScenarioInputPanel.tsx` to treat screenshot capture as critical requirement:
+         - Throws fatal error if zero screenshots captured
+         - Shows warning toast if some screenshots fail but at least one succeeds
+         - Aborts generation with clear error message if capture function unavailable
+      4. **Viewport framing verification:** Confirmed vegetation captures use explicit 10% padding (80% fill) and viewpoint captures use calculated positioning based on perimeter bounding box
+    - **Files modified:**
+      - `apps/api/src/services/generationOrchestrator.ts:78-102` (race condition fix + error handling)
+      - `apps/web/src/components/Layout/ResultsPanel.tsx:15-26` (panel timing fix)
+      - `apps/web/src/components/ScenarioInputPanel/ScenarioInputPanel.tsx:299-339` (screenshot validation)
+    - **Testing:** All TypeScript builds passing (shared, api, web), no new type errors introduced
+    - **Documentation:** Created comprehensive fix documentation at `docs/current_state/scenario_not_found_fix.md` with root cause analysis, code examples, testing notes, and future considerations
+    - **Acceptance criteria met:** No more "Scenario not found" errors during polling, results panel timing aligned with content availability, screenshot validation prevents generation without terrain references, 80% viewport requirement verified for all captures
 
 ## 14. Change Control Process
 
