@@ -6,6 +6,7 @@ export interface FoundryConfig {
   projectPath: string;
   projectRegion: string;
   imageModel: string;
+  projectAuthToken?: string; // Optional: use managed identity if not provided
 }
 
 const cache: { config?: FoundryConfig } = {};
@@ -14,6 +15,7 @@ const getEnvConfig = (): FoundryConfig => ({
   projectPath: process.env.FOUNDRY_PROJECT_PATH ?? '',
   projectRegion: process.env.FOUNDRY_PROJECT_REGION ?? '',
   imageModel: process.env.FOUNDRY_IMAGE_MODEL ?? '',
+  projectAuthToken: process.env.FOUNDRY_PROJECT_AUTH_TOKEN,
 });
 
 const isComplete = (config: FoundryConfig): boolean =>
@@ -36,16 +38,18 @@ export const getFoundryConfig = async (context: InvocationContext): Promise<Foun
   try {
     const credential = new DefaultAzureCredential();
     const client = new SecretClient(process.env.KEY_VAULT_URI, credential);
-    const [projectPath, projectRegion, imageModel] = await Promise.all([
+    const [projectPath, projectRegion, imageModel, projectAuthToken] = await Promise.all([
       client.getSecret('Foundry--ProjectPath'),
       client.getSecret('Foundry--ProjectRegion'),
       client.getSecret('Foundry--ImageModel'),
+      client.getSecret('Foundry--ProjectAuthToken').catch(() => ({ value: undefined })),
     ]);
 
     const config: FoundryConfig = {
       projectPath: projectPath.value ?? envConfig.projectPath,
       projectRegion: projectRegion.value ?? envConfig.projectRegion,
       imageModel: imageModel.value ?? envConfig.imageModel,
+      projectAuthToken: projectAuthToken.value ?? envConfig.projectAuthToken,
     };
 
     if (!isComplete(config)) {

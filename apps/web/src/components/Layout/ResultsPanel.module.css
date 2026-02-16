@@ -10,9 +10,22 @@
 }
 
 .panel.closed {
-  width: 0;
-  transform: translateX(0);
+  width: auto;
   border-left: 0;
+}
+
+.panel.closed .content {
+  display: none;
+}
+
+.panel.closed .header {
+  flex-direction: column;
+  padding: var(--spacing-sm);
+  border-bottom: 0;
+}
+
+.panel.closed .title {
+  display: none;
 }
 
 .header {
@@ -35,6 +48,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
   padding: 0;
@@ -44,6 +58,8 @@
   color: var(--color-text-secondary);
   font-size: 1.25rem;
   transition: all var(--transition-fast);
+  cursor: pointer;
+  z-index: 10;
 }
 
 .toggleButton:hover {
