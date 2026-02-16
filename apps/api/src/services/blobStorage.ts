@@ -99,8 +99,8 @@ export class BlobStorageService {
     const client = await this.getClient();
     const containerClient = client.getContainerClient(this.containerName);
 
-    // Ensure container exists
-    await containerClient.createIfNotExists({ access: 'blob' });
+    // Ensure container exists (private access - storage account has public access disabled)
+    await containerClient.createIfNotExists();
 
     const blobName = `${scenarioId}/${viewpoint}.png`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);

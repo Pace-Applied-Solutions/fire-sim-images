@@ -120,19 +120,25 @@ export class Logger {
       context: mergedContext,
     };
 
-    // Log to Azure Functions context if available
+    // Log to Azure Functions context if available.
+    // Use try/catch to gracefully handle calls after function execution completes
+    // (fire-and-forget async patterns trigger "Unexpected call to 'log'" warnings).
     if (this.functionContext) {
       const contextMsg = this.formatMessage(entry);
 
-      switch (level) {
-        case 'error':
-          this.functionContext.error(contextMsg);
-          break;
-        case 'warn':
-          this.functionContext.warn(contextMsg);
-          break;
-        default:
-          this.functionContext.log(contextMsg);
+      try {
+        switch (level) {
+          case 'error':
+            this.functionContext.error(contextMsg);
+            break;
+          case 'warn':
+            this.functionContext.warn(contextMsg);
+            break;
+          default:
+            this.functionContext.log(contextMsg);
+        }
+      } catch {
+        // Context disposed — console fallback below will still fire
       }
     }
 

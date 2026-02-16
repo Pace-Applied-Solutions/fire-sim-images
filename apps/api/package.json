@@ -25,6 +25,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "applicationinsights": "^3.13.0",
     "jsonwebtoken": "^9.0.3",
+    "protobufjs": "^8.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

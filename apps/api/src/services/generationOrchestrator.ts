@@ -228,9 +228,10 @@ export class GenerationOrchestrator {
           progress.anchorImage = anchorImage;
           progress.seed = request.seed;
         } catch (error) {
+          const anchorError = error instanceof Error ? error : new Error(String(error));
           logger.error(
-            'Anchor image generation failed',
-            error instanceof Error ? error : undefined,
+            `Anchor image generation failed: ${anchorError.message}`,
+            anchorError,
             {
               viewpoint: anchorViewpoint,
             }
@@ -325,9 +326,10 @@ export class GenerationOrchestrator {
               model: metadata.model,
             });
           } catch (uploadError) {
+            const uploadErr = uploadError instanceof Error ? uploadError : new Error(String(uploadError));
             logger.error(
-              'Failed to upload image',
-              uploadError instanceof Error ? uploadError : undefined,
+              `Failed to upload image: ${uploadErr.message}`,
+              uploadErr,
               {
                 viewpoint,
               }
@@ -525,7 +527,7 @@ export class GenerationOrchestrator {
       const batchResults = await Promise.allSettled(batch);
       results.push(...batchResults);
 
-      this.context.log('Batch completed', {
+      console.log('Batch completed', {
         scenarioId,
         batchIndex: Math.floor(i / maxConcurrent) + 1,
         totalBatches: Math.ceil(tasks.length / maxConcurrent),
