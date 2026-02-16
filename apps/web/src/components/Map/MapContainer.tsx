@@ -289,7 +289,9 @@ export const MapContainer = () => {
 
     // Handle map errors
     map.on('error', (e) => {
-      if (e?.sourceId === 'nsw-vegetation') {
+      // Type guard: error events from sources may include sourceId at runtime
+      const errorWithSource = e as typeof e & { sourceId?: string };
+      if (errorWithSource?.sourceId === 'nsw-vegetation') {
         console.warn('Vegetation WMS error:', e?.error ?? e);
         return;
       }
