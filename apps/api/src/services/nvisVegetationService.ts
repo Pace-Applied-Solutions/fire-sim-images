@@ -1,18 +1,17 @@
 /**
- * Vegetation spatial query service — routes to NVIS (national) or SVTM (NSW-only).
+ * NVIS (National Vegetation Information System) vegetation query service.
  *
- * Default source: NVIS MVS 6.0 via WMS GetFeatureInfo (national coverage).
- * Fallback source: NSW SVTM via ArcGIS REST identify (NSW only, @deprecated).
+ * Queries the NVIS MVS WMS GetFeatureInfo endpoint to identify vegetation
+ * subgroups at geographic points around a fire perimeter. This replaces the
+ * NSW-only SVTM ArcGIS REST identify approach with a national WMS-based
+ * alternative.
  *
- * The active source is determined by the VEGETATION_SOURCE constant.
+ * Data source: Australian Government DCCEEW NVIS 6.0 (CC-BY 4.0)
+ * https://gis.environment.gov.au/gispubmap/ogc_services/NVIS_ext_mvs/MapServer/WMSServer
  */
 
-import { SVTM_REST_URL, VEGETATION_SOURCE } from '@fire-sim/shared';
-import type { VegetationContext, VegetationSource } from '@fire-sim/shared';
-import {
-  queryNvisVegetationContext,
-  formatNvisVegetationContextForPrompt,
-} from './nvisVegetationService.js';
+import { NVIS_WMS_MVS_URL, getNvisDescriptor } from '@fire-sim/shared';
+import type { VegetationContext } from '@fire-sim/shared';
 
 /** Compass directions for surrounding queries */
 type CompassDirection =
@@ -25,25 +24,8 @@ type CompassDirection =
   | 'southwest'
   | 'northwest';
 
-/** Raw response from the ArcGIS identify endpoint */
-interface IdentifyResult {
-  results: Array<{
-    layerId: number;
-    layerName: string;
-    attributes: {
-      'Pixel Value'?: string;
-      ClassName?: string;
-      FormationName?: string;
-      FormationNumber?: string;
-      MapName?: string;
-      VIS_ID?: string;
-    };
-  }>;
-}
-
 /**
  * Offset a geographic point by approximate metres using small-angle approximation.
- * Acceptable for offsets <10km at NSW latitudes (~-28° to -37°).
  */
 function offsetPoint(
   lng: number,
@@ -59,8 +41,6 @@ function offsetPoint(
 
 /**
  * Build compass-offset sample points around a centroid.
- *
- * Returns the centroid plus 8 compass points at `radiusM` metres out.
  */
 function buildSamplePoints(
   centroid: [number, number],
@@ -68,7 +48,7 @@ function buildSamplePoints(
 ): Array<{ direction: CompassDirection | 'center'; point: [number, number] }> {
   const [lng, lat] = centroid;
   const r = radiusM;
-  const d = r * Math.SQRT1_2; // diagonal offset
+  const d = r * Math.SQRT1_2;
 
   return [
     { direction: 'center', point: [lng, lat] },
@@ -84,29 +64,36 @@ function buildSamplePoints(
 }
 
 /**
- * Query the SVTM identify endpoint for a single point.
- * Returns the FormationName and ClassName, or null on failure.
+ * Query NVIS MVS WMS GetFeatureInfo for a single point.
+ *
+ * Builds a small BBOX around the point and queries the centre pixel.
+ * Returns the MVS subgroup name or null on failure.
  */
 async function identifyAtPoint(
-  point: [number, number],
-  bbox: [number, number, number, number]
+  point: [number, number]
 ): Promise<{ formationName: string; className: string } | null> {
   const [lng, lat] = point;
-  const [minLng, minLat, maxLng, maxLat] = bbox;
+
+  // Small bbox around the point (~200m). WMS 1.3.0 with EPSG:4326 uses lat/lng axis order.
+  const delta = 0.001;
+  const bboxStr = `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`;
 
   const params = new URLSearchParams({
-    geometry: `${lng},${lat}`,
-    geometryType: 'esriGeometryPoint',
-    sr: '4283',
-    layers: 'all',
-    tolerance: '5',
-    mapExtent: `${minLng},${minLat},${maxLng},${maxLat}`,
-    imageDisplay: '512,512,96',
-    returnGeometry: 'false',
-    f: 'json',
+    SERVICE: 'WMS',
+    VERSION: '1.3.0',
+    REQUEST: 'GetFeatureInfo',
+    LAYERS: '0',
+    QUERY_LAYERS: '0',
+    INFO_FORMAT: 'application/json',
+    CRS: 'EPSG:4326',
+    BBOX: bboxStr,
+    WIDTH: '101',
+    HEIGHT: '101',
+    I: '50',
+    J: '50',
   });
 
-  const url = `${SVTM_REST_URL}/identify?${params}`;
+  const url = `${NVIS_WMS_MVS_URL}?${params}`;
 
   try {
     const controller = new AbortController();
@@ -115,78 +102,69 @@ async function identifyAtPoint(
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
 
-    if (!response.ok) {
-      return null;
-    }
+    if (!response.ok) return null;
 
-    const data = (await response.json()) as IdentifyResult;
+    const data = (await response.json()) as Record<string, unknown>;
 
-    if (data.results && data.results.length > 0) {
-      const attrs = data.results[0].attributes;
+    // ESRI WMS GetFeatureInfo JSON: features array or results array
+    const features = (data?.features ?? data?.results) as
+      | Array<{
+          properties?: Record<string, string>;
+          attributes?: Record<string, string>;
+        }>
+      | undefined;
+    if (features && features.length > 0) {
+      const props = features[0].properties ?? features[0].attributes ?? {};
+      const mvsName =
+        props['MVS_NAME'] ??
+        props['Pixel Value'] ??
+        props['MVS_100_NA'] ??
+        props['Label'] ??
+        'Unknown';
+      const mvgName = props['MVG_NAME'] ?? props['MVG'] ?? mvsName;
+
       return {
-        formationName: attrs.FormationName || 'Unknown',
-        className: attrs.ClassName || 'Unknown',
+        formationName: String(mvsName),
+        className: String(mvgName),
       };
     }
 
     return null;
   } catch {
-    // Network error, timeout, or parse failure — non-fatal
     return null;
   }
 }
 
 /**
- * Query vegetation formations at multiple points around a fire perimeter.
+ * Query NVIS vegetation context at multiple points around a fire perimeter.
  *
- * Routes to NVIS (national) or SVTM (NSW-only) based on the VEGETATION_SOURCE constant.
+ * Queries the NVIS MVS WMS GetFeatureInfo endpoint at the centroid and 8 compass
+ * points. Queries run in parallel for speed.
  *
  * @param centroid - [lng, lat] of the fire perimeter centre
- * @param bbox - [minLng, minLat, maxLng, maxLat] bounding box of the perimeter
+ * @param _bbox - bounding box (unused for NVIS WMS but kept for API compatibility)
  * @param radiusM - Offset distance in metres for compass points (default: 500m)
- * @param source - Override the default vegetation source
  * @returns VegetationContext with formation data for each direction
  */
-export async function queryVegetationContext(
+export async function queryNvisVegetationContext(
   centroid: [number, number],
-  bbox: [number, number, number, number],
-  radiusM = 500,
-  source: VegetationSource = VEGETATION_SOURCE
+  _bbox: [number, number, number, number],
+  radiusM = 500
 ): Promise<VegetationContext | null> {
-  // Route to NVIS by default
-  if (source === 'nvis') {
-    return queryNvisVegetationContext(centroid, bbox, radiusM);
-  }
-
-  // --- SVTM legacy path (NSW only) ---
-  // Expand bbox slightly to ensure all query points fall within the map extent
-  const bufferLng = (bbox[2] - bbox[0]) * 0.5;
-  const bufferLat = (bbox[3] - bbox[1]) * 0.5;
-  const expandedBbox: [number, number, number, number] = [
-    bbox[0] - bufferLng,
-    bbox[1] - bufferLat,
-    bbox[2] + bufferLng,
-    bbox[3] + bufferLat,
-  ];
-
   const samplePoints = buildSamplePoints(centroid, radiusM);
 
-  // Run all 9 queries in parallel
   const results = await Promise.all(
     samplePoints.map(async ({ direction, point }) => ({
       direction,
-      result: await identifyAtPoint(point, expandedBbox),
+      result: await identifyAtPoint(point),
     }))
   );
 
-  // Extract center result
   const centerResult = results.find((r) => r.direction === 'center')?.result;
   if (!centerResult) {
-    // If even the center query failed, the service is likely down
     return null;
   }
 
-  // Build surrounding map
   const surrounding: VegetationContext['surrounding'] = {};
   for (const { direction, result } of results) {
     if (direction !== 'center' && result) {
@@ -194,7 +172,6 @@ export async function queryVegetationContext(
     }
   }
 
-  // Collect unique formation names
   const allFormations = results
     .map((r) => r.result?.formationName)
     .filter((f): f is string => f != null && f !== 'Unknown');
@@ -205,31 +182,23 @@ export async function queryVegetationContext(
     centerClassName: centerResult.className,
     surrounding,
     uniqueFormations,
-    dataSource: 'NSW SVTM C2.0.M2.2 via ArcGIS REST',
+    dataSource: 'NVIS MVS 6.0 via WMS GetFeatureInfo (DCCEEW)',
   };
 }
 
 /**
- * Format a VegetationContext into a natural language description
+ * Format an NVIS VegetationContext into a natural language description
  * suitable for inclusion in an AI image generation prompt.
- *
- * Routes to the NVIS formatter when the data source indicates NVIS.
  */
-export function formatVegetationContextForPrompt(
-  ctx: VegetationContext,
-  source: VegetationSource = VEGETATION_SOURCE
-): string {
-  // Use the NVIS-specific formatter for richer descriptors
-  if (source === 'nvis' || ctx.dataSource?.includes('NVIS')) {
-    return formatNvisVegetationContextForPrompt(ctx);
-  }
-
-  // --- SVTM legacy formatter ---
+export function formatNvisVegetationContextForPrompt(ctx: VegetationContext): string {
   const lines: string[] = [];
 
-  lines.push(`Vegetation at the fire location: ${ctx.centerFormation}`);
+  const descriptor = getNvisDescriptor(ctx.centerFormation);
+  lines.push(`Vegetation at the fire location: ${ctx.centerFormation}.`);
+  lines.push(`Description: ${descriptor}`);
+
   if (ctx.centerClassName && ctx.centerClassName !== ctx.centerFormation) {
-    lines.push(`(specifically: ${ctx.centerClassName})`);
+    lines.push(`(Major Vegetation Group: ${ctx.centerClassName})`);
   }
 
   const directionEntries = Object.entries(ctx.surrounding) as Array<[CompassDirection, string]>;
@@ -247,7 +216,7 @@ export function formatVegetationContextForPrompt(
 
   if (ctx.uniqueFormations.length > 1) {
     lines.push(
-      `This area contains a mix of ${ctx.uniqueFormations.length} vegetation formations: ${ctx.uniqueFormations.join(', ')}.`
+      `This area contains a mix of ${ctx.uniqueFormations.length} vegetation types: ${ctx.uniqueFormations.join(', ')}.`
     );
     lines.push(
       'Ensure the generated image shows the correct vegetation type in each part of the landscape — ' +

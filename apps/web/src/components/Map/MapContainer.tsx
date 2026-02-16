@@ -6,7 +6,7 @@ import centroid from '@turf/centroid';
 import bbox from '@turf/bbox';
 import type { Feature, Polygon } from 'geojson';
 import type { FirePerimeter, ViewPoint } from '@fire-sim/shared';
-import { SVTM_WMS_URL } from '@fire-sim/shared';
+import { NVIS_WMS_MVS_URL } from '@fire-sim/shared';
 import { useAppStore } from '../../store/appStore';
 import { useToastStore } from '../../store/toastStore';
 import { captureViewpointScreenshots, captureVegetationScreenshot } from '../../utils/mapCapture';
@@ -18,9 +18,18 @@ import {
   MAX_PITCH,
   TERRAIN_EXAGGERATION,
 } from '../../config/mapbox';
+import { VegetationTooltip } from './VegetationTooltip';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import styles from './MapContainer.module.css';
+
+/** Vegetation identify result from NVIS GetFeatureInfo */
+interface VegetationIdentifyResult {
+  subgroup: string;
+  group?: string;
+  lngLat: [number, number];
+  point: { x: number; y: number };
+}
 
 type ViewpointPreset =
   | 'helicopter_north'
@@ -79,6 +88,9 @@ export const MapContainer = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [hintDismissed, setHintDismissed] = useState(false);
   const [hasStartedDraw, setHasStartedDraw] = useState(false);
+  const [vegIdentifyResult, setVegIdentifyResult] = useState<VegetationIdentifyResult | null>(null);
+  const [vegIdentifyLoading, setVegIdentifyLoading] = useState(false);
+  const vegIdentifyAbortRef = useRef<AbortController | null>(null);
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
@@ -94,14 +106,134 @@ export const MapContainer = () => {
     map.getCanvas().style.cursor = cursor ?? '';
   }, []);
 
-  // Toggle NSW SVTM vegetation overlay visibility
+  // Toggle NVIS national vegetation overlay visibility
   const toggleVegetationOverlay = useCallback(() => {
     const map = mapRef.current;
-    if (!map || !map.getLayer('nsw-vegetation-layer')) return;
+    if (!map || !map.getLayer('nvis-vegetation-layer')) return;
     const next = !showVegetation;
-    map.setLayoutProperty('nsw-vegetation-layer', 'visibility', next ? 'visible' : 'none');
+    map.setLayoutProperty('nvis-vegetation-layer', 'visibility', next ? 'visible' : 'none');
     setShowVegetation(next);
+    if (!next) {
+      setVegIdentifyResult(null);
+    }
   }, [showVegetation]);
+
+  /**
+   * Handle click-to-identify on the vegetation overlay.
+   * Sends a WMS GetFeatureInfo request to the NVIS MVS service.
+   */
+  const handleVegetationIdentify = useCallback(
+    async (e: mapboxgl.MapMouseEvent) => {
+      if (!showVegetation) return;
+
+      // Cancel any in-flight request
+      vegIdentifyAbortRef.current?.abort();
+      const controller = new AbortController();
+      vegIdentifyAbortRef.current = controller;
+
+      const { lng, lat } = e.lngLat;
+      const point = e.point;
+
+      // Build a small bbox around the clicked point (WMS 1.3.0 uses lat/lng order for EPSG:4326)
+      const delta = 0.001; // ~100m at mid-latitudes
+      const bboxStr = `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`;
+
+      const params = new URLSearchParams({
+        SERVICE: 'WMS',
+        VERSION: '1.3.0',
+        REQUEST: 'GetFeatureInfo',
+        LAYERS: '0',
+        QUERY_LAYERS: '0',
+        INFO_FORMAT: 'application/json',
+        CRS: 'EPSG:4326',
+        BBOX: bboxStr,
+        WIDTH: '101',
+        HEIGHT: '101',
+        I: '50',
+        J: '50',
+      });
+
+      const url = `${NVIS_WMS_MVS_URL}?${params}`;
+      setVegIdentifyLoading(true);
+
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          setVegIdentifyResult(null);
+          return;
+        }
+
+        const data = await response.json();
+
+        // ESRI WMS GetFeatureInfo JSON response typically contains features array
+        const features = data?.features ?? data?.results;
+        if (features && features.length > 0) {
+          const props = features[0].properties ?? features[0].attributes ?? {};
+          const subgroup =
+            props['MVS_NAME'] ??
+            props['Pixel Value'] ??
+            props['MVS_100_NA'] ??
+            props['Label'] ??
+            'Unknown vegetation type';
+          const group = props['MVG_NAME'] ?? props['MVG'] ?? undefined;
+
+          setVegIdentifyResult({
+            subgroup: String(subgroup),
+            group: group ? String(group) : undefined,
+            lngLat: [lng, lat],
+            point: { x: point.x, y: point.y },
+          });
+        } else {
+          setVegIdentifyResult({
+            subgroup: 'No vegetation data at this location',
+            lngLat: [lng, lat],
+            point: { x: point.x, y: point.y },
+          });
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        console.warn('NVIS GetFeatureInfo failed:', err);
+        setVegIdentifyResult(null);
+      } finally {
+        if (!controller.signal.aborted) {
+          setVegIdentifyLoading(false);
+        }
+      }
+    },
+    [showVegetation]
+  );
+
+  // Dismiss the vegetation tooltip
+  const handleDismissVegTooltip = useCallback(() => {
+    setVegIdentifyResult(null);
+  }, []);
+
+  // Register / deregister click handler for vegetation identify
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isMapLoaded) return;
+
+    if (showVegetation) {
+      map.on('click', handleVegetationIdentify);
+    }
+
+    return () => {
+      map.off('click', handleVegetationIdentify);
+    };
+  }, [isMapLoaded, showVegetation, handleVegetationIdentify]);
+
+  // Dismiss tooltip on Escape key
+  useEffect(() => {
+    if (!vegIdentifyResult) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setVegIdentifyResult(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [vegIdentifyResult]);
 
   const flyToLocation = useCallback((coords: [number, number]) => {
     const map = mapRef.current;
@@ -352,24 +484,32 @@ export const MapContainer = () => {
         });
       }
 
-      // Add NSW State Vegetation Type Map (SVTM) as a WMS raster overlay
-      // CC-BY 4.0 — publicly accessible, CORS enabled
-      if (!map.getSource('nsw-vegetation')) {
-        const wmsUrl = `${SVTM_WMS_URL}?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
-        map.addSource('nsw-vegetation', {
+      // Add NVIS (National Vegetation Information System) as a WMS raster overlay
+      // CC-BY 4.0 — Australian Government DCCEEW, CORS enabled
+      if (!map.getSource('nvis-vegetation')) {
+        const wmsUrl = `${NVIS_WMS_MVS_URL}?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
+        map.addSource('nvis-vegetation', {
           type: 'raster',
           tiles: [wmsUrl],
           tileSize: 256,
         });
 
         map.addLayer({
-          id: 'nsw-vegetation-layer',
+          id: 'nvis-vegetation-layer',
           type: 'raster',
-          source: 'nsw-vegetation',
+          source: 'nvis-vegetation',
           paint: { 'raster-opacity': 0.65 },
           layout: { visibility: 'none' },
         });
       }
+
+      // NSW SVTM overlay — disabled in favour of NVIS national coverage.
+      // To re-enable, uncomment the block below and add SVTM_WMS_URL import.
+      // if (!map.getSource('nsw-vegetation')) {
+      //   const wmsUrl = `${SVTM_WMS_URL}?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
+      //   map.addSource('nsw-vegetation', { type: 'raster', tiles: [wmsUrl], tileSize: 256 });
+      //   map.addLayer({ id: 'nsw-vegetation-layer', type: 'raster', source: 'nsw-vegetation', paint: { 'raster-opacity': 0.65 }, layout: { visibility: 'none' } });
+      // }
 
       setIsMapLoaded(true);
       setMapError(null);
@@ -380,8 +520,8 @@ export const MapContainer = () => {
     map.on('error', (e) => {
       // Type guard: error events from sources may include sourceId at runtime
       const errorWithSource = e as typeof e & { sourceId?: string };
-      if (errorWithSource?.sourceId === 'nsw-vegetation') {
-        console.warn('Vegetation WMS error:', e?.error ?? e);
+      if (errorWithSource?.sourceId === 'nvis-vegetation') {
+        console.warn('NVIS vegetation WMS error:', e?.error ?? e);
         return;
       }
 
@@ -937,8 +1077,8 @@ export const MapContainer = () => {
                 aria-pressed={showVegetation}
                 title={
                   showVegetation
-                    ? 'Hide vegetation overlay (NSW SVTM)'
-                    : 'Show vegetation overlay (NSW SVTM)'
+                    ? 'Hide vegetation overlay (NVIS National)'
+                    : 'Show vegetation overlay (NVIS National)'
                 }
                 aria-label={
                   showVegetation ? 'Hide vegetation overlay' : 'Show vegetation overlay'
@@ -957,6 +1097,14 @@ export const MapContainer = () => {
           <div className={styles.mapErrorTitle}>Map unavailable</div>
           <p className={styles.mapErrorText}>{mapError}</p>
         </div>
+      )}
+
+      {vegIdentifyResult && (
+        <VegetationTooltip
+          result={vegIdentifyResult}
+          loading={vegIdentifyLoading}
+          onClose={handleDismissVegTooltip}
+        />
       )}
     </div>
   );
