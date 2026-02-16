@@ -58,3 +58,17 @@ output name string = staticWebApp.name
 output defaultHostname string = staticWebApp.properties.defaultHostname
 output url string = 'https://${staticWebApp.properties.defaultHostname}'
 output principalId string = staticWebApp.identity.principalId
+
+// Input parameter for linking the Function App (for BYOF pattern)
+@description('Resource ID of the Function App to link (optional)')
+param linkedFunctionAppResourceId string = ''
+
+// Link the Function App to the Static Web App if provided
+resource linkedBackend 'Microsoft.Web/staticSites/linkedBackends@2023-01-01' = if (linkedFunctionAppResourceId != '') {
+  parent: staticWebApp
+  name: 'api-backend'
+  properties: {
+    backendResourceId: linkedFunctionAppResourceId
+    region: location
+  }
+}

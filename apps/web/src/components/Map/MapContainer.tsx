@@ -141,8 +141,8 @@ export const MapContainer = () => {
         SERVICE: 'WMS',
         VERSION: '1.3.0',
         REQUEST: 'GetFeatureInfo',
-        LAYERS: '0',
-        QUERY_LAYERS: '0',
+        LAYERS: 'NVIS_ext_mvs',
+        QUERY_LAYERS: 'NVIS_ext_mvs',
         INFO_FORMAT: 'application/json',
         CRS: 'EPSG:4326',
         BBOX: bboxStr,
@@ -487,7 +487,7 @@ export const MapContainer = () => {
       // CC-BY 4.0 — Australian Government DCCEEW. Proxied through /api/nvis-wms-proxy
       // because gis.environment.gov.au does not send CORS headers.
       if (!map.getSource('nvis-vegetation')) {
-        const wmsUrl = `/api/nvis-wms-proxy?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
+        const wmsUrl = `/api/nvis-wms-proxy?service=WMS&request=GetMap&layers=NVIS_ext_mvs&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`;
         map.addSource('nvis-vegetation', {
           type: 'raster',
           tiles: [wmsUrl],

@@ -170,10 +170,10 @@ export const VEGETATION_SOURCE: 'nvis' | 'svtm' = 'nvis';
  * Coverage: All Australian states and territories.
  */
 export const NVIS_WMS_MVS_URL =
-  'https://gis.environment.gov.au/gispubmap/ogc_services/NVIS_ext_mvs/MapServer/WMSServer';
+  'https://gis.environment.gov.au/gispubmap/services/ogc_services/NVIS_ext_mvs/MapServer/WMSServer';
 
 export const NVIS_WMS_MVG_URL =
-  'https://gis.environment.gov.au/gispubmap/ogc_services/NVIS_ext_mvg/MapServer/WMSServer';
+  'https://gis.environment.gov.au/gispubmap/services/ogc_services/NVIS_ext_mvg/MapServer/WMSServer';
 
 /**
  * NVIS Major Vegetation Subgroup (MVS) descriptors.
