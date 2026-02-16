@@ -654,6 +654,8 @@ Update this section after each issue or change.
     - **Resilience:** All vegetation operations are non-fatal — wrapped in try/catch with warning logs, generation proceeds without vegetation data if NSW government server is unavailable.
     - **Generation log:** Vegetation context and screenshot presence are recorded in the generation log for audit and reproducibility.
     - All builds pass (shared, API, web), TypeScript strict mode compliant.
+    - **Map error handling:** WMS tile errors from the vegetation overlay no longer trigger the full "Map unavailable" overlay; errors are logged and the base map remains usable.
+    - **WMS fix:** Updated the SVTM WMS tile template to EPSG:3857 with `{bbox-epsg-3857}` so Mapbox substitutes the bbox and the WMS server no longer returns 400 errors.
 
 ## 14. Change Control Process
 
