@@ -169,30 +169,34 @@ export const MapContainer = () => {
 
     // Setup 3D terrain once style loads
     map.on('load', () => {
-      // Add Mapbox terrain source
-      map.addSource('mapbox-dem', {
-        type: 'raster-dem',
-        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-        tileSize: 512,
-        maxzoom: 14,
-      });
+      // Add Mapbox terrain source (check if it already exists to avoid duplicate errors)
+      if (!map.getSource('mapbox-dem')) {
+        map.addSource('mapbox-dem', {
+          type: 'raster-dem',
+          url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+          tileSize: 512,
+          maxzoom: 14,
+        });
 
-      // Enable 3D terrain
-      map.setTerrain({
-        source: 'mapbox-dem',
-        exaggeration: TERRAIN_EXAGGERATION,
-      });
+        // Enable 3D terrain
+        map.setTerrain({
+          source: 'mapbox-dem',
+          exaggeration: TERRAIN_EXAGGERATION,
+        });
+      }
 
-      // Add sky layer for atmosphere effect
-      map.addLayer({
-        id: 'sky',
-        type: 'sky',
-        paint: {
-          'sky-type': 'atmosphere',
-          'sky-atmosphere-sun': [0.0, 90.0],
-          'sky-atmosphere-sun-intensity': 15,
-        },
-      });
+      // Add sky layer for atmosphere effect (check if it already exists)
+      if (!map.getLayer('sky')) {
+        map.addLayer({
+          id: 'sky',
+          type: 'sky',
+          paint: {
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-sun': [0.0, 90.0],
+            'sky-atmosphere-sun-intensity': 15,
+          },
+        });
+      }
 
       setIsMapLoaded(true);
       setMapError(null);
