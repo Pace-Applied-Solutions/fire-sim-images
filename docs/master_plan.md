@@ -658,6 +658,19 @@ Update this section after each issue or change.
     - **Map error handling:** WMS tile errors from the vegetation overlay no longer trigger the full "Map unavailable" overlay; errors are logged and the base map remains usable.
     - **WMS fix:** Updated the SVTM WMS tile template to EPSG:3857 with `{bbox-epsg-3857}` so Mapbox substitutes the bbox and the WMS server no longer returns 400 errors.
     - **Anchor sequencing:** Default generation now starts with a truck-level ground view, follows with other ground views, and finishes with aerial; anchor selection prefers ground-level viewpoints.
+  - **Mobile Responsive Layout (Feb 16, 2026):**
+    - Redesigned panel interface for mobile viewports ≤768px to ensure usability on small devices
+    - Converted left/right side panels to bottom drawers that slide up from bottom
+    - Created MobileTabBar component with three tabs: Inputs (⚙️), Map (🗺️), Results (🖼️)
+    - Only one panel visible at a time on mobile to maximize map visibility
+    - Panels positioned above 64px tab bar with max heights of 60vh (inputs) and 70vh (results)
+    - Touch-optimized controls with 44px minimum tap targets
+    - Panel headers tappable to collapse/expand on mobile
+    - Removed panel backdrop overlay on mobile (cleaner UX with tab bar navigation)
+    - Preserved desktop/tablet experience (>768px unchanged)
+    - Added comprehensive documentation: `docs/current_state/mobile_responsive_layout.md`
+    - All builds passing, no horizontal overflow, proper touch interaction ergonomics
+    - Acceptance criteria met: functional UI on mobile, no forced zoom, all controls accessible
 
 ## 14. Change Control Process
 
