@@ -130,7 +130,7 @@ module staticWebApp './modules/staticWebApp.bicep' = {
       FOUNDRY_DEPLOYMENT_NAME: ''
       IMAGE_MODEL_ENDPOINT: imageModelEndpoint
       IMAGE_MODEL_DEPLOYMENT: imageModelDeployment
-      KEY_VAULT_URI: 'https://${keyVaultName}.${environment().suffixes.keyvaultDns}/'
+      KEY_VAULT_URI: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/'
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.outputs.connectionString
     }
   }
@@ -204,7 +204,7 @@ module functionApp './modules/functionApp.bicep' = {
     tags: tags
     storageAccountName: storage.outputs.name
     appInsightsConnectionString: appInsights.outputs.connectionString
-    keyVaultUri: 'https://${keyVaultName}.${environment().suffixes.keyvaultDns}/'
+    keyVaultUri: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/'
     maximumInstanceCount: functionAppMaxInstanceCount
     instanceMemoryMB: functionAppInstanceMemoryMB
     runtimeName: 'node'
