@@ -78,6 +78,8 @@ export const MapContainer = () => {
   const [currentDirection, setCurrentDirection] = useState<ViewDirection>('north');
   const [showVegetation, setShowVegetation] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [hintDismissed, setHintDismissed] = useState(false);
+  const [hasStartedDraw, setHasStartedDraw] = useState(false);
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
@@ -170,11 +172,21 @@ export const MapContainer = () => {
     setMapCursor('crosshair');
   }, [setMapCursor]);
 
+  const handleStartDrawing = useCallback(() => {
+    startPolygonDraw();
+    setHasStartedDraw(true);
+  }, [startPolygonDraw]);
+
   const clearPerimeter = useCallback(() => {
     if (!drawRef.current) return;
     drawRef.current.deleteAll();
     setMapCursor(null);
+    setHasStartedDraw(false);
   }, [setMapCursor]);
+
+  const handleDismissHint = useCallback(() => {
+    setHintDismissed(true);
+  }, []);
 
   useEffect(() => {
     requestUserLocation(true);
@@ -794,6 +806,8 @@ export const MapContainer = () => {
     flyToLocation(userLocation);
   }, [flyToLocation, isMapLoaded, userLocation]);
 
+  const showToolbarHint = isMapLoaded && !perimeter && !hintDismissed;
+
   return (
     <div className={styles.container}>
       <div ref={mapContainerRef} className={styles.map} />
@@ -801,7 +815,7 @@ export const MapContainer = () => {
       <div className={styles.drawControls}>
         <button
           className={styles.drawButton}
-          onClick={startPolygonDraw}
+          onClick={handleStartDrawing}
           title="Draw perimeter"
           aria-label="Draw fire perimeter"
           type="button"
@@ -819,6 +833,28 @@ export const MapContainer = () => {
         </button>
       </div>
 
+      {showToolbarHint && (
+        <div className={styles.toolbarHint}>
+          <div className={styles.toolbarHintText}>
+            <div className={styles.toolbarHintTitle}>
+              {hasStartedDraw ? 'Click points on the map to draw a shape.' : 'Start drawing with ⬠'}
+            </div>
+            {!hasStartedDraw && <p>Click on the map to place the perimeter</p>}
+          </div>
+          <button
+            type="button"
+            className={styles.toolbarHintClose}
+            aria-label="Dismiss drawing hint"
+            onClick={handleDismissHint}
+          >
+            ×
+          </button>
+          <div className={styles.toolbarHintArrow} aria-hidden="true">
+            →
+          </div>
+        </div>
+      )}
+
       {/* Map Toolbar */}
       {isMapLoaded && (
         <div className={styles.mapToolbar}>
@@ -828,17 +864,6 @@ export const MapContainer = () => {
               onGeolocationRequest={handleGeolocationRequest}
             />
           </div>
-          {!perimeter && (
-            <div className={styles.toolbarHint}>
-              <div className={styles.toolbarHintText}>
-                <div className={styles.toolbarHintTitle}>Start drawing with ⬠</div>
-                <p>Click on the map to place the perimeter</p>
-              </div>
-              <div className={styles.toolbarHintArrow} aria-hidden="true">
-                →
-              </div>
-            </div>
-          )}
           {metadata && (
             <div className={styles.viewpointControls}>
               <div className={styles.viewpointButtons}>
