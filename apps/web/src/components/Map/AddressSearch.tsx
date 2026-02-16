@@ -63,6 +63,7 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
   const [results, setResults] = useState<MapboxFeature[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
 
@@ -188,11 +189,40 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
   );
 
   /**
+   * Handle expanding the search box
+   */
+  const handleExpand = useCallback(() => {
+    setIsExpanded(true);
+    // Focus the input after expansion animation
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150);
+  }, []);
+
+  /**
+   * Handle collapsing the search box
+   */
+  const handleCollapse = useCallback(() => {
+    setIsExpanded(false);
+    setIsOpen(false);
+    setQuery('');
+    setResults([]);
+    setError(null);
+    setSelectedIndex(-1);
+  }, []);
+
+  /**
    * Handle keyboard navigation
    */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!isOpen || results.length === 0) {
+        // If Escape pressed, collapse the search box
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          handleCollapse();
+          return;
+        }
         // If Enter pressed with no dropdown, try to geocode the query directly
         if (e.key === 'Enter' && query.trim()) {
           fetchGeocodingResults(query.trim());
@@ -222,18 +252,23 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
           e.preventDefault();
           setIsOpen(false);
           setSelectedIndex(-1);
-          inputRef.current?.blur();
+          // If query is empty, collapse the search box
+          if (!query.trim()) {
+            handleCollapse();
+          } else {
+            inputRef.current?.blur();
+          }
           break;
 
         default:
           break;
       }
     },
-    [isOpen, results, selectedIndex, query, handleSelectResult, fetchGeocodingResults]
+    [isOpen, results, selectedIndex, query, handleSelectResult, fetchGeocodingResults, handleCollapse]
   );
 
   /**
-   * Handle click outside to close dropdown
+   * Handle click outside to close dropdown and collapse if empty
    */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -244,6 +279,10 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
         !inputRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        // Collapse if the query is empty
+        if (!query.trim()) {
+          setIsExpanded(false);
+        }
       }
     };
 
@@ -251,7 +290,7 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [query]);
 
   /**
    * Cleanup debounce timer and abort controller on unmount
@@ -269,64 +308,91 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
 
   return (
     <div className={`${styles.container} ${className || ''}`}>
-      <div className={styles.searchBox}>
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Search for address or location..."
-          className={styles.input}
-          aria-label="Search for address or location"
-          aria-autocomplete="list"
-          aria-controls="search-results"
-          aria-expanded={isOpen}
-          aria-activedescendant={selectedIndex >= 0 ? `result-${selectedIndex}` : undefined}
-        />
+      {!isExpanded ? (
+        // Collapsed state: show search icon button
+        <button
+          type="button"
+          onClick={handleExpand}
+          className={styles.searchIconButton}
+          title="Search for location"
+          aria-label="Open address search"
+          aria-expanded={false}
+        >
+          🔍
+        </button>
+      ) : (
+        // Expanded state: show full search box
+        <>
+          <div className={styles.searchBox}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Search for address or location..."
+              className={styles.input}
+              aria-label="Search for address or location"
+              aria-autocomplete="list"
+              aria-controls="search-results"
+              aria-expanded={isOpen}
+              aria-activedescendant={selectedIndex >= 0 ? `result-${selectedIndex}` : undefined}
+            />
 
-        {isLoading && (
-          <div className={styles.loadingSpinner} aria-label="Loading results">
-            ⏳
-          </div>
-        )}
+            {isLoading && (
+              <div className={styles.loadingSpinner} aria-label="Loading results">
+                ⏳
+              </div>
+            )}
 
-        {onGeolocationRequest && (
-          <button
-            type="button"
-            onClick={onGeolocationRequest}
-            className={styles.geolocateButton}
-            title="Use my location"
-            aria-label="Use my location"
-          >
-            📍
-          </button>
-        )}
-      </div>
+            {onGeolocationRequest && (
+              <button
+                type="button"
+                onClick={onGeolocationRequest}
+                className={styles.geolocateButton}
+                title="Use my location"
+                aria-label="Use my location"
+              >
+                📍
+              </button>
+            )}
 
-      {error && (
-        <div className={styles.error} role="alert">
-          {error}
-        </div>
-      )}
-
-      {isOpen && results.length > 0 && (
-        <div ref={dropdownRef} id="search-results" className={styles.dropdown} role="listbox">
-          {results.map((feature, index) => (
             <button
-              key={feature.id}
-              id={`result-${index}`}
               type="button"
-              className={`${styles.result} ${index === selectedIndex ? styles.resultSelected : ''}`}
-              onClick={() => handleSelectResult(feature)}
-              role="option"
-              aria-selected={index === selectedIndex}
+              onClick={handleCollapse}
+              className={styles.closeButton}
+              title="Close search"
+              aria-label="Close address search"
             >
-              <div className={styles.resultText}>{feature.text}</div>
-              <div className={styles.resultContext}>{feature.place_name}</div>
+              ✕
             </button>
-          ))}
-        </div>
+          </div>
+
+          {error && (
+            <div className={styles.error} role="alert">
+              {error}
+            </div>
+          )}
+
+          {isOpen && results.length > 0 && (
+            <div ref={dropdownRef} id="search-results" className={styles.dropdown} role="listbox">
+              {results.map((feature, index) => (
+                <button
+                  key={feature.id}
+                  id={`result-${index}`}
+                  type="button"
+                  className={`${styles.result} ${index === selectedIndex ? styles.resultSelected : ''}`}
+                  onClick={() => handleSelectResult(feature)}
+                  role="option"
+                  aria-selected={index === selectedIndex}
+                >
+                  <div className={styles.resultText}>{feature.text}</div>
+                  <div className={styles.resultContext}>{feature.place_name}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
