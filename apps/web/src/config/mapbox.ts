@@ -26,10 +26,10 @@ export const DEFAULT_CENTER: [number, number] = [150.5, -33.8];
 export const DEFAULT_ZOOM = 10;
 
 /**
- * Mapbox style URL for satellite streets view.
- * Provides satellite imagery with roads, labels, and terrain context.
+ * Mapbox style URL for custom fire simulation view.
+ * Uses a custom style with optimized colors and visibility for fire scenarios.
  */
-export const MAPBOX_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12';
+export const MAPBOX_STYLE = 'mapbox://styles/richardbt/cmf7esv62000n01qw0khz891t';
 
 /**
  * Maximum pitch angle for 3D terrain views (degrees).
