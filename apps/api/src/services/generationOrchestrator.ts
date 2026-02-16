@@ -155,7 +155,7 @@ export class GenerationOrchestrator {
         templateVersion: promptSet.templateVersion,
       });
 
-      // Step 1b: Query NSW SVTM vegetation context at the fire perimeter
+      // Step 1b: Query NVIS vegetation context at the fire perimeter
       let vegetationContext: VegetationContext | null = null;
       let vegetationPromptText = '';
       try {
@@ -173,21 +173,21 @@ export class GenerationOrchestrator {
           Math.max(...lats),
         ];
 
-        logger.info('Querying NSW SVTM vegetation context', { centroid });
+        logger.info('Querying NVIS vegetation context', { centroid });
         vegetationContext = await queryVegetationContext(centroid, perimeterBbox);
 
         if (vegetationContext) {
           vegetationPromptText = formatVegetationContextForPrompt(vegetationContext);
-          logger.info('SVTM vegetation context resolved', {
+          logger.info('NVIS vegetation context resolved', {
             centerFormation: vegetationContext.centerFormation,
             uniqueFormations: vegetationContext.uniqueFormations,
           });
         } else {
-          logger.warn('SVTM vegetation context unavailable — continuing without');
+          logger.warn('NVIS vegetation context unavailable — continuing without');
         }
       } catch (vegError) {
         // Non-fatal — continue without vegetation context
-        logger.warn('SVTM vegetation query failed', {
+        logger.warn('NVIS vegetation query failed', {
           error: vegError instanceof Error ? vegError.message : String(vegError),
         });
       }

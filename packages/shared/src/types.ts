@@ -131,6 +131,13 @@ export interface VegetationContext {
   dataSource: string;
 }
 
+/**
+ * Active vegetation data source selector.
+ * - 'nvis' — National Vegetation Information System (nationwide coverage)
+ * - 'svtm' — NSW State Vegetation Type Map (high-res NSW only, currently disabled)
+ */
+export type VegetationSource = 'nvis' | 'svtm';
+
 export interface GenerationRequest {
   perimeter: FirePerimeter;
   inputs: ScenarioInputs;
