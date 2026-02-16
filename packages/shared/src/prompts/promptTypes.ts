@@ -69,6 +69,8 @@ export interface PromptData {
   fireExtentNorthSouthKm: number;
   /** Fire extent east to west in kilometres */
   fireExtentEastWestKm: number;
+  /** Locality description (e.g., "near Bungendore, New South Wales") */
+  locality?: string;
 }
 
 /**

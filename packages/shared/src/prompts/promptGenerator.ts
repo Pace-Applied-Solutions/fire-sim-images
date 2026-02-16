@@ -245,6 +245,7 @@ function preparePromptData(request: GenerationRequest): PromptData {
     fireAreaHectares: areaHectares,
     fireExtentNorthSouthKm: extentNorthSouthKm,
     fireExtentEastWestKm: extentEastWestKm,
+    locality: geoContext.locality,
   };
 }
 

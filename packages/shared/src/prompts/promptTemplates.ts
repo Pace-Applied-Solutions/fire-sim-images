@@ -139,13 +139,13 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.4.0).
+ * Default prompt template (v1.5.0).
  * Structured template for generating photorealistic bushfire scenario prompts.
- * Updated to include fire size/scale information and emphasize matching mapped area dimensions.
+ * Updated to include locality context for better geographic understanding.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.4.0',
+  version: '1.5.0',
   sections: {
     // Step 1 — Establish the photographic style and intent (Gemini best practice:
     // provide context, use camera/lens language, describe purpose)
@@ -160,13 +160,21 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
 
     // Step 2 — Describe the scene narratively (Gemini best practice: hyper-specific,
     // narrative description over keyword lists)
-    scene: (data) =>
-      `First, establish the landscape with strict adherence to the reference imagery. The terrain is ${data.terrainDescription}, ` +
-      `covered with ${data.vegetationDescriptor}, ` +
-      `at approximately ${data.elevation} metres elevation in New South Wales, Australia. ` +
-      `${data.nearbyFeatures} ` +
-      `Preserve every topographic feature exactly where it appears in the reference — hills, gullies, flat paddocks, tree lines, bare earth patches, fence lines, and any built structures. ` +
-      `If the reference shows a building, road, or clearing, it must appear in the generated image in the same location with the same scale and orientation.`,
+    scene: (data) => {
+      const localityContext = data.locality 
+        ? ` This location is ${data.locality}, Australia.` 
+        : ' This location is in New South Wales, Australia.';
+      
+      return (
+        `First, establish the landscape with strict adherence to the reference imagery.${localityContext} ` +
+        `The terrain is ${data.terrainDescription}, ` +
+        `covered with ${data.vegetationDescriptor}, ` +
+        `at approximately ${data.elevation} metres elevation. ` +
+        `${data.nearbyFeatures} ` +
+        `Preserve every topographic feature exactly where it appears in the reference — hills, gullies, flat paddocks, tree lines, bare earth patches, fence lines, and any built structures. ` +
+        `If the reference shows a building, road, or clearing, it must appear in the generated image in the same location with the same scale and orientation.`
+      );
+    },
 
     // Step 3 — Layer the fire behaviour on top (Gemini best practice: step-by-step
     // instructions for complex multi-element scenes)
