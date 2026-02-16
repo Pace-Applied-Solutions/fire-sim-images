@@ -15,19 +15,38 @@ Status: 404 (The specified container does not exist.)
 ErrorCode: ContainerNotFound
 ```
 
-**Recent Occurrence:** This error occurred after infrastructure redeployment at 2026-02-16 01:38Z, suggesting the deployment token may have been regenerated.
+**Recent Occurrence:** This error occurred on 2026-02-16 at 01:53Z (run #30) but resolved itself within 4 minutes when run #31 succeeded without any changes, indicating a transient Azure infrastructure issue.
 
 ### Root Cause
 
 Azure Static Web Apps uses an internal blob storage container to receive and process deployment artifacts. This error typically occurs when:
 
-1. **The deployment token in GitHub secrets is stale or invalid** (most common after infrastructure redeployment)
-2. The SWA resource's backing storage was not properly initialized during creation
-3. The deployment token belongs to a different or deleted SWA instance
+1. **Transient Azure infrastructure issues** (most common - usually resolves within minutes)
+2. The deployment token in GitHub secrets is stale or invalid (common after infrastructure redeployment)
+3. The SWA resource's backing storage was not properly initialized during creation
+4. The deployment token belongs to a different or deleted SWA instance
 
 ### Resolution
 
-#### Option 1: Update Deployment Token (Recommended - Quickest Fix)
+#### Option 0: Wait and Retry (For Transient Issues)
+
+If this is the first occurrence or if Azure service health reports known issues, simply retry the deployment:
+
+1. **Check Azure Service Health:**
+   - Visit: https://status.azure.com/
+   - Look for issues with "Static Web Apps" in your region
+
+2. **Retry the deployment:**
+   - Wait 2-5 minutes for Azure to resolve the transient issue
+   - Then either:
+     - Push a new commit to trigger deployment, OR
+     - Manually trigger: https://github.com/richardthorek/fire-sim-images/actions/workflows/deploy-swa.yml
+
+3. **If it succeeds:** Issue was transient Azure infrastructure (no action needed)
+
+4. **If it fails again:** Proceed to Option 1 below
+
+#### Option 1: Update Deployment Token (After Infrastructure Changes)
 
 After infrastructure redeployment, the deployment token may have changed. Update the GitHub secret with the current token.
 
@@ -54,7 +73,7 @@ After infrastructure redeployment, the deployment token may have changed. Update
    
    OR make a minor change and push to `main` to trigger automatic deployment
 
-#### Option 2: Redeploy Infrastructure (Recommended)
+#### Option 2: Redeploy Infrastructure (If Token Update Doesn't Work)
 
 If Option 1 doesn't work, redeploy the entire infrastructure to ensure all resources are properly configured.
 
@@ -133,15 +152,28 @@ After applying any of the above fixes, verify the deployment:
    - Inspect the page source for `<meta name="app-version" content="<commit-sha>">`
    - Confirm the commit SHA matches the latest deployment
 
-## Prevention
+## Prevention and Best Practices
 
-To prevent this issue from recurring:
+### Handling Transient Issues
+
+Azure Static Web Apps may occasionally experience transient infrastructure issues (as observed on 2026-02-16):
+
+1. **Don't panic on first failure** — A single deployment failure is often transient
+2. **Wait 2-5 minutes and retry** — Most transient issues resolve quickly
+3. **Check Azure status** — Visit https://status.azure.com/ for known issues
+4. **Only escalate if persistent** — If failures continue after retries, investigate further
+
+### Preventing Configuration Issues
+
+To prevent deployment token and configuration issues:
 
 1. **Never manually delete SWA storage resources** — Always use `az staticwebapp delete` or the Azure portal to delete SWAs
 
 2. **Rotate deployment tokens carefully** — When rotating tokens, ensure the new token is updated in GitHub secrets before any workflows run
 
-3. **Monitor deployment health** — Set up alerts for failed deployments:
+3. **Update secrets after infrastructure changes** — After any infrastructure redeployment, verify the deployment token hasn't changed
+
+4. **Monitor deployment health** — Set up alerts for failed deployments:
    ```bash
    # Example: Create an alert rule for failed deployments
    az monitor metrics alert create \
@@ -152,7 +184,7 @@ To prevent this issue from recurring:
      --description "Alert when SWA deployment fails"
    ```
 
-4. **Use infrastructure-as-code consistently** — Always deploy/update SWA resources via Bicep templates to ensure proper configuration
+5. **Use infrastructure-as-code consistently** — Always deploy/update SWA resources via Bicep templates to ensure proper configuration
 
 ## Related Issues
 
