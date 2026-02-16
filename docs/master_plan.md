@@ -223,6 +223,8 @@ Update this section after each issue or change.
 
 - **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
+  - **Vegetation tooltip visibility:** Docked the NVIS info panel to a fixed on-map position so it never renders off-screen; added location display and scrollable body.
+  - **NVIS visible legend:** Legend now samples visible map area and lists only the vegetation subgroups present in view.
   - **Address search fix:** Store `handleLocationSelect` and `handleGeolocationRequest` directly in the app store (not as thunks) so Header results pan/zoom correctly.
   - **NVIS overlay UX fixes:** Updated WMS GetFeatureInfo to request `application/geo+json` and parse Raster.MVS/MVG attributes; added an in-map NVIS legend panel via proxied GetLegendGraphic.
   - Master plan created as single source of truth.

@@ -102,24 +102,13 @@ export const VegetationTooltip = ({ result, loading, onClose }: VegetationToolti
   const descriptor = useMemo(() => getNvisDescriptor(result.subgroup), [result.subgroup]);
   const fireCharacteristics = useMemo(() => extractFireCharacteristics(descriptor), [descriptor]);
   const fuelType = useMemo(() => deriveFuelType(result.subgroup), [result.subgroup]);
-
-  // Position tooltip relative to the clicked point. Offset it so it doesn't overlap the cursor.
-  const tooltipStyle = useMemo(() => {
-    const { x, y } = result.point;
-    // Position to the right and above the click if there's space; otherwise adjust.
-    return {
-      left: `${Math.min(x + 16, window.innerWidth - 320)}px`,
-      top: `${Math.max(y - 20, 8)}px`,
-    };
-  }, [result.point]);
+  const locationLabel = useMemo(() => {
+    const [lng, lat] = result.lngLat;
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }, [result.lngLat]);
 
   return (
-    <div
-      className={styles.tooltip}
-      style={tooltipStyle}
-      role="dialog"
-      aria-label="Vegetation information"
-    >
+    <div className={`${styles.tooltip} ${styles.tooltipFixed}`} role="dialog" aria-label="Vegetation information">
       <div className={styles.header}>
         <span className={styles.headerIcon}>📍</span>
         <span className={styles.headerTitle}>Vegetation Info</span>
@@ -149,6 +138,11 @@ export const VegetationTooltip = ({ result, loading, onClose }: VegetationToolti
                 <div className={styles.value}>{result.group}</div>
               </div>
             )}
+
+            <div className={styles.section}>
+              <div className={styles.label}>Location</div>
+              <div className={styles.value}>{locationLabel}</div>
+            </div>
 
             <div className={styles.section}>
               <div className={styles.label}>Fire Characteristics</div>

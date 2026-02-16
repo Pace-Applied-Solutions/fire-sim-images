@@ -30,6 +30,21 @@ interface VegetationIdentifyResult {
   point: { x: number; y: number };
 }
 
+function resolveMvsName(props: Record<string, unknown>): string | null {
+  const value =
+    props['Raster.MVS_NAME'] ??
+    props['MVS_NAME'] ??
+    props['Pixel Value'] ??
+    props['MVS_100_NA'] ??
+    props['Label'];
+  return value ? String(value) : null;
+}
+
+function resolveMvgName(props: Record<string, unknown>): string | null {
+  const value = props['Raster.MVG_NAME'] ?? props['MVG_NAME'] ?? props['MVG'];
+  return value ? String(value) : null;
+}
+
 type ViewpointPreset =
   | 'helicopter_north'
   | 'helicopter_south'
@@ -90,6 +105,10 @@ export const MapContainer = () => {
   const [vegIdentifyResult, setVegIdentifyResult] = useState<VegetationIdentifyResult | null>(null);
   const [vegIdentifyLoading, setVegIdentifyLoading] = useState(false);
   const vegIdentifyAbortRef = useRef<AbortController | null>(null);
+  const [vegLegendItems, setVegLegendItems] = useState<string[]>([]);
+  const [vegLegendLoading, setVegLegendLoading] = useState(false);
+  const [vegLegendError, setVegLegendError] = useState<string | null>(null);
+  const vegLegendAbortRef = useRef<AbortController | null>(null);
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
@@ -114,6 +133,8 @@ export const MapContainer = () => {
     setShowVegetation(next);
     if (!next) {
       setVegIdentifyResult(null);
+      setVegLegendItems([]);
+      setVegLegendError(null);
     }
   }, [showVegetation]);
 
@@ -171,18 +192,8 @@ export const MapContainer = () => {
         const features = data?.features ?? data?.results;
         if (features && features.length > 0) {
           const props = features[0].properties ?? features[0].attributes ?? {};
-          const subgroup =
-            props['Raster.MVS_NAME'] ??
-            props['MVS_NAME'] ??
-            props['Pixel Value'] ??
-            props['MVS_100_NA'] ??
-            props['Label'] ??
-            'Unknown vegetation type';
-          const group =
-            props['Raster.MVG_NAME'] ??
-            props['MVG_NAME'] ??
-            props['MVG'] ??
-            undefined;
+          const subgroup = resolveMvsName(props) ?? 'Unknown vegetation type';
+          const group = resolveMvgName(props);
 
           setVegIdentifyResult({
             subgroup: String(subgroup),
@@ -209,6 +220,91 @@ export const MapContainer = () => {
     },
     [showVegetation]
   );
+
+  const fetchLegendItemAt = useCallback(
+    async (lng: number, lat: number, signal: AbortSignal): Promise<string | null> => {
+      const delta = 0.001;
+      const bboxStr = `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`;
+
+      const params = new URLSearchParams({
+        SERVICE: 'WMS',
+        VERSION: '1.3.0',
+        REQUEST: 'GetFeatureInfo',
+        LAYERS: 'NVIS_ext_mvs',
+        QUERY_LAYERS: 'NVIS_ext_mvs',
+        INFO_FORMAT: 'application/geo+json',
+        CRS: 'EPSG:4326',
+        BBOX: bboxStr,
+        WIDTH: '101',
+        HEIGHT: '101',
+        I: '50',
+        J: '50',
+      });
+
+      const response = await fetch(`/api/nvis-wms-proxy?${params}`, { signal });
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      const features = data?.features ?? data?.results;
+      if (!features || features.length === 0) return null;
+
+      const props = features[0].properties ?? features[0].attributes ?? {};
+      return resolveMvsName(props);
+    },
+    []
+  );
+
+  const refreshVegetationLegend = useCallback(async () => {
+    if (!showVegetation) return;
+    const map = mapRef.current;
+    if (!map) return;
+
+    vegLegendAbortRef.current?.abort();
+    const controller = new AbortController();
+    vegLegendAbortRef.current = controller;
+
+    setVegLegendLoading(true);
+    setVegLegendError(null);
+
+    try {
+      const bounds = map.getBounds();
+      const west = bounds.getWest();
+      const east = bounds.getEast();
+      const south = bounds.getSouth();
+      const north = bounds.getNorth();
+
+      const samplesX = 4;
+      const samplesY = 3;
+      const lngStep = samplesX === 1 ? 0 : (east - west) / (samplesX - 1);
+      const latStep = samplesY === 1 ? 0 : (north - south) / (samplesY - 1);
+
+      const requests: Array<Promise<string | null>> = [];
+      for (let x = 0; x < samplesX; x += 1) {
+        for (let y = 0; y < samplesY; y += 1) {
+          const lng = west + lngStep * x;
+          const lat = south + latStep * y;
+          requests.push(fetchLegendItemAt(lng, lat, controller.signal));
+        }
+      }
+
+      const results = await Promise.allSettled(requests);
+      const items = new Set<string>();
+      results.forEach((result) => {
+        if (result.status !== 'fulfilled' || !result.value) return;
+        items.add(result.value);
+      });
+
+      setVegLegendItems(Array.from(items).sort());
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setVegLegendError('Unable to load visible legend items');
+      setVegLegendItems([]);
+    } finally {
+      if (!controller.signal.aborted) {
+        setVegLegendLoading(false);
+      }
+    }
+  }, [fetchLegendItemAt, showVegetation]);
 
   // Dismiss the vegetation tooltip
   const handleDismissVegTooltip = useCallback(() => {
@@ -985,6 +1081,31 @@ export const MapContainer = () => {
     flyToLocation(userLocation);
   }, [flyToLocation, isMapLoaded, userLocation]);
 
+  useEffect(() => {
+    if (!isMapLoaded || !showVegetation) return;
+    const map = mapRef.current;
+    if (!map) return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void refreshVegetationLegend();
+      }, 400);
+    };
+
+    map.on('moveend', scheduleRefresh);
+    map.on('zoomend', scheduleRefresh);
+    scheduleRefresh();
+
+    return () => {
+      map.off('moveend', scheduleRefresh);
+      map.off('zoomend', scheduleRefresh);
+      if (timer) clearTimeout(timer);
+      vegLegendAbortRef.current?.abort();
+    };
+  }, [isMapLoaded, refreshVegetationLegend, showVegetation]);
+
   // Register location handlers in store for Header's AddressSearch to use
   useEffect(() => {
     if (!isMapLoaded) {
@@ -1147,12 +1268,36 @@ export const MapContainer = () => {
 
       {showVegetation && (
         <div className={styles.vegetationLegend} role="region" aria-label="NVIS legend">
-          <div className={styles.legendHeader}>NVIS Legend</div>
-          <img
-            className={styles.legendImage}
-            src="/api/nvis-wms-proxy?service=WMS&request=GetLegendGraphic&version=1.3.0&format=image/png&layer=NVIS_ext_mvs"
-            alt="NVIS major vegetation subgroup legend"
-          />
+          <div className={styles.legendHeader}>
+            <span>Visible vegetation</span>
+            <button
+              type="button"
+              className={styles.legendRefresh}
+              onClick={() => void refreshVegetationLegend()}
+            >
+              Refresh
+            </button>
+          </div>
+          <div className={styles.legendBody}>
+            {vegLegendLoading && (
+              <div className={styles.legendStatus}>Loading visible classes...</div>
+            )}
+            {!vegLegendLoading && vegLegendError && (
+              <div className={styles.legendStatus}>{vegLegendError}</div>
+            )}
+            {!vegLegendLoading && !vegLegendError && vegLegendItems.length === 0 && (
+              <div className={styles.legendStatus}>No vegetation data in view</div>
+            )}
+            {!vegLegendLoading && vegLegendItems.length > 0 && (
+              <ul className={styles.legendList}>
+                {vegLegendItems.map((item) => (
+                  <li key={item} className={styles.legendItem}>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
     </div>
