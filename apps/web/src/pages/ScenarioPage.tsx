@@ -17,15 +17,6 @@ export const ScenarioPage: React.FC = () => {
   } = useAppStore();
 
   const renderResults = () => {
-    if (scenarioState === 'generating' && generationProgress) {
-      return (
-        <div className={styles.generatingState}>
-          <div className={styles.spinner} />
-          <p className={styles.progressText}>{generationProgress}</p>
-        </div>
-      );
-    }
-
     if (generationResult) {
       return (
         <GeneratedImages
@@ -47,6 +38,18 @@ export const ScenarioPage: React.FC = () => {
   };
 
   return (
-    <Layout sidebar={<ScenarioInputPanel />} main={<MapContainer />} results={renderResults()} />
+    <Layout sidebar={<ScenarioInputPanel />} main={
+      <>
+        <MapContainer />
+        {scenarioState === 'generating' && generationProgress && (
+          <div className={styles.progressOverlay}>
+            <div className={styles.progressCard}>
+              <div className={styles.spinner} />
+              <p className={styles.progressText}>{generationProgress}</p>
+            </div>
+          </div>
+        )}
+      </>
+    } results={renderResults()} />
   );
 };

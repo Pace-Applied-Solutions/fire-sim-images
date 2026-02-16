@@ -11,8 +11,8 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
     useAppStore();
 
   useEffect(() => {
-    // Open panel when generating (to show progress) or when complete (to show results)
-    if (scenarioState === 'generating' || scenarioState === 'complete') {
+    // Only open panel when generation is complete (not during — map needs full width for screenshots)
+    if (scenarioState === 'complete') {
       setResultsPanelOpen(true);
     }
   }, [scenarioState, setResultsPanelOpen]);
