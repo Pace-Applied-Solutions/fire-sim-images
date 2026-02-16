@@ -46,7 +46,7 @@ export class GenerationOrchestrator {
   private consistencyValidator: ConsistencyValidator;
   private logger;
 
-  constructor(private context: InvocationContext) {
+  constructor(context: InvocationContext) {
     this.imageGenerator = new ImageGeneratorService(context);
     this.blobStorage = new BlobStorageService(context);
     this.consistencyValidator = new ConsistencyValidator();
