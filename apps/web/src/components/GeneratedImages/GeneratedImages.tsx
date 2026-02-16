@@ -181,7 +181,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             <div key={result.anchorImage.viewPoint} className={`${styles.imageCard} ${styles.anchorCard}`}>
               <div
                 className={styles.imageWrapper}
-                onClick={() => openLightbox(0)}
+                onClick={() => openLightbox(0)} // Anchor is always at index 0 in result.images
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -212,6 +212,8 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             <div key={image.viewPoint} className={styles.imageCard}>
               <div
                 className={styles.imageWrapper}
+                // Map filtered array index back to position in result.images
+                // Anchor is at index 0, so non-anchor images start at index 1
                 onClick={() => openLightbox(index + (result.anchorImage ? 1 : 0))}
                 role="button"
                 tabIndex={0}
