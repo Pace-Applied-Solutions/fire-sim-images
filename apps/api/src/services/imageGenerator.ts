@@ -67,6 +67,11 @@ export class ImageGeneratorService {
       style: options?.style || this.config.defaultStyle,
       seed: options?.seed,
       onThinkingUpdate: options?.onThinkingUpdate,
+      mapScreenshot: options?.mapScreenshot,
+      referenceImage: options?.referenceImage,
+      referenceStrength: options?.referenceStrength,
+      vegetationMapScreenshot: options?.vegetationMapScreenshot,
+      vegetationPromptText: options?.vegetationPromptText,
     };
 
     let lastError: Error | undefined;

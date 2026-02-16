@@ -12,6 +12,9 @@ export type ScenarioState =
 /** Function type for capturing map screenshots from specific viewpoints */
 export type CaptureMapScreenshotsFn = (viewpoints: ViewPoint[]) => Promise<Record<string, string>>;
 
+/** Function type for capturing the vegetation overlay screenshot */
+export type CaptureVegetationScreenshotFn = () => Promise<string | null>;
+
 interface AppState {
   // Scenario state
   scenarioState: ScenarioState;
@@ -49,6 +52,10 @@ interface AppState {
   // Map screenshot capture (registered by MapContainer)
   captureMapScreenshots: CaptureMapScreenshotsFn | null;
   setCaptureMapScreenshots: (fn: CaptureMapScreenshotsFn | null) => void;
+
+  // Vegetation overlay screenshot capture (registered by MapContainer)
+  captureVegetationScreenshot: CaptureVegetationScreenshotFn | null;
+  setCaptureVegetationScreenshot: (fn: CaptureVegetationScreenshotFn | null) => void;
 
   // UI state
   isSidebarOpen: boolean;
@@ -96,6 +103,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Map screenshot capture
   captureMapScreenshots: null,
   setCaptureMapScreenshots: (fn) => set({ captureMapScreenshots: fn }),
+
+  // Vegetation overlay screenshot capture
+  captureVegetationScreenshot: null,
+  setCaptureVegetationScreenshot: (fn) => set({ captureVegetationScreenshot: fn }),
 
   // Initial UI state - sidebar open by default, results panel closed
   isSidebarOpen: true,

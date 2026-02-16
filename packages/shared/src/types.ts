@@ -107,6 +107,23 @@ export type ViewPoint =
 /**
  * Request payload for generating a fire scenario.
  */
+/**
+ * Spatial vegetation context from NSW State Vegetation Type Map (SVTM).
+ * Queried from ArcGIS identify endpoint at multiple points around the fire perimeter.
+ */
+export interface VegetationContext {
+  /** Formation name at the fire perimeter centroid */
+  centerFormation: string;
+  /** Detailed class name at centroid (e.g. "Sydney Montane Dry Sclerophyll Forests") */
+  centerClassName?: string;
+  /** Formation names at compass points around the perimeter */
+  surrounding: Partial<Record<'north' | 'south' | 'east' | 'west' | 'northeast' | 'southeast' | 'southwest' | 'northwest', string>>;
+  /** Unique formation names found across all query points */
+  uniqueFormations: string[];
+  /** Data source identifier */
+  dataSource: string;
+}
+
 export interface GenerationRequest {
   perimeter: FirePerimeter;
   inputs: ScenarioInputs;
@@ -114,6 +131,7 @@ export interface GenerationRequest {
   requestedViews: ViewPoint[];
   seed?: number; // Consistent seed for reproducibility across all viewpoints
   mapScreenshots?: Record<ViewPoint, string>; // Map view screenshots for terrain reference (base64 data URLs)
+  vegetationMapScreenshot?: string; // Aerial vegetation overlay screenshot (base64 data URL)
 }
 
 /**

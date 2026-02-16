@@ -196,3 +196,77 @@ export async function captureViewpointScreenshots(
 
   return screenshots;
 }
+
+/**
+ * Capture a vegetation overlay screenshot from the NSW SVTM WMS layer.
+ *
+ * Temporarily toggles the 'nsw-vegetation-layer' on, moves the camera
+ * to a flat aerial (top-down) view centered on the fire perimeter, waits
+ * for WMS tiles to load, captures the canvas, then restores the original
+ * state.
+ *
+ * @param map - The Mapbox GL map instance
+ * @param perimeterInfo - Centroid and bounding box of the fire perimeter
+ * @returns Base64 JPEG data URL of the vegetation overlay, or null if layer unavailable
+ */
+export async function captureVegetationScreenshot(
+  map: MapboxMap,
+  perimeterInfo: PerimeterInfo,
+): Promise<string | null> {
+  // Check the vegetation layer exists
+  if (!map.getLayer('nsw-vegetation-layer')) {
+    console.warn('NSW vegetation layer not found — skipping vegetation capture');
+    return null;
+  }
+
+  // Save current state
+  const savedCamera = {
+    center: map.getCenter().toArray() as [number, number],
+    zoom: map.getZoom(),
+    bearing: map.getBearing(),
+    pitch: map.getPitch(),
+  };
+  const wasVisible =
+    map.getLayoutProperty('nsw-vegetation-layer', 'visibility') === 'visible';
+
+  // Turn vegetation layer ON
+  map.setLayoutProperty('nsw-vegetation-layer', 'visibility', 'visible');
+
+  // Move to flat aerial view showing the full perimeter with buffer
+  const [centerLng, centerLat] = perimeterInfo.centroid;
+  const [minLng, minLat, maxLng, maxLat] = perimeterInfo.bbox;
+  const lngDiff = maxLng - minLng;
+  const latDiff = maxLat - minLat;
+  const maxDiff = Math.max(lngDiff, latDiff);
+  // Zoom out a bit more than the terrain views so the vegetation context
+  // covers a wider area around the fire
+  const vegZoom = 14 - Math.log2(maxDiff * 100) - 2;
+
+  map.jumpTo({
+    center: [centerLng, centerLat],
+    zoom: vegZoom,
+    bearing: 0,
+    pitch: 0, // Top-down
+  });
+
+  // Wait for WMS tiles to load (may be slower than Mapbox tiles)
+  await waitForMapIdle(map, 8000);
+
+  // Capture
+  const dataUrl = captureCanvas(map);
+
+  // Restore vegetation layer visibility
+  if (!wasVisible) {
+    map.setLayoutProperty('nsw-vegetation-layer', 'visibility', 'none');
+  }
+
+  // Restore camera
+  map.jumpTo({
+    center: savedCamera.center,
+    zoom: savedCamera.zoom,
+    bearing: savedCamera.bearing,
+    pitch: savedCamera.pitch,
+  });
+
+  return dataUrl;
+}

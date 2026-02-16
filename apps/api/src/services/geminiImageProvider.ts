@@ -132,6 +132,51 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       }
     }
 
+    // ── Vegetation overlay image (NSW SVTM) ────────────────────
+    // If a vegetation map screenshot is provided, include it as a second reference
+    // image with instructions for the AI to use it for vegetation spatial accuracy.
+    const vegScreenshot = options?.vegetationMapScreenshot;
+    if (vegScreenshot) {
+      let vegBase64: string;
+      if (Buffer.isBuffer(vegScreenshot)) {
+        vegBase64 = vegScreenshot.toString('base64');
+      } else if (typeof vegScreenshot === 'string') {
+        vegBase64 = vegScreenshot.replace(/^data:image\/\w+;base64,/, '');
+      } else {
+        vegBase64 = '';
+      }
+
+      if (vegBase64.length > 0) {
+        parts.push({
+          inline_data: {
+            mime_type: 'image/png',
+            data: vegBase64,
+          },
+        });
+
+        effectivePrompt +=
+          '\n\nVEGETATION REFERENCE MAP: The previous image is a vegetation formation overlay from the NSW State Vegetation Type Map. ' +
+          'Each colour represents a different vegetation formation type. Use this to ensure each part of the landscape has the correct vegetation:\n' +
+          '- Dark green areas = Wet sclerophyll forests (tall eucalypts with dense fern understorey)\n' +
+          '- Medium green areas = Dry sclerophyll forests (eucalypt woodland with sparse understorey and leaf litter)\n' +
+          '- Light green areas = Grassy woodlands (scattered eucalypts over native grasses)\n' +
+          '- Yellow-green areas = Grasslands (open grass with no tree canopy)\n' +
+          '- Orange/brown areas = Heathlands (low dense shrubland)\n' +
+          '- White/light grey areas = Cleared land (farmland, urban, minimal vegetation)\n' +
+          '- Teal/blue-green areas = Forested or freshwater wetlands\n' +
+          '- Dark olive areas = Rainforests (dense closed canopy)\n' +
+          'Match the vegetation in each part of your generated image to what this map shows.';
+      }
+    }
+
+    // ── Spatial vegetation context from SVTM queries ───────────
+    // Append text-based vegetation context from ArcGIS identify queries
+    if (options?.vegetationPromptText) {
+      effectivePrompt +=
+        '\n\nSPATIAL VEGETATION DATA (from NSW State Vegetation Type Map): ' +
+        options.vegetationPromptText;
+    }
+
     parts.push({ text: effectivePrompt });
 
     // Generation config

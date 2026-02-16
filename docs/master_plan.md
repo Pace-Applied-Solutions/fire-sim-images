@@ -639,6 +639,21 @@ Update this section after each issue or change.
     - **Generation log (markdown):** Added `uploadGenerationLog()` to `BlobStorageService`. After each generation completes, a `generation-log.md` file is saved to the same blob container folder (`generated-images/{scenarioId}/generation-log.md`) containing: all prompts, model thinking text, model text responses, seed, model name, and timing. This supports prompt evaluation, auditing, and reproducibility.
     - **Model text response capture:** Added `modelTextResponse` field to `ImageGenResult` to capture the model's non-thought text output separately from thinking text, included in the generation log.
     - **API alignment verified:** Cross-checked implementation against Google's official Gemini API docs (image generation, thinking, generateContent). Confirmed: `thinkingConfig.includeThoughts`, `responseModalities: ['TEXT', 'IMAGE']`, `imageConfig.aspectRatio`/`imageSize`, `systemInstruction`, SSE streaming, and `thought` part detection all align with the current API spec.
+  - **NSW SVTM vegetation overlay research:**
+    - Investigated NSW State Vegetation Type Map (SVTM) dataset for spatially accurate vegetation data integration
+    - Discovered and confirmed working endpoints: ArcGIS MapServer, WMS 1.3.0, REST export, and identify — all publicly accessible with CORS enabled, no API key required
+    - SVTM provides 17 vegetation formation categories at 5m resolution across NSW; 10/17 map directly to existing `VEGETATION_TYPES`
+    - Created ADR-006 (`docs/adr/ADR-006-nsw-vegetation-overlay.md`) documenting three design options: client-side WMS overlay screenshot, server-side spatial query, and hybrid — with recommendation for client-side WMS overlay
+    - **Bug fix:** Fixed `imageGenerator.ts` silently dropping `mapScreenshot`, `referenceImage`, and `referenceStrength` from merged options — these fields were never forwarded to the Gemini provider, meaning map screenshots were not being sent to the AI model
+  - **NSW SVTM vegetation overlay — hybrid integration (Option C from ADR-006):**
+    - **Client-side WMS overlay:** Added NSW SVTM WMS raster source and layer to MapContainer with 🌿 toggle button. WMS tiles are loaded from NSW ArcGIS WMS 1.3.0 endpoint at 0.65 opacity. Added `captureVegetationScreenshot()` in mapCapture.ts that temporarily enables the vegetation layer, jumps to a flat aerial view, waits for WMS tiles, captures canvas, and restores camera state.
+    - **Server-side spatial queries:** Created `vegetationService.ts` with `queryVegetationContext()` that queries the ArcGIS REST identify endpoint at 9 points (center + 8 compass directions) around the fire perimeter. Returns `VegetationContext` with formation names, class names, and spatial distribution. `formatVegetationContextForPrompt()` converts results to natural language fire-relevant descriptions.
+    - **Shared types/constants:** Added `VegetationContext` interface to types.ts, `SVTM_FORMATION_DESCRIPTORS` (17 entries), `SVTM_WMS_URL`, and `SVTM_REST_URL` to constants.ts.
+    - **Pipeline integration:** Orchestrator queries vegetation context after prompt generation (Step 1b), passes both `vegetationMapScreenshot` and `vegetationPromptText` through to image generation. Gemini provider includes the vegetation overlay screenshot as a second reference image with color legend instructions, and appends spatial vegetation text with "SPATIAL VEGETATION DATA" header.
+    - **Frontend flow:** ScenarioInputPanel captures vegetation screenshot during generation flow (after terrain screenshots), sends as `vegetationMapScreenshot` in the generation request.
+    - **Resilience:** All vegetation operations are non-fatal — wrapped in try/catch with warning logs, generation proceeds without vegetation data if NSW government server is unavailable.
+    - **Generation log:** Vegetation context and screenshot presence are recorded in the generation log for audit and reproducibility.
+    - All builds pass (shared, API, web), TypeScript strict mode compliant.
 
 ## 14. Change Control Process
 
