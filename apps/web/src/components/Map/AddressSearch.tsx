@@ -18,6 +18,7 @@ interface MapboxFeature {
   text: string;
   place_name: string;
   center: [number, number]; // [longitude, latitude]
+  bbox?: [number, number, number, number]; // [minLng, minLat, maxLng, maxLat]
   geometry: {
     type: 'Point';
     coordinates: [number, number];
@@ -37,7 +38,12 @@ interface MapboxGeocodingResponse {
 }
 
 export interface AddressSearchProps {
-  onLocationSelect: (longitude: number, latitude: number, placeName: string) => void;
+  onLocationSelect: (
+    longitude: number,
+    latitude: number,
+    placeName: string,
+    bbox?: [number, number, number, number]
+  ) => void;
   onGeolocationRequest?: () => void;
   className?: string;
 }
@@ -183,7 +189,7 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
       setQuery(feature.place_name);
       setIsOpen(false);
       setSelectedIndex(-1);
-      onLocationSelect(lng, lat, feature.place_name);
+      onLocationSelect(lng, lat, feature.place_name, feature.bbox);
     },
     [onLocationSelect]
   );

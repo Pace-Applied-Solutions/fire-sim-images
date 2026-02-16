@@ -916,16 +916,49 @@ export const MapContainer = () => {
    * Handle location selection from address search
    */
   const handleLocationSelect = useCallback(
-    (longitude: number, latitude: number, _placeName: string) => {
+    (
+      longitude: number,
+      latitude: number,
+      _placeName: string,
+      bbox?: [number, number, number, number]
+    ) => {
       const map = mapRef.current;
       if (!map) return;
 
-      map.flyTo({
-        center: [longitude, latitude],
-        zoom: 14,
-        duration: 2000,
-        essential: true,
-      });
+      // If bbox is available, use fitBounds for better framing
+      if (bbox && bbox.length === 4) {
+        const [minLng, minLat, maxLng, maxLat] = bbox;
+        
+        // Calculate the size to determine appropriate padding
+        const lngDiff = maxLng - minLng;
+        const latDiff = maxLat - minLat;
+        const maxDiff = Math.max(lngDiff, latDiff);
+        
+        // Use less padding for smaller areas, more for larger areas
+        // Scale padding from 50px (for small areas) to 100px (for large areas)
+        const padding = Math.min(100, Math.max(50, maxDiff * 5000));
+
+        map.fitBounds(
+          [
+            [minLng, minLat],
+            [maxLng, maxLat],
+          ],
+          {
+            padding,
+            duration: 2000,
+            essential: true,
+            maxZoom: 16, // Prevent excessive zoom for very small areas
+          }
+        );
+      } else {
+        // Fallback to center point with fixed zoom for point-only results
+        map.flyTo({
+          center: [longitude, latitude],
+          zoom: 14,
+          duration: 2000,
+          essential: true,
+        });
+      }
     },
     []
   );
