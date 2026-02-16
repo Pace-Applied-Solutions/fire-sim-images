@@ -23,6 +23,8 @@ export interface ImageGenResult {
   format: 'png' | 'jpeg' | 'webp';
   /** Model thinking/reasoning text (from Gemini 3 Pro interleaved output) */
   thinkingText?: string;
+  /** Model's non-thought text response (scene description, etc.) */
+  modelTextResponse?: string;
   metadata: {
     model: string;
     promptHash: string;

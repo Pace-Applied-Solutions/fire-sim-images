@@ -172,6 +172,9 @@ export class GenerationOrchestrator {
       let anchorImageData: Buffer | undefined;
       const anchorPrompt = promptSet.prompts.find((p) => p.viewpoint === anchorViewpoint);
 
+      // Collect model text responses for the generation log
+      const modelTextResponses: Array<{ viewpoint: string; text?: string }> = [];
+
       if (anchorPrompt) {
         try {
           const imageGenTimer = startTimer('image.generation.anchor', {
@@ -197,6 +200,11 @@ export class GenerationOrchestrator {
             durationMs: imageGenDuration,
             model: result.metadata.model,
           });
+
+          // Capture model text response for generation log
+          if (result.modelTextResponse) {
+            modelTextResponses.push({ viewpoint: anchorViewpoint, text: result.modelTextResponse });
+          }
 
           // Upload anchor image
           const uploadTimer = startTimer('blob.upload', { scenarioId, viewpoint: anchorViewpoint });
@@ -445,6 +453,30 @@ export class GenerationOrchestrator {
       };
 
       await this.blobStorage.uploadMetadata(scenarioId, scenarioMetadata);
+
+      // Step 8: Save generation log (prompt, thinking, responses) as markdown
+      // in the same blob container folder as the images for audit/evaluation
+      try {
+        const generationLog = {
+          prompts: promptSet.prompts.map((p) => ({
+            viewpoint: p.viewpoint,
+            promptText: p.promptText,
+          })),
+          thinkingText: progress.thinkingText,
+          modelResponses: modelTextResponses,
+          seed: request.seed,
+          model: images[0]?.metadata.model,
+          generationTimeMs: Date.now() - new Date(progress.createdAt).getTime(),
+          timestamp: new Date().toISOString(),
+        };
+        await this.blobStorage.uploadGenerationLog(scenarioId, generationLog);
+        logger.info('Generation log saved', { scenarioId });
+      } catch (logError) {
+        // Non-fatal — don't fail the generation if logging fails
+        logger.warn('Failed to save generation log', {
+          error: logError instanceof Error ? logError.message : String(logError),
+        });
+      }
 
       // Calculate and track costs
       const costBreakdown = globalCostEstimator.estimateScenarioCost({

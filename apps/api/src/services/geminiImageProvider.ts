@@ -149,10 +149,26 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       generationConfig.thinkingConfig = { includeThoughts: true };
     }
 
-    const body = {
+    const body: Record<string, unknown> = {
       contents: [{ parts }],
       generationConfig,
     };
+
+    // Use systemInstruction for consistent scene guidance across multi-image sets
+    if (isProModel) {
+      body.systemInstruction = {
+        parts: [{
+          text:
+            'You are a photorealistic bushfire scenario renderer for Australian fire service training. ' +
+            'Generate a single high-quality image per request. Each image is part of a multi-perspective set ' +
+            'depicting the SAME fire event at the SAME moment in time. Maintain strict visual consistency: ' +
+            'identical smoke plume shape and colour, identical flame intensity, identical vegetation state, ' +
+            'identical weather conditions (cloud cover, haze, lighting), and identical terrain features across all perspectives. ' +
+            'Use Australian flora (eucalyptus, banksia, spinifex) and realistic fire behaviour. ' +
+            'Never include people, animals, vehicles, or text overlays in the image.',
+        }],
+      };
+    }
 
     // ── Make the streaming request ──────────────────────────────
     const response = await fetch(url, {
@@ -214,6 +230,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       imageData,
       format: 'png',
       thinkingText: thinkingText || extracted.text,
+      modelTextResponse: extracted.text,
       metadata: {
         model: this.modelId,
         promptHash,

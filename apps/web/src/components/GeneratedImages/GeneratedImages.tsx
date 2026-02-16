@@ -321,17 +321,19 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
             </div>
           </div>
         )}
-        {result.images.map((image, index) => (
+        {result.images
+          .filter((image) => !result.anchorImage || image.viewPoint !== result.anchorImage.viewPoint)
+          .map((image, index) => (
           <div key={image.viewPoint} className={styles.imageCard}>
             <div
               className={styles.imageWrapper}
-              onClick={() => openLightbox(index)}
+              onClick={() => openLightbox(index + (result.anchorImage ? 1 : 0))}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  openLightbox(index);
+                  openLightbox(index + (result.anchorImage ? 1 : 0));
                 }
               }}
             >
@@ -372,11 +374,6 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           </div>
         ))}
       </div>
-
-      {/* Show thinking text in completed state too */}
-      {result.thinkingText && (
-        <ThinkingPanel text={result.thinkingText} />
-      )}
 
       {result.completedAt && (
         <div className={styles.footer}>

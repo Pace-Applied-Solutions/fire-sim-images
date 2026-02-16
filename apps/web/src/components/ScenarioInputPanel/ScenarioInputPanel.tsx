@@ -248,6 +248,8 @@ export const ScenarioInputPanel: React.FC = () => {
       // enabled later or offered as user-selectable options
       const requestedViews: ViewPoint[] = [
         'aerial',
+        'ground_north',
+        'ground_east',
       ];
 
       // Capture map screenshots from each viewpoint for terrain reference

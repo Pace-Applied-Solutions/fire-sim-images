@@ -145,6 +145,101 @@ export class BlobStorageService {
   }
 
   /**
+   * Upload a generation log (prompt, thinking text, model responses) as a Markdown file
+   * alongside the generated images in the same blob container folder.
+   */
+  async uploadGenerationLog(
+    scenarioId: string,
+    log: {
+      prompts: Array<{ viewpoint: string; promptText: string }>;
+      thinkingText?: string;
+      modelResponses?: Array<{ viewpoint: string; text?: string }>;
+      seed?: number;
+      model?: string;
+      generationTimeMs?: number;
+      timestamp?: string;
+    }
+  ): Promise<string> {
+    const timestamp = log.timestamp || new Date().toISOString();
+    const lines: string[] = [
+      `# Generation Log`,
+      ``,
+      `**Scenario ID:** ${scenarioId}`,
+      `**Model:** ${log.model || 'unknown'}`,
+      `**Seed:** ${log.seed ?? 'none'}`,
+      `**Generated:** ${timestamp}`,
+      `**Duration:** ${log.generationTimeMs ? `${(log.generationTimeMs / 1000).toFixed(1)}s` : 'unknown'}`,
+      ``,
+      `---`,
+      ``,
+    ];
+
+    // Prompts
+    lines.push(`## Prompts`);
+    lines.push(``);
+    for (const p of log.prompts) {
+      lines.push(`### ${p.viewpoint}`);
+      lines.push(``);
+      lines.push('```');
+      lines.push(p.promptText);
+      lines.push('```');
+      lines.push(``);
+    }
+
+    // Thinking text
+    if (log.thinkingText) {
+      lines.push(`## Model Thinking`);
+      lines.push(``);
+      lines.push(log.thinkingText);
+      lines.push(``);
+    }
+
+    // Model text responses
+    if (log.modelResponses && log.modelResponses.length > 0) {
+      lines.push(`## Model Responses`);
+      lines.push(``);
+      for (const r of log.modelResponses) {
+        if (r.text) {
+          lines.push(`### ${r.viewpoint}`);
+          lines.push(``);
+          lines.push(r.text);
+          lines.push(``);
+        }
+      }
+    }
+
+    const markdownContent = lines.join('\n');
+
+    if (this.devMode) {
+      this.context.log('[BlobStorage] Dev mode — generation log:', {
+        scenarioId,
+        logLength: markdownContent.length,
+      });
+      // Write to console in dev mode for visibility
+      this.context.log(`[GenerationLog]\n${markdownContent.substring(0, 2000)}`);
+      return `dev://generated-images/${scenarioId}/generation-log.md`;
+    }
+
+    const client = await this.getClient();
+    const containerClient = client.getContainerClient(this.containerName);
+
+    const blobName = `${scenarioId}/generation-log.md`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    const buffer = Buffer.from(markdownContent, 'utf-8');
+
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: 'text/markdown',
+      },
+    });
+
+    this.context.log('Uploaded generation log to blob storage', { scenarioId, blobName });
+
+    return blockBlobClient.url;
+  }
+
+  /**
    * Upload scenario metadata to blob storage.
    */
   async uploadMetadata(scenarioId: string, metadata: unknown): Promise<string> {

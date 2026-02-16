@@ -631,6 +631,14 @@ Update this section after each issue or change.
     - **Immediate progress UI:** `generationResult` is now set immediately when generation starts (with `in_progress` status, empty images), so Results Panel shows progress from the start. Previously only set when thinkingText or images arrived, leaving a dead placeholder.
     - **"Model is thinking" indicator:** When no thinking text has arrived yet, the ThinkingPanel shows a spinner with "Model is thinking… this can take 30–90 seconds for complex fire scenarios" instead of being hidden.
     - **Results Panel auto-open:** Panel now opens as soon as `scenarioState` becomes `'generating'`, not just when results arrive.
+  - **Multi-image generation & UI fixes (3-image pipeline):**
+    - **3-image default:** Changed `requestedViews` from `['aerial']` to `['aerial', 'ground_north', 'ground_east']` — generates 1 aerial anchor + 2 ground perspectives per scenario. Updated `totalImages` prop from 1 → 3.
+    - **Duplicate image fix:** The completed-state UI was rendering the anchor image twice — once as the dedicated "⚓ Anchor" card and again in the `result.images.map()` loop (since the orchestrator puts the anchor in both `anchorImage` and `images[]`). Added `.filter()` to exclude the anchor from the loop.
+    - **Transient thinking text:** Thinking text now only displays during `in_progress`/`failed` states. In the `completed` state it no longer appears — it served its purpose during generation. The data is preserved in the generation log.
+    - **System instruction for consistency:** Added `systemInstruction` to Gemini API calls describing the bushfire scenario renderer role and requiring strict visual consistency (smoke, flames, vegetation, weather, terrain) across all perspectives in a multi-image set.
+    - **Generation log (markdown):** Added `uploadGenerationLog()` to `BlobStorageService`. After each generation completes, a `generation-log.md` file is saved to the same blob container folder (`generated-images/{scenarioId}/generation-log.md`) containing: all prompts, model thinking text, model text responses, seed, model name, and timing. This supports prompt evaluation, auditing, and reproducibility.
+    - **Model text response capture:** Added `modelTextResponse` field to `ImageGenResult` to capture the model's non-thought text output separately from thinking text, included in the generation log.
+    - **API alignment verified:** Cross-checked implementation against Google's official Gemini API docs (image generation, thinking, generateContent). Confirmed: `thinkingConfig.includeThoughts`, `responseModalities: ['TEXT', 'IMAGE']`, `imageConfig.aspectRatio`/`imageSize`, `systemInstruction`, SSE streaming, and `thought` part detection all align with the current API spec.
 
 ## 14. Change Control Process
 
