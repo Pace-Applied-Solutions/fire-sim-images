@@ -109,10 +109,13 @@ export const MapContainer = () => {
   const [vegIdentifyResult, setVegIdentifyResult] = useState<VegetationIdentifyResult | null>(null);
   const [vegIdentifyLoading, setVegIdentifyLoading] = useState(false);
   const vegIdentifyAbortRef = useRef<AbortController | null>(null);
-  const [vegLegendItems, setVegLegendItems] = useState<string[]>([]);
+  const [vegLegendItems, setVegLegendItems] = useState<Array<{ name: string; color: string }>>(
+    []
+  );
   const [vegLegendLoading, setVegLegendLoading] = useState(false);
   const [vegLegendError, setVegLegendError] = useState<string | null>(null);
   const vegLegendAbortRef = useRef<AbortController | null>(null);
+  const vegLegendColorRef = useRef<Map<string, string>>(new Map());
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
@@ -258,6 +261,44 @@ export const MapContainer = () => {
     []
   );
 
+  const fetchLegendColorAt = useCallback(
+    async (lng: number, lat: number, signal: AbortSignal): Promise<string | null> => {
+      const delta = 0.0005;
+      const bboxStr = `${lat - delta},${lng - delta},${lat + delta},${lng + delta}`;
+
+      const params = new URLSearchParams({
+        SERVICE: 'WMS',
+        VERSION: '1.3.0',
+        REQUEST: 'GetMap',
+        LAYERS: 'NVIS_ext_mvs',
+        STYLES: '',
+        FORMAT: 'image/png',
+        TRANSPARENT: 'true',
+        CRS: 'EPSG:4326',
+        BBOX: bboxStr,
+        WIDTH: '1',
+        HEIGHT: '1',
+      });
+
+      const response = await fetch(`/api/nvis-wms-proxy?${params}`, { signal });
+      if (!response.ok) return null;
+
+      const blob = await response.blob();
+      const bitmap = await createImageBitmap(blob);
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(bitmap, 0, 0, 1, 1);
+      const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+      const alpha = a / 255;
+      if (alpha === 0) return null;
+      return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+    },
+    []
+  );
+
   const refreshVegetationLegend = useCallback(async () => {
     if (!showVegetation) return;
     const map = mapRef.current;
@@ -288,23 +329,42 @@ export const MapContainer = () => {
       const lngStep = (east - west) / (samplesX - 1);
       const latStep = (north - south) / (samplesY - 1);
 
-      const requests: Array<Promise<string | null>> = [];
+      const requests: Array<Promise<{ name: string; color: string } | null>> = [];
       for (let x = 0; x < samplesX; x += 1) {
         for (let y = 0; y < samplesY; y += 1) {
           const lng = west + lngStep * x;
           const lat = south + latStep * y;
-          requests.push(fetchLegendItemAt(lng, lat, controller.signal));
+          requests.push(
+            (async () => {
+              const name = await fetchLegendItemAt(lng, lat, controller.signal);
+              if (!name) return null;
+
+              const cached = vegLegendColorRef.current.get(name);
+              if (cached) {
+                return { name, color: cached };
+              }
+
+              const color = await fetchLegendColorAt(lng, lat, controller.signal);
+              const resolvedColor = color ?? 'rgba(255, 255, 255, 0.6)';
+              vegLegendColorRef.current.set(name, resolvedColor);
+              return { name, color: resolvedColor };
+            })()
+          );
         }
       }
 
       const results = await Promise.allSettled(requests);
-      const items = new Set<string>();
+      const items = new Map<string, string>();
       results.forEach((result) => {
         if (result.status !== 'fulfilled' || !result.value) return;
-        items.add(result.value);
+        items.set(result.value.name, result.value.color);
       });
 
-      setVegLegendItems(Array.from(items).sort());
+      const nextItems = Array.from(items.entries())
+        .map(([name, color]) => ({ name, color }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      setVegLegendItems(nextItems);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setVegLegendError('Unable to load visible legend items');
@@ -1371,8 +1431,13 @@ export const MapContainer = () => {
             {!vegLegendLoading && vegLegendItems.length > 0 && (
               <ul className={styles.legendList}>
                 {vegLegendItems.map((item) => (
-                  <li key={item} className={styles.legendItem}>
-                    {item}
+                  <li key={item.name} className={styles.legendItem}>
+                    <span
+                      className={styles.legendSwatch}
+                      style={{ backgroundColor: item.color }}
+                      aria-hidden="true"
+                    />
+                    <span className={styles.legendLabel}>{item.name}</span>
                   </li>
                 ))}
               </ul>

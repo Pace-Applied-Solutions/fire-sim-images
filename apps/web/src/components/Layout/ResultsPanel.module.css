@@ -2,16 +2,19 @@
   display: flex;
   flex-direction: column;
   width: 360px;
+  --edge-tab-width: 40px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
   background-color: var(--color-bg-secondary);
   border-left: 1px solid var(--color-border-default);
-  transition: width var(--transition-base);
-  flex-shrink: 0;
+  transition: transform var(--transition-base);
   overflow: hidden;
 }
 
 .panel.closed {
-  width: 40px;
-  border-left: 1px solid var(--color-border-default);
+  transform: translateX(calc(100% - var(--edge-tab-width)));
 }
 
 .header {
@@ -60,7 +63,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
+  width: var(--edge-tab-width);
   height: 100%;
   padding: 1rem 0;
   background: transparent;
@@ -107,6 +110,10 @@
   }
 
   .panel.closed {
+    transform: translateX(calc(100% - 36px));
+  }
+
+  .edgeTab {
     width: 36px;
   }
 }
