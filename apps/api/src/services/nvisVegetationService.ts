@@ -84,7 +84,7 @@ async function identifyAtPoint(
     REQUEST: 'GetFeatureInfo',
     LAYERS: '0',
     QUERY_LAYERS: '0',
-    INFO_FORMAT: 'application/json',
+    INFO_FORMAT: 'application/geo+json',
     CRS: 'EPSG:4326',
     BBOX: bboxStr,
     WIDTH: '101',
@@ -116,12 +116,14 @@ async function identifyAtPoint(
     if (features && features.length > 0) {
       const props = features[0].properties ?? features[0].attributes ?? {};
       const mvsName =
+        props['Raster.MVS_NAME'] ??
         props['MVS_NAME'] ??
+        props['Raster.Pixel Value'] ??
         props['Pixel Value'] ??
         props['MVS_100_NA'] ??
         props['Label'] ??
         'Unknown';
-      const mvgName = props['MVG_NAME'] ?? props['MVG'] ?? mvsName;
+      const mvgName = props['Raster.MVG_NAME'] ?? props['MVG_NAME'] ?? props['MVG'] ?? mvsName;
 
       return {
         formationName: String(mvsName),

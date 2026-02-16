@@ -228,8 +228,10 @@ export async function captureVegetationScreenshot(
   };
   const wasVisible = map.getLayoutProperty('nvis-vegetation-layer', 'visibility') === 'visible';
 
-  // Turn vegetation layer ON
+  // Turn vegetation layer ON at full opacity for a clean classification image
   map.setLayoutProperty('nvis-vegetation-layer', 'visibility', 'visible');
+  const savedOpacity = map.getPaintProperty('nvis-vegetation-layer', 'raster-opacity') ?? 0.65;
+  map.setPaintProperty('nvis-vegetation-layer', 'raster-opacity', 1.0);
 
   // Move to flat aerial view and fit perimeter to ~80% of the viewport
   const [minLng, minLat, maxLng, maxLat] = perimeterInfo.bbox;
@@ -262,7 +264,8 @@ export async function captureVegetationScreenshot(
   // Capture
   const dataUrl = map.getCanvas().toDataURL('image/png');
 
-  // Restore vegetation layer visibility
+  // Restore vegetation layer opacity and visibility
+  map.setPaintProperty('nvis-vegetation-layer', 'raster-opacity', savedOpacity as number);
   if (!wasVisible) {
     map.setLayoutProperty('nvis-vegetation-layer', 'visibility', 'none');
   }

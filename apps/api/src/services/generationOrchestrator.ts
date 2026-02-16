@@ -142,7 +142,6 @@ export class GenerationOrchestrator {
 
     const logger = this.logger.child({ scenarioId });
     const endToEndTimer = startTimer('generation', { scenarioId });
-    import type { VegetationLegendItem } from '@fire-sim/shared'; // Assuming this type is defined in the shared module
 
     try {
       // Step 1: Generate prompts for all viewpoints
@@ -153,8 +152,6 @@ export class GenerationOrchestrator {
 
       logger.info('Prompts generated', {
         promptCount: promptSet.prompts.length,
-        vegetationPromptText?: string,
-        vegetationLegendItems?: Array<{ name: string; color: string }>,
       });
 
       // Step 1b: Query NVIS vegetation context at the fire perimeter
@@ -230,6 +227,7 @@ export class GenerationOrchestrator {
             seed: request.seed,
             mapScreenshot: anchorMapScreenshot,
             vegetationMapScreenshot: request.vegetationMapScreenshot,
+            vegetationLegendItems: request.vegetationLegendItems,
             vegetationPromptText: vegetationPromptText || undefined,
             // Surface thinking text to the progress store in real time so the
             // frontend poll picks it up while the model is still working.

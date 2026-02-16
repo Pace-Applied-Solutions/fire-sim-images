@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { getNvisDescriptor } from '@fire-sim/shared';
 import type {
   ImageGenerationProvider,
   ImageGenOptions,
@@ -155,17 +156,13 @@ export class GeminiImageProvider implements ImageGenerationProvider {
         });
 
         effectivePrompt +=
-          '\n\nVEGETATION REFERENCE MAP: The previous image is a vegetation formation overlay from the NSW State Vegetation Type Map. ' +
-          'Each colour represents a different vegetation formation type. Use this to ensure each part of the landscape has the correct vegetation:\n' +
-          '- Dark green areas = Wet sclerophyll forests (tall eucalypts with dense fern understorey)\n' +
-          '- Medium green areas = Dry sclerophyll forests (eucalypt woodland with sparse understorey and leaf litter)\n' +
-          '- Light green areas = Grassy woodlands (scattered eucalypts over native grasses)\n' +
-          '- Yellow-green areas = Grasslands (open grass with no tree canopy)\n' +
-          '- Orange/brown areas = Heathlands (low dense shrubland)\n' +
-          '- White/light grey areas = Cleared land (farmland, urban, minimal vegetation)\n' +
-          '- Teal/blue-green areas = Forested or freshwater wetlands\n' +
-          '- Dark olive areas = Rainforests (dense closed canopy)\n' +
-          'Match the vegetation in each part of your generated image to what this map shows.';
+          '\n\nVEGETATION CLASSIFICATION MAP: The previous image is a vegetation classification overlay from the ' +
+          'Australian National Vegetation Information System (NVIS). Each distinct colour represents a different ' +
+          'Major Vegetation Subgroup (MVS). This map shows the real spatial distribution of vegetation types ' +
+          'across the landscape. Use it to place the correct type of vegetation (forest, woodland, grassland, ' +
+          'shrubland, etc.) in the corresponding part of your generated image. ' +
+          'Where the satellite terrain image shows tree canopy, the NVIS map tells you WHAT TYPE of trees they are. ' +
+          'Where it shows open ground, the NVIS map tells you whether it is native grassland, cleared farmland, or heath.';
       }
     }
 
@@ -173,19 +170,23 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     // Append text-based vegetation context from ArcGIS identify queries
     if (options?.vegetationPromptText) {
       effectivePrompt +=
-        '\n\nSPATIAL VEGETATION DATA (from NSW State Vegetation Type Map): ' +
+        '\n\nSPATIAL VEGETATION DATA (from NVIS — National Vegetation Information System): ' +
         options.vegetationPromptText;
     }
 
     if (options?.vegetationLegendItems && options.vegetationLegendItems.length > 0) {
       const legendLines = options.vegetationLegendItems
-        .map((item) => `- ${item.color}: ${item.name}`)
+        .map((item) => {
+          const descriptor = getNvisDescriptor(item.name);
+          return `- ${item.color} → ${item.name}: ${descriptor}`;
+        })
         .join('\n');
 
       effectivePrompt +=
-        '\n\nVISIBLE VEGETATION LEGEND (color -> subgroup):\n' +
+        '\n\nNVIS VEGETATION LEGEND (maps overlay colours to real-world vegetation):\n' +
         legendLines +
-        '\nUse these color labels to match the vegetation regions in the reference overlay.';
+        '\nFor each coloured region in the vegetation overlay image, render the corresponding vegetation type ' +
+        'described above. This is the key to translating the abstract colour map into photorealistic landscape.';
     }
 
     parts.push({ text: effectivePrompt });
