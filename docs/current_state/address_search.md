@@ -73,7 +73,7 @@ The address search feature provides fast, responsive location search and navigat
 2. After 300ms, API request is sent to Mapbox Geocoding
 3. Results appear in dropdown (up to 5 results)
 4. User selects result via mouse click or keyboard
-5. Map smoothly pans and zooms to selected location
+5. Map smoothly pans and zooms to selected location, fitting the entire address area when available
 6. Success toast notification shows selected location name
 
 ## Technical Implementation
@@ -109,10 +109,16 @@ MapContainer.tsx - Integration point, handles map interactions
 
 ### Map Navigation
 
-- **Method**: `map.flyTo()` with smooth animation
+- **Method**: Uses `map.fitBounds()` or `map.flyTo()` based on result type
+- **Behavior**:
+  - **With bounding box**: Uses `map.fitBounds()` to show entire address area
+    - Applies dynamic padding (50-100px) based on area size
+    - Sets maxZoom of 16 to prevent excessive zoom on small areas
+    - Ideal for suburbs, regions, or large address areas
+  - **Point location only**: Uses `map.flyTo()` with fixed zoom level 14
+    - Suitable for precise addresses without area bounds
 - **Parameters**:
   - Duration: 2000ms (2 seconds)
-  - Zoom level: 14 (appropriate for address-level detail)
   - Essential: true (ensures animation completes even if user interacts)
 
 ## Extensibility for Future Features
@@ -315,3 +321,25 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 - Results are global; try more specific queries
 - Include suburb/city name for better disambiguation
 - Future: Add bounding box biasing to favor nearby results
+
+## Changelog
+
+### 2026-02-16: Improved Map Pan and Zoom
+
+**Issue**: Address search always used fixed zoom level 14, regardless of result type
+
+**Changes**:
+- Added bbox (bounding box) support from Mapbox Geocoding API
+- Implemented `map.fitBounds()` for results with bbox to show entire address area
+- Dynamic padding (50-100px) based on area size
+- maxZoom of 16 prevents excessive zoom on very small areas
+- Fallback to `map.flyTo()` with zoom 14 for point-only results
+
+**Impact**:
+- Better framing for large areas (suburbs, regions)
+- Appropriate zoom for both point and area address types
+- Improved user experience when searching for different location types
+
+**Files Changed**:
+- `apps/web/src/components/Map/AddressSearch.tsx`
+- `apps/web/src/components/Map/MapContainer.tsx`
