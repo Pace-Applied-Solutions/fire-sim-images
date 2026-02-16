@@ -686,6 +686,29 @@ Update this section after each issue or change.
       - Troubleshooting guide for common issues
       - Future enhancements roadmap (vegetation label layer, enhanced spatial queries)
     - **Acceptance criteria met:** Generated images preserve landscape features from reference, directional context clear in ground views, dual viewpoints (top-down aerial + perspective ground views) captured and documented, revised workflow documented.
+  - **Prompt Template v1.4.0: Fire Size & Scale (Feb 16, 2026):**
+    - **Problem addressed:** Generated images showed smaller fires than mapped area; AI lacked understanding of incident scale; red polygon sometimes visible
+    - **Fire dimension calculation:** Added `calculateFireDimensions()` function to compute area (hectares), N-S extent (km), and E-W extent (km) from perimeter bounding box
+    - **PromptData enhancement:** Added `fireAreaHectares`, `fireExtentNorthSouthKm`, `fireExtentEastWestKm` fields
+    - **Fire section updates:** 
+      - Includes explicit dimensions: "The fire covers approximately X hectares, spanning Y km from north to south and Z km from east to west"
+      - Added critical instruction: "The fire must fill the entire mapped area — this is not a small fire, but an incident of this specific scale"
+      - Emphasizes active fire edge, smoke, and burned areas should occupy full extent
+      - Explicit red polygon removal: "Do NOT show any red polygon outline or boundary markers — the fire itself replaces any drawn perimeter lines"
+    - **Technical implementation:** Uses turf/area and turf/bbox for accurate calculations; accounts for latitude variation in longitude-to-km conversion (cosine correction)
+    - **Prompt version bump:** v1.3.0 → v1.4.0
+    - **Testing:** All 120 tests passing, no breaking changes
+    - **Documentation:** Created `docs/PROMPT_V1.4.0_FIRE_SIZE.md` with examples, technical details, and validation
+  - **Vegetation Expansion Issue Package (Feb 16, 2026):**
+    - Created comprehensive GitHub issue (27KB documentation) for interactive vegetation labels and national coverage expansion
+    - **Problem:** No way to identify vegetation types (colors only); NSW-only coverage blocks scenarios in other states
+    - **Solution proposed:** 
+      - Part 1: Click-to-identify functionality (query at coordinates, display formation/fire characteristics)
+      - Part 2: NVIS integration (National Vegetation Information System) for nationwide coverage via WMS
+      - Hybrid approach: Keep NSW SVTM (5m high-res) + add NVIS (25-100m national baseline)
+    - **Files created:** `.github/ISSUE_VEGETATION_LABELS_NATIONAL.md` (full specification), `.github/ISSUE_TEMPLATE_VEGETATION.md` (copy-paste ready), `docs/VEGETATION_ISSUE_QUICK_REF.md` (visual guide)
+    - **Implementation phases:** Click-to-identify (1-2d) → NVIS integration (3-5d) → Optional labels (2-3d)
+    - **NVIS details:** Australian Government DCCEEW, CC-BY 4.0 license, 85 vegetation subgroups (MVS), CORS-enabled WMS endpoints
 
 ## 14. Change Control Process
 
