@@ -2,7 +2,12 @@
  * API client for interacting with the image generation back-end.
  */
 
-import type { GenerationRequest, GenerationResult, GeoContext } from '@fire-sim/shared';
+import type {
+  GenerationRequest,
+  GenerationResult,
+  GeoContext,
+  ScenarioMetadata,
+} from '@fire-sim/shared';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -157,6 +162,23 @@ export class GenerationApiClient {
     }
 
     throw new Error('Generation timed out after maximum polling attempts');
+  }
+
+  /**
+   * Get complete scenario metadata by ID.
+   * Used for loading scenarios from URL parameters.
+   */
+  async getScenario(scenarioId: string): Promise<ScenarioMetadata> {
+    const response = await fetch(`${API_BASE_URL}/scenarios/${scenarioId}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to fetch scenario' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
   }
 
   /**

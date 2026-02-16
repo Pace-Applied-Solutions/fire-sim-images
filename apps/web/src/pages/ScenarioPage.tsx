@@ -4,9 +4,13 @@ import { MapContainer } from '../components/Map';
 import { ScenarioInputPanel } from '../components/ScenarioInputPanel';
 import { GeneratedImages } from '../components/GeneratedImages';
 import { useAppStore } from '../store/appStore';
+import { useScenarioUrl } from '../hooks/useScenarioUrl';
 import styles from './ScenarioPage.module.css';
 
 export const ScenarioPage: React.FC = () => {
+  // Sync scenario state with URL parameters
+  useScenarioUrl();
+
   const {
     generationResult,
     generationProgress,
