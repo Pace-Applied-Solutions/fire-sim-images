@@ -22,7 +22,12 @@ export type CaptureMapScreenshotsFn = (viewpoints: ViewPoint[]) => Promise<Recor
 export type CaptureVegetationScreenshotFn = () => Promise<string | null>;
 
 /** Function type for handling location selection from address search */
-export type HandleLocationSelectFn = (longitude: number, latitude: number, placeName: string) => void;
+export type HandleLocationSelectFn = (
+  longitude: number,
+  latitude: number,
+  placeName: string,
+  bbox?: [number, number, number, number]
+) => void;
 
 /** Function type for handling geolocation requests */
 export type HandleGeolocationRequestFn = () => void;
