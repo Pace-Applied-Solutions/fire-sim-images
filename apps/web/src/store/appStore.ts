@@ -21,6 +21,12 @@ export type CaptureMapScreenshotsFn = (viewpoints: ViewPoint[]) => Promise<Recor
 /** Function type for capturing the vegetation overlay screenshot */
 export type CaptureVegetationScreenshotFn = () => Promise<string | null>;
 
+/** Function type for handling location selection from address search */
+export type HandleLocationSelectFn = (longitude: number, latitude: number, placeName: string) => void;
+
+/** Function type for handling geolocation requests */
+export type HandleGeolocationRequestFn = () => void;
+
 interface AppState {
   // Scenario state
   scenarioState: ScenarioState;
@@ -62,6 +68,13 @@ interface AppState {
   // Vegetation overlay screenshot capture (registered by MapContainer)
   captureVegetationScreenshot: CaptureVegetationScreenshotFn | null;
   setCaptureVegetationScreenshot: (fn: CaptureVegetationScreenshotFn | null) => void;
+
+  // Map location handlers (registered by MapContainer)
+  handleLocationSelect: HandleLocationSelectFn | null;
+  setHandleLocationSelect: (fn: HandleLocationSelectFn | null) => void;
+
+  handleGeolocationRequest: HandleGeolocationRequestFn | null;
+  setHandleGeolocationRequest: (fn: HandleGeolocationRequestFn | null) => void;
 
   // UI state
   isSidebarOpen: boolean;
@@ -114,11 +127,18 @@ export const useAppStore = create<AppState>((set) => ({
   captureVegetationScreenshot: null,
   setCaptureVegetationScreenshot: (fn) => set({ captureVegetationScreenshot: fn }),
 
+  // Map location handlers
+  handleLocationSelect: null,
+  setHandleLocationSelect: (fn) => set({ handleLocationSelect: fn }),
+
+  handleGeolocationRequest: null,
+  setHandleGeolocationRequest: (fn) => set({ handleGeolocationRequest: fn }),
+
   // Initial UI state - sidebar open by default, results panel closed
   isSidebarOpen: true,
   isResultsPanelOpen: false,
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  toggleResultsPanel: () => set((state) => ({ isResultsPanelOpen: !state.isResultsPanelOpen })),
-  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
-  setResultsPanelOpen: (open) => set({ isResultsPanelOpen: open }),
+  toggleSidebar: () => set((state: AppState) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  toggleResultsPanel: () => set((state: AppState) => ({ isResultsPanelOpen: !state.isResultsPanelOpen })),
+  setSidebarOpen: (open: boolean) => set({ isSidebarOpen: open }),
+  setResultsPanelOpen: (open: boolean) => set({ isResultsPanelOpen: open }),
 }));

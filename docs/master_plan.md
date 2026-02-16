@@ -720,6 +720,24 @@ Update this section after each issue or change.
     - **Files created:** `.github/ISSUE_VEGETATION_LABELS_NATIONAL.md` (full specification), `.github/ISSUE_TEMPLATE_VEGETATION.md` (copy-paste ready), `docs/VEGETATION_ISSUE_QUICK_REF.md` (visual guide)
     - **Implementation phases:** Click-to-identify (1-2d) → NVIS integration (3-5d) → Optional labels (2-3d)
     - **NVIS details:** Australian Government DCCEEW, CC-BY 4.0 license, 85 vegetation subgroups (MVS), CORS-enabled WMS endpoints
+  - **Address Search Moved to Header (Feb 16, 2026):**
+    - **Problem addressed:** Address search field was overlaying map controls in top-left corner, causing visual clutter and obstructing access to map controls (zoom, rotation, compass)
+    - **Solution:** Moved AddressSearch component from MapContainer toolbar overlay to Header component center section
+    - **Architecture pattern:** Used Zustand store to pass location handlers (`handleLocationSelect`, `handleGeolocationRequest`) from MapContainer to Header, following existing pattern used for `captureMapScreenshots`
+    - **Implementation details:**
+      - Added handler function types to appStore: `HandleLocationSelectFn`, `HandleGeolocationRequestFn`
+      - MapContainer registers handlers in store when map loads, cleans up on unmount
+      - Header conditionally renders AddressSearch when handlers available (map loaded)
+      - Header CSS updated with centered `.center` section for search field, flexible layout between brand/nav and status
+      - Removed `.toolbarSearch` styles from MapContainer (no longer needed)
+    - **Benefits:**
+      - Map controls (zoom, rotation, compass, scale) fully visible and accessible
+      - Clean separation of concerns: navigation/search in header, map visualization in content area
+      - No overlay conflicts or z-index issues
+      - Maintains all existing functionality: geolocation, autocomplete, keyboard navigation, expand/collapse behavior
+    - **Responsive behavior:** Search scales appropriately on mobile (max-width: 400px tablet, 280px mobile)
+    - **Acceptance criteria met:** Address search in header, map controls unobstructed, clean accessible layout maintained across viewports
+    - **Files modified:** `appStore.ts`, `MapContainer.tsx`, `MapContainer.module.css`, `Header.tsx`, `Header.module.css`
 
 ## 14. Change Control Process
 

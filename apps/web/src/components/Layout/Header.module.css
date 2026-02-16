@@ -7,12 +7,34 @@
   background-color: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border-default);
   flex-shrink: 0;
+  gap: var(--spacing-lg);
 }
 
 .left {
   display: flex;
   align-items: center;
   gap: var(--spacing-2xl);
+  flex-shrink: 0;
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.headerSearch {
+  width: 100%;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .brand {
@@ -63,12 +85,6 @@
 .navLink:global(.active) {
   color: var(--color-accent-primary);
   background-color: rgba(255, 149, 0, 0.1);
-}
-
-.right {
-  display: flex;
-  align-items: center;
-  position: relative;
 }
 
 .statusIndicator {
@@ -215,6 +231,10 @@
 
   .nav {
     display: none;
+  }
+
+  .center {
+    max-width: 400px;
   }
 
   .brandText {
