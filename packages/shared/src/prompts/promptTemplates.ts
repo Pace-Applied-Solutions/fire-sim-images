@@ -139,13 +139,13 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.3.0).
+ * Default prompt template (v1.4.0).
  * Structured template for generating photorealistic bushfire scenario prompts.
- * Updated to enhance landscape adherence and add directional narratives for ground-level views.
+ * Updated to include fire size/scale information and emphasize matching mapped area dimensions.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.3.0',
+  version: '1.4.0',
   sections: {
     // Step 1 — Establish the photographic style and intent (Gemini best practice:
     // provide context, use camera/lens language, describe purpose)
@@ -185,11 +185,20 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
         data.explicitFlameHeightM !== undefined
           ? getFlameHeightQualifier(data.explicitFlameHeightM)
           : data.intensityDescription.descriptor;
+      
+      // Format fire size information
+      const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares`;
+      const extentDesc = `spanning ${data.fireExtentNorthSouthKm.toFixed(2)} kilometres from north to south and ${data.fireExtentEastWestKm.toFixed(2)} kilometres from east to west`;
+      
       return (
         `Then, add the fire. A ${data.fireStage} is burning through the vegetation. ` +
         `${qualifier}. ` +
         `${flameDesc} with ${data.smokeDescription}.${rosDesc} ` +
-        `The head fire is spreading ${data.spreadDirection}, driven by ${data.windDescription}.`
+        `The head fire is spreading ${data.spreadDirection}, driven by ${data.windDescription}. ` +
+        `${areaDesc}, ${extentDesc}. ` +
+        `CRITICAL: The fire must fill the entire mapped area — this is not a small fire, but an incident of this specific scale. ` +
+        `The active fire edge, smoke, and burned areas should occupy the full extent of the landscape shown in the reference imagery. ` +
+        `Do NOT show any red polygon outline or boundary markers — the fire itself replaces any drawn perimeter lines.`
       );
     },
 

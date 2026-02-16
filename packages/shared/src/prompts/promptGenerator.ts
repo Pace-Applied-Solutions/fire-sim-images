@@ -4,6 +4,8 @@
  */
 
 import crypto from 'node:crypto';
+import area from '@turf/area';
+import bbox from '@turf/bbox';
 import type { GenerationRequest, ViewPoint } from '../types.js';
 import { VEGETATION_DESCRIPTORS } from '../constants.js';
 import type { PromptData, PromptSet, GeneratedPrompt, PromptTemplate } from './promptTypes.js';
@@ -145,10 +147,50 @@ function generateWindDescription(windSpeed: number, windDirection: string): stri
 }
 
 /**
+ * Calculates fire dimensions from perimeter bounding box.
+ * Returns area in hectares and extent in kilometres (N-S and E-W).
+ */
+function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
+  areaHectares: number;
+  extentNorthSouthKm: number;
+  extentEastWestKm: number;
+} {
+  // Calculate area in square metres, convert to hectares
+  const areaM2 = area(perimeter);
+  const areaHectares = areaM2 / 10_000;
+
+  // Get bounding box [minLng, minLat, maxLng, maxLat]
+  const [minLng, minLat, maxLng, maxLat] = bbox(perimeter);
+
+  // Calculate mid-latitude for more accurate longitude conversion
+  const midLat = (minLat + maxLat) / 2;
+
+  // Latitude degrees to km (approximately constant globally)
+  const kmPerDegreeLat = 111.0;
+
+  // Longitude degrees to km (varies with latitude)
+  // At the equator it's ~111km, at NSW latitudes (~-33°) it's ~93km
+  const kmPerDegreeLng = 111.0 * Math.cos((midLat * Math.PI) / 180);
+
+  // Calculate extents
+  const latDiff = maxLat - minLat;
+  const lngDiff = maxLng - minLng;
+
+  const extentNorthSouthKm = latDiff * kmPerDegreeLat;
+  const extentEastWestKm = lngDiff * kmPerDegreeLng;
+
+  return {
+    areaHectares,
+    extentNorthSouthKm,
+    extentEastWestKm,
+  };
+}
+
+/**
  * Prepares all data needed for prompt template filling.
  */
 function preparePromptData(request: GenerationRequest): PromptData {
-  const { inputs, geoContext } = request;
+  const { inputs, geoContext, perimeter } = request;
 
   if (!geoContext.vegetationType) {
     throw new Error(
@@ -179,6 +221,9 @@ function preparePromptData(request: GenerationRequest): PromptData {
   const windDescription = generateWindDescription(inputs.windSpeed, inputs.windDirection);
   const timeOfDayLighting = TIME_OF_DAY_LIGHTING[inputs.timeOfDay];
 
+  // Calculate fire dimensions from perimeter
+  const { areaHectares, extentNorthSouthKm, extentEastWestKm } = calculateFireDimensions(perimeter);
+
   return {
     vegetationDescriptor,
     terrainDescription,
@@ -197,6 +242,9 @@ function preparePromptData(request: GenerationRequest): PromptData {
     timeOfDayLighting,
     explicitFlameHeightM: inputs.flameHeightM,
     explicitRateOfSpreadKmh: inputs.rateOfSpreadKmh,
+    fireAreaHectares: areaHectares,
+    fireExtentNorthSouthKm: extentNorthSouthKm,
+    fireExtentEastWestKm: extentEastWestKm,
   };
 }
 
