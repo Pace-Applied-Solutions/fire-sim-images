@@ -14,16 +14,16 @@
 export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
 
 /**
- * Default map center coordinates for NSW, Australia.
- * Approximately centered on NSW with good coverage of fire-prone areas.
+ * Default map center coordinates for Australia.
+ * Starts wide so users briefly see the national context before zooming in.
  */
-export const DEFAULT_CENTER: [number, number] = [150.5, -33.8];
+export const DEFAULT_CENTER: [number, number] = [134.489563, -25.734968];
 
 /**
  * Default zoom level for initial map view.
- * Zoom 10 provides a regional overview suitable for scenario creation.
+ * Zoom 3.5 fits the Australian continent in view.
  */
-export const DEFAULT_ZOOM = 10;
+export const DEFAULT_ZOOM = 3.5;
 
 /**
  * Mapbox style URL for custom fire simulation view.
