@@ -96,6 +96,7 @@ export const ScenarioInputPanel: React.FC = () => {
     setGenerationProgress,
     setGenerationResult,
     setError,
+    captureMapScreenshots,
   } = useAppStore();
   const { addToast } = useToastStore();
   const [inputs, setInputs] = useState<ScenarioInputs>(DEFAULT_INPUTS);
@@ -214,12 +215,30 @@ export const ScenarioInputPanel: React.FC = () => {
         'ridge',
       ];
 
+      // Capture map screenshots from each viewpoint for terrain reference
+      let mapScreenshots: Record<string, string> | undefined;
+      if (captureMapScreenshots) {
+        setGenerationProgress('Capturing terrain views...');
+        try {
+          mapScreenshots = await captureMapScreenshots(requestedViews);
+          const count = Object.keys(mapScreenshots).length;
+          console.log(`Captured ${count} map screenshots for terrain reference`);
+          if (count > 0) {
+            setGenerationProgress(`Captured ${count} terrain views. Starting AI generation...`);
+          }
+        } catch (error) {
+          console.warn('Map screenshot capture failed, proceeding without:', error);
+          // Non-fatal: continue generation without screenshots
+        }
+      }
+
       // Start generation
       const startResponse = await generationApi.startGeneration({
         perimeter,
         inputs,
         geoContext,
         requestedViews,
+        mapScreenshots: mapScreenshots as Record<ViewPoint, string>,
       });
 
       addToast({ type: 'success', message: 'Generation started' });

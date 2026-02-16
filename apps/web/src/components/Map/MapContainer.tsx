@@ -5,9 +5,10 @@ import area from '@turf/area';
 import centroid from '@turf/centroid';
 import bbox from '@turf/bbox';
 import type { Feature, Polygon } from 'geojson';
-import type { FirePerimeter } from '@fire-sim/shared';
+import type { FirePerimeter, ViewPoint } from '@fire-sim/shared';
 import { useAppStore } from '../../store/appStore';
 import { useToastStore } from '../../store/toastStore';
+import { captureViewpointScreenshots } from '../../utils/mapCapture';
 import {
   MAPBOX_TOKEN,
   DEFAULT_CENTER,
@@ -74,6 +75,7 @@ export const MapContainer = () => {
 
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
+  const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
   const { addToast } = useToastStore();
 
   const setMapCursor = useCallback((cursor: string | null) => {
@@ -140,6 +142,7 @@ export const MapContainer = () => {
       pitch: 40, // Start with mild 3D tilt
       bearing: 0,
       maxPitch: MAX_PITCH,
+      preserveDrawingBuffer: true, // Required for canvas.toDataURL() screenshot capture
     });
 
     mapRef.current = map;
@@ -177,11 +180,75 @@ export const MapContainer = () => {
           tileSize: 512,
           maxzoom: 14,
         });
+      }
 
-        // Enable 3D terrain
-        map.setTerrain({
-          source: 'mapbox-dem',
-          exaggeration: TERRAIN_EXAGGERATION,
+      // Wait for the DEM source to be loaded before enabling terrain
+      // This prevents the "Couldn't find terrain source" error from race conditions
+      const enableTerrain = () => {
+        if (map.isSourceLoaded('mapbox-dem')) {
+          map.setTerrain({
+            source: 'mapbox-dem',
+            exaggeration: TERRAIN_EXAGGERATION,
+          });
+        } else {
+          const onSourceData = (e: mapboxgl.MapSourceDataEvent) => {
+            if (e.sourceId === 'mapbox-dem' && map.isSourceLoaded('mapbox-dem')) {
+              map.setTerrain({
+                source: 'mapbox-dem',
+                exaggeration: TERRAIN_EXAGGERATION,
+              });
+              map.off('sourcedata', onSourceData);
+            }
+          };
+          map.on('sourcedata', onSourceData);
+        }
+      };
+
+      enableTerrain();
+
+      // Add contour lines from Mapbox terrain tileset
+      if (!map.getSource('mapbox-contours')) {
+        map.addSource('mapbox-contours', {
+          type: 'vector',
+          url: 'mapbox://mapbox.mapbox-terrain-v2',
+        });
+
+        map.addLayer({
+          id: 'contour-lines',
+          type: 'line',
+          source: 'mapbox-contours',
+          'source-layer': 'contour',
+          paint: {
+            'line-color': 'rgba(255, 255, 255, 0.25)',
+            'line-width': [
+              'match',
+              ['get', 'index'],
+              5, 1.5,  // Every 5th contour line is thicker (major)
+              0.6,
+            ],
+          },
+          layout: {
+            'line-join': 'round',
+          },
+        });
+
+        map.addLayer({
+          id: 'contour-labels',
+          type: 'symbol',
+          source: 'mapbox-contours',
+          'source-layer': 'contour',
+          filter: ['==', ['get', 'index'], 5], // Only label major contour lines
+          paint: {
+            'text-color': 'rgba(255, 255, 255, 0.5)',
+            'text-halo-color': 'rgba(0, 0, 0, 0.6)',
+            'text-halo-width': 1,
+          },
+          layout: {
+            'symbol-placement': 'line',
+            'text-field': ['concat', ['to-string', ['get', 'ele']], 'm'],
+            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+            'text-size': 10,
+          },
         });
       }
 
@@ -417,6 +484,30 @@ export const MapContainer = () => {
       return null;
     }
   }, [addToast]);
+
+  // Register map screenshot capture function in the store for ScenarioInputPanel to use
+  useEffect(() => {
+    if (!isMapLoaded || !metadata) {
+      setCaptureMapScreenshots(null);
+      return;
+    }
+
+    const captureFn = async (viewpoints: ViewPoint[]): Promise<Record<string, string>> => {
+      const map = mapRef.current;
+      if (!map) return {};
+
+      return captureViewpointScreenshots(map, {
+        centroid: metadata.centroid,
+        bbox: metadata.bbox,
+      }, viewpoints);
+    };
+
+    setCaptureMapScreenshots(captureFn);
+
+    return () => {
+      setCaptureMapScreenshots(null);
+    };
+  }, [isMapLoaded, metadata, setCaptureMapScreenshots]);
 
   // Fly to viewpoint preset
   const flyToViewpoint = useCallback(

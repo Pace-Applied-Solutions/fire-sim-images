@@ -142,6 +142,17 @@ resource storageBlobDataOwner 'Microsoft.Authorization/roleAssignments@2022-04-0
   }
 }
 
+// Storage Blob Delegator – required to generate User Delegation SAS tokens
+resource storageBlobDelegator 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAccount.id, functionApp.id, 'db58b8e5-c6ad-4a2a-8342-4190687cbf4a')
+  scope: storageAccount
+  properties: {
+    principalId: functionApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'db58b8e5-c6ad-4a2a-8342-4190687cbf4a')
+  }
+}
+
 // Storage Queue Data Contributor – Azure Functions internal queue operations
 resource storageQueueDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(storageAccount.id, functionApp.id, '974c5e8b-45b9-4653-ba55-5f855dd0fb88')

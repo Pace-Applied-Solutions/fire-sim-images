@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { FirePerimeter, ScenarioInputs, GenerationResult, GeoContext } from '@fire-sim/shared';
+import type { FirePerimeter, ScenarioInputs, GenerationResult, GeoContext, ViewPoint } from '@fire-sim/shared';
 
 export type ScenarioState =
   | 'idle'
@@ -8,6 +8,9 @@ export type ScenarioState =
   | 'generating'
   | 'complete'
   | 'error';
+
+/** Function type for capturing map screenshots from specific viewpoints */
+export type CaptureMapScreenshotsFn = (viewpoints: ViewPoint[]) => Promise<Record<string, string>>;
 
 interface AppState {
   // Scenario state
@@ -38,6 +41,10 @@ interface AppState {
   // Error handling
   error: string | null;
   setError: (error: string | null) => void;
+
+  // Map screenshot capture (registered by MapContainer)
+  captureMapScreenshots: CaptureMapScreenshotsFn | null;
+  setCaptureMapScreenshots: (fn: CaptureMapScreenshotsFn | null) => void;
 
   // UI state
   isSidebarOpen: boolean;
@@ -77,6 +84,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Initial error state
   error: null,
   setError: (error) => set({ error }),
+
+  // Map screenshot capture
+  captureMapScreenshots: null,
+  setCaptureMapScreenshots: (fn) => set({ captureMapScreenshots: fn }),
 
   // Initial UI state - sidebar open by default, results panel closed
   isSidebarOpen: true,

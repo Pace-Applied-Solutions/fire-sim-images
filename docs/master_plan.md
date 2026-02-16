@@ -591,6 +591,15 @@ Update this section after each issue or change.
   - Prioritize Phase 2 enhancements based on real-world usage
   - Begin SDXL + ControlNet integration for enhanced spatial control
   - Plan fire spread simulation architecture
+- **Flex Consumption + SAS + Map Screenshots (post-MVP hardening):**
+  - **SAS URL fix:** Implemented User Delegation SAS in `blobStorage.ts` so deployed Function Apps (managed identity, no account key) can generate time-limited read-only blob URLs. Previously returned raw URLs which caused 409 errors (public access disabled).
+  - **Storage Blob Delegator role:** Added RBAC role assignment in `infra/modules/functionApp.bicep` for the managed identity to call `getUserDelegationKey()`.
+  - **Map screenshot capture:** Implemented automatic capture of Mapbox 3D terrain screenshots from each requested viewpoint before starting AI generation. Screenshots act as terrain reference images for Flux Kontext image-to-image mode.
+    - Created `apps/web/src/utils/mapCapture.ts` — programmatic camera positioning and canvas capture utility
+    - Extended Zustand store with `captureMapScreenshots` function slot registered by MapContainer
+    - ScenarioInputPanel calls capture function during generation, passing screenshots in the request
+  - **Flux image-to-image:** Updated `fluxImageProvider.ts` to include an `image` field (base64 reference screenshot) in the Flux Kontext API body when a map screenshot or reference image is provided, grounding generated fire imagery in actual terrain.
+  - **Terrain source timing fix:** Deferred `map.setTerrain()` until the DEM source is verified loaded, avoiding the "Couldn't find terrain source" console error.
 
 ## 14. Change Control Process
 

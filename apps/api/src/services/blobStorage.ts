@@ -112,7 +112,7 @@ export class BlobStorageService {
     // Ensure container exists (private access - storage account has public access disabled)
     // This is safe with connection strings/account keys
     try {
-      await containerClient.createIfNotExists({ access: 'None' as any });
+      await containerClient.createIfNotExists();
       this.context.log('[BlobStorage] Container ensured', { container: this.containerName });
     } catch (error) {
       this.context.warn('[BlobStorage] Could not ensure container exists (may already exist)', {
@@ -178,24 +178,11 @@ export class BlobStorageService {
 
   /**
    * Generate a SAS URL for read-only access to a blob.
+   * Supports both account-key SAS and User Delegation SAS (for managed identity).
    */
   async generateSASUrl(blobUrl: string, options?: SASUrlOptions): Promise<string> {
     if (this.devMode) {
       return blobUrl; // data URL or dev:// URL, no SAS needed
-    }
-
-    if (!this.accountKey) {
-      // If using managed identity, return the URL as-is (container must be public)
-      this.context.error('Storage account key not available for SAS generation. This will cause 409 errors if blob access is not public.', {
-        accountKeyPresent: false,
-        blobUrl: blobUrl.substring(0, 50) + '...',
-        environmentVariables: {
-          AZURE_STORAGE_ACCOUNT_KEY: !!process.env.AZURE_STORAGE_ACCOUNT_KEY,
-          AZURE_STORAGE_ACCOUNT_NAME: !!process.env.AZURE_STORAGE_ACCOUNT_NAME,
-          AZURE_STORAGE_CONNECTION_STRING: !!process.env.AZURE_STORAGE_CONNECTION_STRING,
-        },
-      });
-      return blobUrl;
     }
 
     const expiresInHours = options?.expiresInHours || 24;
@@ -206,23 +193,59 @@ export class BlobStorageService {
     const containerName = pathParts[0];
     const blobName = pathParts.slice(1).join('/');
 
-    const credential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
-
+    const startsOn = new Date();
     const expiresOn = new Date();
     expiresOn.setHours(expiresOn.getHours() + expiresInHours);
 
-    const sasToken = generateBlobSASQueryParameters(
-      {
-        containerName,
-        blobName,
-        permissions: BlobSASPermissions.parse(permissions),
-        startsOn: new Date(),
-        expiresOn,
-      },
-      credential
-    ).toString();
+    if (this.accountKey) {
+      // Account-key based SAS (local development)
+      const credential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
 
-    return `${blobUrl}?${sasToken}`;
+      const sasToken = generateBlobSASQueryParameters(
+        {
+          containerName,
+          blobName,
+          permissions: BlobSASPermissions.parse(permissions),
+          startsOn,
+          expiresOn,
+        },
+        credential
+      ).toString();
+
+      return `${blobUrl}?${sasToken}`;
+    }
+
+    // User Delegation SAS (managed identity - deployed environment)
+    try {
+      const client = await this.getClient();
+      const delegationKey = await client.getUserDelegationKey(startsOn, expiresOn);
+
+      const sasToken = generateBlobSASQueryParameters(
+        {
+          containerName,
+          blobName,
+          permissions: BlobSASPermissions.parse(permissions),
+          startsOn,
+          expiresOn,
+        },
+        delegationKey,
+        this.accountName
+      ).toString();
+
+      this.context.log('[BlobStorage] Generated User Delegation SAS', {
+        blobName,
+        expiresInHours,
+      });
+
+      return `${blobUrl}?${sasToken}`;
+    } catch (error) {
+      this.context.error('[BlobStorage] Failed to generate User Delegation SAS. Ensure the managed identity has "Storage Blob Delegator" role.', {
+        error: error instanceof Error ? error.message : String(error),
+        blobUrl: blobUrl.substring(0, 60) + '...',
+      });
+      // Return raw URL as last resort - will fail with 409 if storage isn't public
+      return blobUrl;
+    }
   }
 
   /**

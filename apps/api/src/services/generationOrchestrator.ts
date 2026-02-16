@@ -503,11 +503,13 @@ export class GenerationOrchestrator {
 
       try {
         // Get map screenshot for this viewpoint if available
+        // Prefer viewpoint-specific map screenshot over the generic anchor image
+        // because the screenshot provides terrain-specific grounding for this exact perspective
         const mapScreenshot = mapScreenshots?.[viewpoint];
 
         const result = await this.imageGenerator.generateImage(prompt.promptText, {
           seed,
-          referenceImage: anchorImage,
+          referenceImage: !mapScreenshot ? anchorImage : undefined,
           referenceStrength: 0.5, // 50% adherence to reference
           mapScreenshot,
         });

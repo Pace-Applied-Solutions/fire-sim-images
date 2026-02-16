@@ -21,12 +21,39 @@ export class FluxImageProvider implements ImageGenerationProvider {
     const size = options?.size ?? '1024x1024';
     const url = `${this.config.endpoint}/openai/deployments/${this.config.deployment}/images/generations?api-version=${this.config.apiVersion}`;
 
+    // If a map screenshot is provided, use image-to-image mode.
+    // Modify the prompt to instruct Flux Kontext to transform the terrain reference.
+    const referenceImage = options?.mapScreenshot ?? options?.referenceImage;
+    let effectivePrompt = prompt;
+    let base64Image: string | undefined;
+
+    if (referenceImage) {
+      let base64Data: string;
+      if (Buffer.isBuffer(referenceImage)) {
+        base64Data = referenceImage.toString('base64');
+      } else if (typeof referenceImage === 'string') {
+        // Strip data URL prefix if present (e.g. "data:image/jpeg;base64,...")
+        base64Data = referenceImage.replace(/^data:image\/\w+;base64,/, '');
+      } else {
+        base64Data = '';
+      }
+      if (base64Data.length > 0) {
+        base64Image = base64Data;
+        // Prefix the prompt to tell Flux Kontext to use the reference as a terrain base
+        effectivePrompt = `Transform this satellite/terrain map view into a photorealistic photograph showing the following fire scenario, keeping the exact same terrain, topography, vegetation layout, and camera angle: ${prompt}`;
+      }
+    }
+
     const body = {
-      prompt,
+      prompt: effectivePrompt,
       size,
       n: 1,
       response_format: 'b64_json',
     } as Record<string, unknown>;
+
+    if (base64Image) {
+      body.image = base64Image;
+    }
 
     let response: Response;
     response = await fetch(url, {
