@@ -8,6 +8,7 @@ import type { GenerationResult, ScenarioInputs, GeoContext, FirePerimeter } from
 import { ImageLightbox } from './ImageLightbox';
 import { ScenarioSummaryCard } from './ScenarioSummaryCard';
 import { ScreenshotCompare } from '../ScreenshotCompare';
+import { PromptModal } from './PromptModal';
 import styles from './GeneratedImages.module.css';
 
 /**
@@ -61,6 +62,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [showScreenshotCompare, setShowScreenshotCompare] = useState(false);
+  const [promptModalData, setPromptModalData] = useState<{ prompt: string; viewpoint: string } | null>(null);
 
   const hasScreenshots = mapScreenshots && Object.keys(mapScreenshots).length > 0;
 
@@ -109,6 +111,16 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   // Close lightbox
   const closeLightbox = useCallback(() => {
     setLightboxIndex(null);
+  }, []);
+
+  // Show prompt modal
+  const showPromptModal = useCallback((prompt: string, viewpoint: string) => {
+    setPromptModalData({ prompt, viewpoint });
+  }, []);
+
+  // Close prompt modal
+  const closePromptModal = useCallback(() => {
+    setPromptModalData(null);
   }, []);
 
   if (result.status === 'pending' || result.status === 'in_progress') {
@@ -318,6 +330,13 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
               >
                 Download
               </a>
+              <button
+                className={styles.promptButton}
+                onClick={() => showPromptModal(result.anchorImage!.metadata.prompt, result.anchorImage!.viewPoint)}
+                title="View generation prompt"
+              >
+                View Prompt
+              </button>
             </div>
           </div>
         )}
@@ -361,6 +380,13 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
               >
                 Download
               </a>
+              <button
+                className={styles.promptButton}
+                onClick={() => showPromptModal(image.metadata.prompt, image.viewPoint)}
+                title="View generation prompt"
+              >
+                View Prompt
+              </button>
               {onRegenerateImage && (
                 <button
                   className={styles.regenerateButton}
@@ -389,6 +415,15 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           images={result.images}
           initialIndex={lightboxIndex}
           onClose={closeLightbox}
+        />
+      )}
+
+      {/* Prompt Modal */}
+      {promptModalData && (
+        <PromptModal
+          prompt={promptModalData.prompt}
+          viewpoint={promptModalData.viewpoint}
+          onClose={closePromptModal}
         />
       )}
     </div>
