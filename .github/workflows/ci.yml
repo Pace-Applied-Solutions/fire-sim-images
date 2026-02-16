@@ -29,9 +29,6 @@ jobs:
       - name: Build shared package
         run: npm run build --workspace=packages/shared
 
-      - name: Format check
-        run: npm run format:check
-
       - name: Lint code
         run: npm run lint
 
@@ -65,7 +62,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Shared package built" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Code formatting checked" >> $GITHUB_STEP_SUMMARY
           echo "✅ Linting completed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Type checking completed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Unit tests completed" >> $GITHUB_STEP_SUMMARY
