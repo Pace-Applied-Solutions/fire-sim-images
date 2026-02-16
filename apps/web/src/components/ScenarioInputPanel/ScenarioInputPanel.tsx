@@ -281,6 +281,16 @@ export const ScenarioInputPanel: React.FC = () => {
       addToast({ type: 'success', message: 'Generation started' });
       console.log('Generation started:', startResponse);
 
+      // Set an initial generationResult immediately so the Results Panel
+      // renders the in-progress state with a "model is thinking" indicator,
+      // rather than showing the empty placeholder.
+      setGenerationResult({
+        id: startResponse.scenarioId,
+        status: 'in_progress',
+        images: [],
+        createdAt: new Date().toISOString(),
+      });
+
       // Poll for completion — update partial results progressively
       const result = await generationApi.pollForCompletion(startResponse.scenarioId, (status) => {
         const progressMsg = status.status === 'in_progress'
@@ -289,27 +299,17 @@ export const ScenarioInputPanel: React.FC = () => {
             ? 'Waiting for generation to start...'
             : status.progress;
         setGenerationProgress(progressMsg);
-        console.log('Generation progress:', status.progress);
+        console.log('Generation progress:', status.progress, 'thinkingText:', status.thinkingText ? `${status.thinkingText.length} chars` : '(none)');
 
-        // Set partial results so images appear as they complete
-        if (status.results?.images && status.results.images.length > 0) {
-          setGenerationResult({
-            id: startResponse.scenarioId,
-            status: status.status as GenerationResult['status'],
-            images: status.results.images,
-            createdAt: status.createdAt,
-            thinkingText: status.thinkingText,
-          });
-        } else if (status.thinkingText) {
-          // Even without images yet, show thinking text so user sees progress
-          setGenerationResult({
-            id: startResponse.scenarioId,
-            status: status.status as GenerationResult['status'],
-            images: [],
-            createdAt: status.createdAt,
-            thinkingText: status.thinkingText,
-          });
-        }
+        // Always update generationResult during polling so the
+        // Results Panel stays current with thinking text, images, and status
+        setGenerationResult({
+          id: startResponse.scenarioId,
+          status: status.status as GenerationResult['status'],
+          images: status.results?.images || [],
+          createdAt: status.createdAt,
+          thinkingText: status.thinkingText,
+        });
       });
 
       // Handle final completion

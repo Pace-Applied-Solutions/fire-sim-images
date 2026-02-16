@@ -13,10 +13,11 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
   const { generationResult } = useAppStore();
 
   useEffect(() => {
-    // Open panel when AI generation starts producing results, or when complete
+    // Open panel when AI generation starts, producing results, or when complete
     if (scenarioState === 'complete') {
       setResultsPanelOpen(true);
-    } else if (scenarioState === 'generating' && generationResult) {
+    } else if (scenarioState === 'generating') {
+      // Open as soon as generation starts so user sees progress/thinking
       setResultsPanelOpen(true);
     }
   }, [scenarioState, generationResult, setResultsPanelOpen]);

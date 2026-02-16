@@ -440,3 +440,22 @@
   word-break: break-word;
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
+
+.waitingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  white-space: normal;
+}
+
+.thinkingSpinner {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border: 2px solid var(--color-border, rgba(255,255,255,0.15));
+  border-top-color: var(--color-accent-primary, #6c63ff);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}

@@ -46,8 +46,12 @@ function isGemini3Pro(model: string): boolean {
 /** Shape of a single part inside a Gemini response candidate. */
 interface GeminiPart {
   text?: string;
+  /** Gemini API returns camelCase `inlineData` in SSE responses */
+  inlineData?: { mimeType?: string; data?: string };
+  /** Some older API versions / REST may use snake_case */
   inline_data?: { mime_type?: string; data?: string };
   thought?: boolean;
+  thoughtSignature?: string;
   thought_signature?: string;
 }
 
@@ -171,6 +175,8 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       options?.onThinkingUpdate,
     );
 
+    console.log(`[GeminiImageProvider] SSE stream complete. Parts: ${allParts.length}, thinkingText: ${thinkingText ? `${thinkingText.length} chars` : '(none)'}`);
+
     // Reconstruct canonical payload for extractResponse()
     const payload: Record<string, unknown> = {
       candidates: [{ content: { parts: allParts } }],
@@ -260,9 +266,13 @@ export class GeminiImageProvider implements ImageGenerationProvider {
           }),
         ]);
 
-        if (readResult.done) break;
+        if (readResult.done) {
+          console.log(`[GeminiSSE] Stream ended. Total parts: ${allParts.length}, thinking parts: ${thinkingParts.length}, remaining buffer: ${buffer.length} chars`);
+          break;
+        }
 
-        buffer += decoder.decode(readResult.value, { stream: true });
+        const chunk = decoder.decode(readResult.value, { stream: true });
+        buffer += chunk;
 
         // SSE events are separated by double newlines
         const events = buffer.split('\n\n');
@@ -284,6 +294,16 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
               for (const part of parts) {
                 allParts.push(part);
+
+                // Log each part for diagnostics
+                const partType = part.thought
+                  ? (part.text ? 'thinking-text' : part.inline_data || (part as Record<string, unknown>).inlineData ? 'thinking-image' : 'thinking-other')
+                  : (part.text ? 'text' : part.inline_data || (part as Record<string, unknown>).inlineData ? 'image' : 'other');
+                if (partType === 'thinking-text') {
+                  console.log(`[GeminiSSE] Thinking chunk: ${(part.text || '').substring(0, 120)}...`);
+                } else {
+                  console.log(`[GeminiSSE] Part type: ${partType}`);
+                }
 
                 // Accumulate thinking text and notify caller
                 if (part.text && part.thought) {
@@ -343,9 +363,10 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     // Find the last non-thought image part
     for (let i = parts.length - 1; i >= 0; i--) {
       const part = parts[i];
-      if (part.inline_data?.data && !part.thought) {
+      const imageData = part.inlineData?.data || part.inline_data?.data;
+      if (imageData && !part.thought) {
         return {
-          imageBase64: part.inline_data.data,
+          imageBase64: imageData,
           text: textParts.length > 0 ? textParts.join('\n') : undefined,
         };
       }
@@ -353,9 +374,10 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
     // Fallback: any image (including thought images)
     for (const part of parts) {
-      if (part.inline_data?.data) {
+      const imageData = part.inlineData?.data || part.inline_data?.data;
+      if (imageData) {
         return {
-          imageBase64: part.inline_data.data,
+          imageBase64: imageData,
           text: textParts.length > 0 ? textParts.join('\n') : undefined,
         };
       }

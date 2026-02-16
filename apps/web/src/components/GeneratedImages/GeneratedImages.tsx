@@ -136,9 +136,25 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
           </div>
         </div>
 
-        {/* Show model thinking text while generating */}
-        {result.thinkingText && (
+        {/* Show model thinking text while generating, or a waiting indicator */}
+        {result.thinkingText ? (
           <ThinkingPanel text={result.thinkingText} isStreaming />
+        ) : (
+          <div className={styles.thinkingPanel}>
+            <div className={styles.thinkingHeader}>
+              <span className={styles.thinkingIcon}>💭</span>
+              <span className={styles.thinkingLabel}>Model Reasoning</span>
+              <span className={styles.thinkingDot} />
+            </div>
+            <div className={styles.thinkingBody}>
+              <div className={styles.thinkingBubble}>
+                <div className={styles.waitingIndicator}>
+                  <div className={styles.thinkingSpinner} />
+                  <span>Model is thinking… this can take 30–90 seconds for complex fire scenarios.</span>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         <div className={styles.grid}>
