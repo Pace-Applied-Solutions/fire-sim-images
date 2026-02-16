@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/functions/*.js",
   "scripts": {
     "dev": "echo 'Note: Azure Functions requires Azure Functions Core Tools to be installed globally.' && echo 'Install with: npm i -g azure-functions-core-tools@4' && echo '' && npm run build && func start",
     "build": "tsc",
