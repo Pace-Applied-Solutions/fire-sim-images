@@ -26,7 +26,7 @@ export const ScenarioPage: React.FC = () => {
           inputs={scenarioInputs || undefined}
           geoContext={geoContext || undefined}
           mapScreenshots={mapScreenshots}
-          totalImages={9}
+          totalImages={1}
         />
       );
     }

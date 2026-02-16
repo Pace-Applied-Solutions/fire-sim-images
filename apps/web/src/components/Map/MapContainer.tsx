@@ -108,30 +108,9 @@ export const MapContainer = () => {
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Try to get user's location for initial map center
+    // Default centre (Sydney basin) — user can tap the locate button for their position
     const initialCenter: [number, number] = DEFAULT_CENTER;
     const initialZoom = DEFAULT_ZOOM;
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          if (mapRef.current && !mapRef.current.isMoving()) {
-            // Only move if map hasn't been interacted with yet
-            mapRef.current.flyTo({
-              center: [longitude, latitude],
-              zoom: 12,
-              duration: 2000,
-            });
-          }
-        },
-        (error) => {
-          console.warn('Geolocation error:', error);
-          // Silently fall back to default location
-        },
-        { timeout: 5000 }
-      );
-    }
 
     // Initialize map
     const map = new mapboxgl.Map({
@@ -170,9 +149,12 @@ export const MapContainer = () => {
     // Add scale bar
     map.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
 
-    // Setup 3D terrain once style loads
-    map.on('load', () => {
-      // Add Mapbox terrain source (check if it already exists to avoid duplicate errors)
+    // Setup 3D terrain once style is ready.
+    // Use 'style.load' (fires as soon as the style document is parsed) instead
+    // of 'load' (fires after all tiles are fetched) to avoid the "Couldn't find
+    // terrain source" error from the render loop accessing terrain before the
+    // source exists.
+    map.once('style.load', () => {
       if (!map.getSource('mapbox-dem')) {
         map.addSource('mapbox-dem', {
           type: 'raster-dem',
@@ -182,25 +164,28 @@ export const MapContainer = () => {
         });
       }
 
-      // Wait for the DEM source to be loaded before enabling terrain
-      // This prevents the "Couldn't find terrain source" error from race conditions
+      // Enable terrain once the DEM tiles arrive
       const enableTerrain = () => {
-        if (map.isSourceLoaded('mapbox-dem')) {
-          map.setTerrain({
-            source: 'mapbox-dem',
-            exaggeration: TERRAIN_EXAGGERATION,
-          });
-        } else {
-          const onSourceData = (e: mapboxgl.MapSourceDataEvent) => {
-            if (e.sourceId === 'mapbox-dem' && map.isSourceLoaded('mapbox-dem')) {
-              map.setTerrain({
-                source: 'mapbox-dem',
-                exaggeration: TERRAIN_EXAGGERATION,
-              });
-              map.off('sourcedata', onSourceData);
-            }
-          };
-          map.on('sourcedata', onSourceData);
+        try {
+          if (map.getSource('mapbox-dem') && map.isSourceLoaded('mapbox-dem')) {
+            map.setTerrain({
+              source: 'mapbox-dem',
+              exaggeration: TERRAIN_EXAGGERATION,
+            });
+          } else {
+            const onSourceData = (e: mapboxgl.MapSourceDataEvent) => {
+              if (e.sourceId === 'mapbox-dem' && map.getSource('mapbox-dem') && map.isSourceLoaded('mapbox-dem')) {
+                map.setTerrain({
+                  source: 'mapbox-dem',
+                  exaggeration: TERRAIN_EXAGGERATION,
+                });
+                map.off('sourcedata', onSourceData);
+              }
+            };
+            map.on('sourcedata', onSourceData);
+          }
+        } catch {
+          // Terrain not ready yet — safe to ignore; tiles will arrive shortly
         }
       };
 

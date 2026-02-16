@@ -178,8 +178,11 @@ export class GenerationOrchestrator {
             scenarioId,
             viewpoint: anchorViewpoint,
           });
+          // Use the map screenshot for this viewpoint as a terrain reference
+          const anchorMapScreenshot = request.mapScreenshots?.[anchorViewpoint];
           const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
             seed: request.seed,
+            mapScreenshot: anchorMapScreenshot,
             // Surface thinking text to the progress store in real time so the
             // frontend poll picks it up while the model is still working.
             onThinkingUpdate: (thinkingText: string) => {
@@ -243,6 +246,10 @@ export class GenerationOrchestrator {
           progress.completedImages++;
           progress.anchorImage = anchorImage;
           progress.seed = request.seed;
+          // Push anchor into progress.images immediately so the status
+          // endpoint returns it to the frontend while remaining views
+          // (if any) are still generating.
+          progress.images.push(anchorImage);
 
           // Capture model thinking text if available
           if (result.thinkingText) {
@@ -355,6 +362,10 @@ export class GenerationOrchestrator {
 
             images.push(generatedImage);
             progress.completedImages++;
+            // Push derived image into progress.images immediately so the
+            // status endpoint returns it to the frontend while remaining
+            // views are still generating.
+            progress.images.push(generatedImage);
 
             logger.info('Image generated and uploaded', {
               viewpoint,

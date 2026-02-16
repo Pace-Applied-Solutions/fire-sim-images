@@ -106,13 +106,13 @@ export class GenerationApiClient {
    * @param scenarioId The scenario ID to poll
    * @param onProgress Callback for progress updates
    * @param pollIntervalMs Interval between polls in milliseconds (default: 2000)
-   * @param maxPolls Maximum number of polls before timeout (default: 150, = 5 minutes)
+   * @param maxPolls Maximum number of polls before timeout (default: 300, = 10 minutes)
    */
   async pollForCompletion(
     scenarioId: string,
     onProgress?: (status: GenerationStatusResponse) => void,
     pollIntervalMs = 2000,
-    maxPolls = 150
+    maxPolls = 300
   ): Promise<GenerationResult> {
     let polls = 0;
 

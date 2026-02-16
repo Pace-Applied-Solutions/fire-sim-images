@@ -244,15 +244,20 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     try {
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        // Race the next chunk against an inactivity timeout
+        // Race the next chunk against an inactivity timeout.
+        // Clear the timer when data arrives to avoid leaking timers.
+        let inactivityTimer: ReturnType<typeof setTimeout> | undefined;
         const readResult = await Promise.race([
-          reader.read(),
-          new Promise<{ done: true; value: undefined }>((resolve) =>
-            setTimeout(
+          reader.read().then((r) => {
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            return r;
+          }),
+          new Promise<{ done: true; value: undefined }>((resolve) => {
+            inactivityTimer = setTimeout(
               () => resolve({ done: true, value: undefined }),
               inactivityTimeoutMs,
-            ),
-          ),
+            );
+          }),
         ]);
 
         if (readResult.done) break;
