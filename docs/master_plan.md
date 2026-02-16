@@ -699,6 +699,17 @@ Update this section after each issue or change.
     - **Prompt version bump:** v1.3.0 → v1.4.0
     - **Testing:** All 120 tests passing, no breaking changes
     - **Documentation:** Created `docs/PROMPT_V1.4.0_FIRE_SIZE.md` with examples, technical details, and validation
+  - **Prompt Template v1.5.0: Locality Context (Feb 16, 2026):**
+    - **Problem addressed:** Generic "New South Wales, Australia" context didn't help AI understand regional landscape characteristics
+    - **Mapbox reverse geocoding:** Created geocoding utility (`apps/web/src/utils/geocoding.ts`) to automatically determine locality from fire perimeter centroid
+    - **Smart formatting:** Place type-based formatting (locality: "near {town}, {state}", district: "in the {area} area, {state}", region: "in {state}")
+    - **Frontend integration:** ScenarioInputPanel queries locality when perimeter changes, adds to geoContext; non-fatal error handling
+    - **Scene section enhancement:** Includes locality context at start of landscape description ("This location is near Bungendore, New South Wales, Australia")
+    - **Fallback strategy:** Generic state-level context if reverse geocoding unavailable or fails
+    - **Examples:** "near Bungendore, New South Wales" (tablelands), "in the Blue Mountains area, New South Wales" (escarpment), "near Bendigo, Victoria" (goldfields plains)
+    - **Prompt version bump:** v1.4.0 → v1.5.0
+    - **Testing:** All 120 tests passing, locality optional (no breaking changes)
+    - **Documentation:** Created `docs/PROMPT_V1.5.0_LOCALITY.md` with geographic context examples, API details, regional characteristics
   - **Vegetation Expansion Issue Package (Feb 16, 2026):**
     - Created comprehensive GitHub issue (27KB documentation) for interactive vegetation labels and national coverage expansion
     - **Problem:** No way to identify vegetation types (colors only); NSW-only coverage blocks scenarios in other states
