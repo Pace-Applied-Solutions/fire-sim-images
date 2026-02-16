@@ -12,17 +12,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   return (
     <>
       <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : styles.closed}`}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Scenario Inputs</h2>
+        {isSidebarOpen ? (
+          <>
+            <div className={styles.header}>
+              <h2 className={styles.title}>Scenario Inputs</h2>
+              <button
+                onClick={toggleSidebar}
+                className={styles.toggleButton}
+                aria-label="Close sidebar"
+                title="Close sidebar"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.content}>{children}</div>
+          </>
+        ) : (
           <button
             onClick={toggleSidebar}
-            className={styles.toggleButton}
-            aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            className={styles.edgeTab}
+            aria-label="Open sidebar"
+            title="Scenario Inputs"
           >
-            {isSidebarOpen ? '←' : '→'}
+            <span className={styles.edgeTabIcon}>☰</span>
+            <span className={styles.edgeTabLabel}>Inputs</span>
           </button>
-        </div>
-        <div className={styles.content}>{children}</div>
+        )}
       </aside>
 
       {/* Mobile backdrop */}

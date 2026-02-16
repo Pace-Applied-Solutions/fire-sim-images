@@ -23,18 +23,32 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
 
   return (
     <aside className={`${styles.panel} ${isResultsPanelOpen ? styles.open : styles.closed}`}>
-      <div className={styles.header}>
-        {isResultsPanelOpen && <h2 className={styles.title}>Generated Results</h2>}
+      {isResultsPanelOpen ? (
+        <>
+          <div className={styles.header}>
+            <h2 className={styles.title}>Generated Results</h2>
+            <button
+              onClick={toggleResultsPanel}
+              className={styles.toggleButton}
+              aria-label="Close results panel"
+              title="Close results"
+            >
+              ✕
+            </button>
+          </div>
+          <div className={styles.content}>{children}</div>
+        </>
+      ) : (
         <button
           onClick={toggleResultsPanel}
-          className={styles.toggleButton}
-          aria-label={isResultsPanelOpen ? 'Close results panel' : 'Open results panel'}
-          title={isResultsPanelOpen ? 'Close results' : 'Open results'}
+          className={styles.edgeTab}
+          aria-label="Open results panel"
+          title="Generated Results"
         >
-          {isResultsPanelOpen ? '→' : '←'}
+          <span className={styles.edgeTabIcon}>🖼</span>
+          <span className={styles.edgeTabLabel}>Results</span>
         </button>
-      </div>
-      {isResultsPanelOpen && <div className={styles.content}>{children}</div>}
+      )}
     </aside>
   );
 };
