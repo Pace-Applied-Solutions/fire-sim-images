@@ -272,6 +272,12 @@ export const MapContainer = () => {
 
     try {
       const bounds = map.getBounds();
+      if (!bounds) {
+        setVegLegendError('Map bounds not available');
+        setVegLegendLoading(false);
+        return;
+      }
+
       const west = bounds.getWest();
       const east = bounds.getEast();
       const south = bounds.getSouth();
@@ -279,8 +285,8 @@ export const MapContainer = () => {
 
       const samplesX = 4;
       const samplesY = 3;
-      const lngStep = samplesX === 1 ? 0 : (east - west) / (samplesX - 1);
-      const latStep = samplesY === 1 ? 0 : (north - south) / (samplesY - 1);
+      const lngStep = (east - west) / (samplesX - 1);
+      const latStep = (north - south) / (samplesY - 1);
 
       const requests: Array<Promise<string | null>> = [];
       for (let x = 0; x < samplesX; x += 1) {
