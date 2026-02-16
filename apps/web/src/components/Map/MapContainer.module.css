@@ -24,6 +24,40 @@
 	z-index: 10;
 }
 
+.vegetationLegend {
+	position: absolute;
+	bottom: 16px;
+	right: 16px;
+	z-index: 20;
+	background: var(--color-bg-elevated);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
+	border: 1px solid var(--color-border-default);
+	max-width: 240px;
+	max-height: 260px;
+	overflow: hidden;
+}
+
+.legendHeader {
+	padding: 6px 10px;
+	font-size: 0.7rem;
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--color-text-secondary);
+	background: var(--color-bg-secondary);
+	border-bottom: 1px solid var(--color-border-default);
+}
+
+.legendImage {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-height: 220px;
+	object-fit: contain;
+	background: var(--color-bg-primary);
+}
+
 .drawButton {
 	width: 36px;
 	height: 36px;

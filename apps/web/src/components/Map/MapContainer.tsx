@@ -143,7 +143,7 @@ export const MapContainer = () => {
         REQUEST: 'GetFeatureInfo',
         LAYERS: 'NVIS_ext_mvs',
         QUERY_LAYERS: 'NVIS_ext_mvs',
-        INFO_FORMAT: 'application/json',
+        INFO_FORMAT: 'application/geo+json',
         CRS: 'EPSG:4326',
         BBOX: bboxStr,
         WIDTH: '101',
@@ -172,12 +172,17 @@ export const MapContainer = () => {
         if (features && features.length > 0) {
           const props = features[0].properties ?? features[0].attributes ?? {};
           const subgroup =
+            props['Raster.MVS_NAME'] ??
             props['MVS_NAME'] ??
             props['Pixel Value'] ??
             props['MVS_100_NA'] ??
             props['Label'] ??
             'Unknown vegetation type';
-          const group = props['MVG_NAME'] ?? props['MVG'] ?? undefined;
+          const group =
+            props['Raster.MVG_NAME'] ??
+            props['MVG_NAME'] ??
+            props['MVG'] ??
+            undefined;
 
           setVegIdentifyResult({
             subgroup: String(subgroup),
@@ -1138,6 +1143,17 @@ export const MapContainer = () => {
           loading={vegIdentifyLoading}
           onClose={handleDismissVegTooltip}
         />
+      )}
+
+      {showVegetation && (
+        <div className={styles.vegetationLegend} role="region" aria-label="NVIS legend">
+          <div className={styles.legendHeader}>NVIS Legend</div>
+          <img
+            className={styles.legendImage}
+            src="/api/nvis-wms-proxy?service=WMS&request=GetLegendGraphic&version=1.3.0&format=image/png&layer=NVIS_ext_mvs"
+            alt="NVIS major vegetation subgroup legend"
+          />
+        </div>
       )}
     </div>
   );

@@ -223,6 +223,7 @@ Update this section after each issue or change.
 
 - **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
+  - **NVIS overlay UX fixes:** Updated WMS GetFeatureInfo to request `application/geo+json` and parse Raster.MVS/MVG attributes; added an in-map NVIS legend panel via proxied GetLegendGraphic.
   - Master plan created as single source of truth.
   - Background research and technical considerations documented.
   - Copilot instructions file created.
