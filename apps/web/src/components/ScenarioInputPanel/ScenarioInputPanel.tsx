@@ -304,15 +304,38 @@ export const ScenarioInputPanel: React.FC = () => {
           mapScreenshots = await captureMapScreenshots(requestedViews);
           const count = Object.keys(mapScreenshots).length;
           console.log(`Captured ${count} map screenshots for terrain reference`);
-          // Store screenshots so the comparison view can access them
-          if (count > 0) {
-            setMapScreenshots(mapScreenshots);
-            setGenerationProgress(`Captured ${count} terrain views. Starting AI generation...`);
+
+          // Validate that all requested screenshots were captured
+          if (count === 0) {
+            throw new Error('Failed to capture any terrain screenshots');
           }
+          if (count < requestedViews.length) {
+            console.warn(`Only ${count}/${requestedViews.length} screenshots captured - some views failed`);
+            addToast({
+              type: 'warning',
+              message: `Only ${count}/${requestedViews.length} terrain views captured - proceeding with available screenshots`,
+            });
+          }
+
+          // Store screenshots so the comparison view can access them
+          setMapScreenshots(mapScreenshots);
+          setGenerationProgress(`Captured ${count} terrain views. Starting AI generation...`);
         } catch (error) {
-          console.warn('Map screenshot capture failed, proceeding without:', error);
-          // Non-fatal: continue generation without screenshots
+          console.error('Map screenshot capture failed:', error);
+          const errorMsg = error instanceof Error ? error.message : 'Screenshot capture failed';
+          setError(errorMsg);
+          setScenarioState('error');
+          setGenerationProgress(null);
+          addToast({ type: 'error', message: `Cannot start generation: ${errorMsg}` });
+          return;
         }
+      } else {
+        // No screenshot capture function available - cannot proceed
+        setError('Map screenshot capture not available');
+        setScenarioState('error');
+        setGenerationProgress(null);
+        addToast({ type: 'error', message: 'Cannot start generation: Map not ready for screenshot capture' });
+        return;
       }
 
       // Capture vegetation overlay screenshot (NSW SVTM)
