@@ -256,6 +256,8 @@ Update this section after each issue or change.
     - Split infra workflow into validate-only push runs and a gated deploy job for manual dispatch
     - Added separate dev/prod deploy jobs so only prod requires environment approval
     - Aligned dev Bicep location with existing eastus2 resources to prevent validation conflicts
+    - Removed Content Safety secret output by fetching keys in main template to clear linter warning
+    - Fixed Content Safety existing resource reference to use stable name for Bicep evaluation
   - **Issue 3 complete:** Front-End Shell, Design System & Navigation
     - Comprehensive design token system with dark theme optimized for training rooms
     - Responsive layout with Header, Sidebar, MainArea, and ResultsPanel components

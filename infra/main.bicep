@@ -168,6 +168,10 @@ module contentSafety './modules/contentSafety.bicep' = {
   }
 }
 
+resource contentSafetyResource 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' existing = {
+  name: contentSafetyName
+}
+
 // Deploy Storage Account
 module storage './modules/storage.bicep' = {
   name: 'storage-deployment'
@@ -256,7 +260,7 @@ resource contentSafetyKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' =
     keyVault
   ]
   properties: {
-    value: contentSafety.outputs.key
+    value: contentSafetyResource.listKeys().key1
   }
 }
 

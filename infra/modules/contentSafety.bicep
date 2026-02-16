@@ -39,4 +39,3 @@ resource contentSafety 'Microsoft.CognitiveServices/accounts@2023-10-01-preview'
 output id string = contentSafety.id
 output name string = contentSafety.name
 output endpoint string = contentSafety.properties.endpoint
-output key string = contentSafety.listKeys().key1
