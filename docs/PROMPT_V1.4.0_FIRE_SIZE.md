@@ -35,9 +35,9 @@ function calculateFireDimensions(perimeter: FirePerimeter) {
 
   // Latitude: ~111 km per degree (constant)
   const kmPerDegreeLat = 111.0;
-  
+
   // Longitude: varies with latitude (cosine correction)
-  const kmPerDegreeLng = 111.0 * Math.cos(midLat * Math.PI / 180);
+  const kmPerDegreeLng = 111.0 * Math.cos((midLat * Math.PI) / 180);
 
   // Calculate extents
   const extentNorthSouthKm = (maxLat - minLat) * kmPerDegreeLat;
@@ -50,6 +50,7 @@ function calculateFireDimensions(perimeter: FirePerimeter) {
 ### 2. Include in PromptData
 
 Added three new fields:
+
 - `fireAreaHectares: number` - Total fire area
 - `fireExtentNorthSouthKm: number` - North-South distance
 - `fireExtentEastWestKm: number` - East-West distance
@@ -57,25 +58,27 @@ Added three new fields:
 ### 3. Updated Fire Section
 
 **Before (v1.3.0):**
+
 ```
 Then, add the fire. A established bushfire is burning through the vegetation.
-Very high intensity — active crown fire. Flames are 10 to 20 metres high 
-with massive dark smoke columns forming pyrocumulus cloud. The head fire 
+Very high intensity — active crown fire. Flames are 10 to 20 metres high
+with massive dark smoke columns forming pyrocumulus cloud. The head fire
 is spreading to the south, driven by moderate north winds.
 ```
 
 **After (v1.4.0):**
+
 ```
 Then, add the fire. A established bushfire is burning through the vegetation.
-Very high intensity — active crown fire. Flames are 10 to 20 metres high 
-with massive dark smoke columns forming pyrocumulus cloud. The head fire 
-is spreading to the south, driven by moderate north winds. The fire covers 
-approximately 125.3 hectares, spanning 1.45 kilometres from north to south 
-and 1.12 kilometres from east to west. CRITICAL: The fire must fill the 
-entire mapped area — this is not a small fire, but an incident of this 
-specific scale. The active fire edge, smoke, and burned areas should occupy 
-the full extent of the landscape shown in the reference imagery. Do NOT 
-show any red polygon outline or boundary markers — the fire itself replaces 
+Very high intensity — active crown fire. Flames are 10 to 20 metres high
+with massive dark smoke columns forming pyrocumulus cloud. The head fire
+is spreading to the south, driven by moderate north winds. The fire covers
+approximately 125.3 hectares, spanning 1.45 kilometres from north to south
+and 1.12 kilometres from east to west. CRITICAL: The fire must fill the
+entire mapped area — this is not a small fire, but an incident of this
+specific scale. The active fire edge, smoke, and burned areas should occupy
+the full extent of the landscape shown in the reference imagery. Do NOT
+show any red polygon outline or boundary markers — the fire itself replaces
 any drawn perimeter lines.
 ```
 
@@ -86,11 +89,13 @@ any drawn perimeter lines.
 ### 🎯 Explicit Scale Information
 
 **Area:**
+
 ```
 The fire covers approximately 125.3 hectares
 ```
 
 **Dimensions:**
+
 ```
 spanning 1.45 kilometres from north to south and 1.12 kilometres from east to west
 ```
@@ -98,18 +103,20 @@ spanning 1.45 kilometres from north to south and 1.12 kilometres from east to we
 ### 🔥 Fill-the-Area Mandate
 
 **Critical Instruction:**
+
 ```
-CRITICAL: The fire must fill the entire mapped area — this is not a small 
-fire, but an incident of this specific scale. The active fire edge, smoke, 
-and burned areas should occupy the full extent of the landscape shown in 
+CRITICAL: The fire must fill the entire mapped area — this is not a small
+fire, but an incident of this specific scale. The active fire edge, smoke,
+and burned areas should occupy the full extent of the landscape shown in
 the reference imagery.
 ```
 
 ### 🚫 No Red Polygon
 
 **Explicit Removal:**
+
 ```
-Do NOT show any red polygon outline or boundary markers — the fire itself 
+Do NOT show any red polygon outline or boundary markers — the fire itself
 replaces any drawn perimeter lines.
 ```
 
@@ -118,37 +125,45 @@ replaces any drawn perimeter lines.
 ## Scale Examples
 
 ### Spot Fire (5 ha)
+
 ```
-The fire covers approximately 5.2 hectares, spanning 0.35 kilometres from 
+The fire covers approximately 5.2 hectares, spanning 0.35 kilometres from
 north to south and 0.28 kilometres from east to west.
 ```
+
 **Visual:** Small active fire, concentrated smoke column
 
 ---
 
 ### Developing Fire (50 ha)
+
 ```
-The fire covers approximately 48.7 hectares, spanning 0.85 kilometres from 
+The fire covers approximately 48.7 hectares, spanning 0.85 kilometres from
 north to south and 0.72 kilometres from east to west.
 ```
+
 **Visual:** Medium fire with distinct head and flanks, smoke plume forming
 
 ---
 
 ### Established Fire (150 ha)
+
 ```
-The fire covers approximately 150.3 hectares, spanning 1.80 kilometres from 
+The fire covers approximately 150.3 hectares, spanning 1.80 kilometres from
 north to south and 1.45 kilometres from east to west.
 ```
+
 **Visual:** Large active fire, multiple fronts, pyrocumulus development
 
 ---
 
 ### Major Campaign Fire (2500 ha)
+
 ```
-The fire covers approximately 2,487.5 hectares, spanning 6.25 kilometres from 
+The fire covers approximately 2,487.5 hectares, spanning 6.25 kilometres from
 north to south and 5.80 kilometres from east to west.
 ```
+
 **Visual:** Massive fire complex, extensive smoke column, landscape-scale impact
 
 ---
@@ -158,16 +173,19 @@ north to south and 5.80 kilometres from east to west.
 ### Calculation Accuracy
 
 **Latitude (N-S):**
+
 - 1 degree ≈ 111 km (constant globally)
 - Highly accurate for all Australian latitudes
 
 **Longitude (E-W):**
+
 - 1 degree ≈ 111 km at equator
 - 1 degree ≈ 93 km at -33° (Sydney)
 - 1 degree ≈ 85 km at -43° (Tasmania)
 - Uses cosine correction: `111 × cos(latitude)`
 
 **Typical Fire Perimeters:**
+
 - Small: 0.2 - 0.5 km dimensions (5-25 ha)
 - Medium: 0.5 - 2 km dimensions (25-400 ha)
 - Large: 2 - 10 km dimensions (400-10,000 ha)
@@ -176,6 +194,7 @@ north to south and 5.80 kilometres from east to west.
 ### Geographic Projection
 
 Uses Web Mercator (EPSG:3857) coordinates from Mapbox:
+
 - Lon/Lat stored as decimal degrees
 - Accurate for mid-latitude calculations (NSW, VIC, QLD)
 - Slight distortion at extreme latitudes (Tasmania, Torres Strait)
@@ -186,29 +205,35 @@ Uses Web Mercator (EPSG:3857) coordinates from Mapbox:
 
 ### For AI Model
 
-✅ **Clear scale understanding**  
+✅ **Clear scale understanding**
+
 - Knows exact fire dimensions
 - Can scale flames, smoke, burned areas appropriately
 
-✅ **Fill-the-area instruction**  
+✅ **Fill-the-area instruction**
+
 - Explicit mandate to use full extent
 - Prevents small-fire-in-large-landscape problem
 
-✅ **No polygon artifacts**  
+✅ **No polygon artifacts**
+
 - Told not to render red lines
 - Fire replaces drawn perimeter
 
 ### For Trainers
 
-✅ **Realistic proportions**  
+✅ **Realistic proportions**
+
 - Generated fire matches drawn area
 - Incident scale preserved
 
-✅ **Consistent mapping**  
+✅ **Consistent mapping**
+
 - What they draw is what they get
 - No surprises about fire size
 
-✅ **Professional imagery**  
+✅ **Professional imagery**
+
 - No technical artifacts (red lines)
 - Ready for training exercises
 
@@ -219,6 +244,7 @@ Uses Web Mercator (EPSG:3857) coordinates from Mapbox:
 ### Test Cases
 
 **Small Fire (10 ha):**
+
 ```typescript
 {
   fireAreaHectares: 10.5,
@@ -229,6 +255,7 @@ Uses Web Mercator (EPSG:3857) coordinates from Mapbox:
 ```
 
 **Medium Fire (200 ha):**
+
 ```typescript
 {
   fireAreaHectares: 198.3,
@@ -239,6 +266,7 @@ Uses Web Mercator (EPSG:3857) coordinates from Mapbox:
 ```
 
 **Large Fire (5000 ha):**
+
 ```typescript
 {
   fireAreaHectares: 4,987.2,
@@ -259,12 +287,12 @@ Uses Web Mercator (EPSG:3857) coordinates from Mapbox:
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
+| Version    | Date       | Changes                                                                                                                                              |
+| ---------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **v1.4.0** | 2026-02-16 | ✨ **Fire size/scale information**<br>• Area in hectares<br>• N-S and E-W dimensions<br>• Fill-the-area mandate<br>• Red polygon removal instruction |
-| v1.3.0 | 2026-02-16 | Landscape adherence, directional narratives |
-| v1.2.0 | 2026-02-14 | Ground-level perspectives, viewpoint descriptions |
-| v1.0.0 | 2026-01-15 | Initial photorealistic template |
+| v1.3.0     | 2026-02-16 | Landscape adherence, directional narratives                                                                                                          |
+| v1.2.0     | 2026-02-14 | Ground-level perspectives, viewpoint descriptions                                                                                                    |
+| v1.0.0     | 2026-01-15 | Initial photorealistic template                                                                                                                      |
 
 ---
 
@@ -278,6 +306,7 @@ packages/shared/src/prompts/
 ```
 
 **Dependencies Added:**
+
 - `@turf/area` - Calculate polygon area
 - `@turf/bbox` - Extract bounding box
 
@@ -292,15 +321,17 @@ const perimeter = {
   type: 'Feature',
   geometry: {
     type: 'Polygon',
-    coordinates: [[
-      [150.0, -33.0],
-      [150.02, -33.0],
-      [150.02, -33.015],
-      [150.0, -33.015],
-      [150.0, -33.0]
-    ]]
-  }
-}
+    coordinates: [
+      [
+        [150.0, -33.0],
+        [150.02, -33.0],
+        [150.02, -33.015],
+        [150.0, -33.015],
+        [150.0, -33.0],
+      ],
+    ],
+  },
+};
 ```
 
 ### Calculated Dimensions
@@ -316,9 +347,9 @@ const perimeter = {
 ### Generated Prompt (excerpt)
 
 ```
-The fire covers approximately 125.3 hectares, spanning 1.67 kilometres 
-from north to south and 1.86 kilometres from east to west. CRITICAL: 
-The fire must fill the entire mapped area — this is not a small fire, 
+The fire covers approximately 125.3 hectares, spanning 1.67 kilometres
+from north to south and 1.86 kilometres from east to west. CRITICAL:
+The fire must fill the entire mapped area — this is not a small fire,
 but an incident of this specific scale.
 ```
 
@@ -353,6 +384,7 @@ but an incident of this specific scale.
 **Result:** Fire images match incident scale as drawn by trainers
 
 **Key Instructions Added:**
+
 1. ✅ Fire area in hectares
 2. ✅ North-South extent in km
 3. ✅ East-West extent in km

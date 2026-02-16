@@ -134,8 +134,7 @@ export class GenerationApiClient {
           return this.getGenerationResults(scenarioId);
         }
       } catch (error) {
-        const isNotFound =
-          error instanceof Error && error.message.includes('Scenario not found');
+        const isNotFound = error instanceof Error && error.message.includes('Scenario not found');
 
         if (isNotFound && consecutive404s < MAX_INITIAL_404_RETRIES) {
           consecutive404s++;

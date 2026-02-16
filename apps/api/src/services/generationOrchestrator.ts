@@ -121,7 +121,9 @@ export class GenerationOrchestrator {
 
     // Fallback: load from blob storage (handles process restarts / cold starts)
     try {
-      const persisted = (await this.blobStorage.loadProgress(scenarioId)) as GenerationProgress | null;
+      const persisted = (await this.blobStorage.loadProgress(
+        scenarioId
+      )) as GenerationProgress | null;
       if (persisted) {
         // Re-hydrate in-memory store
         progressStore.set(scenarioId, persisted);
@@ -148,7 +150,9 @@ export class GenerationOrchestrator {
     if (!progress) {
       // Fallback: load from blob storage
       try {
-        const persisted = (await this.blobStorage.loadProgress(scenarioId)) as GenerationProgress | null;
+        const persisted = (await this.blobStorage.loadProgress(
+          scenarioId
+        )) as GenerationProgress | null;
         if (persisted) {
           progressStore.set(scenarioId, persisted);
           this.logger.info('Re-hydrated progress from blob for results', { scenarioId });
@@ -188,7 +192,11 @@ export class GenerationOrchestrator {
    * Persist progress to blob storage. Debounces writes so rapid updates
    * (e.g. thinking text streaming) don't flood storage.
    */
-  private persistProgress(scenarioId: string, progress: GenerationProgress, immediate = false): Promise<void> {
+  private persistProgress(
+    scenarioId: string,
+    progress: GenerationProgress,
+    immediate = false
+  ): Promise<void> {
     // Clear any pending debounce timer
     const existing = persistTimers.get(scenarioId);
     if (existing) clearTimeout(existing);
@@ -206,12 +214,15 @@ export class GenerationOrchestrator {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         persistTimers.delete(scenarioId);
-        this.blobStorage.saveProgress(scenarioId, progress).catch((err) => {
-          this.logger.warn('Failed to persist progress to blob', {
-            scenarioId,
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }).finally(resolve);
+        this.blobStorage
+          .saveProgress(scenarioId, progress)
+          .catch((err) => {
+            this.logger.warn('Failed to persist progress to blob', {
+              scenarioId,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          })
+          .finally(resolve);
       }, 1000);
       persistTimers.set(scenarioId, timer);
     });
@@ -632,7 +643,10 @@ export class GenerationOrchestrator {
     request: GenerationRequest,
     images: GeneratedImage[],
     anchorImage: GeneratedImage | undefined,
-    promptSet: { prompts: Array<{ viewpoint: ViewPoint; promptText: string }>; templateVersion: string },
+    promptSet: {
+      prompts: Array<{ viewpoint: ViewPoint; promptText: string }>;
+      templateVersion: string;
+    },
     modelTextResponses: Array<{ viewpoint: string; text?: string }>,
     vegetationContext: VegetationContext | null,
     logger: ReturnType<typeof createLogger>

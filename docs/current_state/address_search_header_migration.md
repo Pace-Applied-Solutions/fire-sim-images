@@ -64,6 +64,7 @@ Map Container
 Used Zustand store to pass handlers from MapContainer (which owns the map instance) to Header (which renders the search). This follows the existing pattern used for `captureMapScreenshots`:
 
 **Store (appStore.ts):**
+
 ```typescript
 export type HandleLocationSelectFn = (lng: number, lat: number, placeName: string) => void;
 export type HandleGeolocationRequestFn = () => void;
@@ -72,13 +73,14 @@ interface AppState {
   // ... other state
   handleLocationSelect: HandleLocationSelectFn | null;
   setHandleLocationSelect: (fn: HandleLocationSelectFn | null) => void;
-  
+
   handleGeolocationRequest: HandleGeolocationRequestFn | null;
   setHandleGeolocationRequest: (fn: HandleGeolocationRequestFn | null) => void;
 }
 ```
 
 **MapContainer registers handlers:**
+
 ```typescript
 useEffect(() => {
   if (!isMapLoaded) {
@@ -98,6 +100,7 @@ useEffect(() => {
 ```
 
 **Header consumes handlers:**
+
 ```typescript
 const handleLocationSelect = useAppStore((s) => s.handleLocationSelect);
 const handleGeolocationRequest = useAppStore((s) => s.handleGeolocationRequest);
@@ -121,6 +124,7 @@ return (
 ### Conditional Rendering
 
 The search only appears when:
+
 - Map is successfully loaded (`isMapLoaded === true`)
 - Handlers are registered in the store
 
@@ -129,6 +133,7 @@ This ensures the search is functional when visible. If the map fails to load (e.
 ### CSS Changes
 
 **Header.module.css:**
+
 ```css
 .header {
   display: flex;
@@ -161,6 +166,7 @@ This ensures the search is functional when visible. If the map fails to load (e.
 ```
 
 **MapContainer.module.css:**
+
 ```css
 /* REMOVED: .toolbarSearch styles (no longer needed) */
 
@@ -173,16 +179,19 @@ This ensures the search is functional when visible. If the map fails to load (e.
 ## Benefits
 
 ### 1. Improved Accessibility
+
 - Map controls fully visible and unobstructed
 - Clear visual hierarchy (navigation in header, map in content)
 - No competing overlays in the same spatial area
 
 ### 2. Cleaner Architecture
+
 - Separation of concerns: navigation/search in header, visualization in content
 - Follows standard web app patterns (search in header is conventional)
 - No z-index conflicts or stacking context issues
 
 ### 3. Maintained Functionality
+
 - All AddressSearch features preserved:
   - Collapsible expand/collapse with 🔍 icon
   - Mapbox Geocoding API integration
@@ -194,6 +203,7 @@ This ensures the search is functional when visible. If the map fails to load (e.
   - ARIA accessibility attributes
 
 ### 4. Responsive Design
+
 - Desktop: Wide search field (max 600px) centered in header
 - Tablet: Medium search field (max 400px)
 - Mobile: Compact search field (max 280px) when brand text hidden
@@ -227,6 +237,7 @@ This ensures the search is functional when visible. If the map fails to load (e.
 ## Testing
 
 ### Manual Testing
+
 - ✅ Search appears in header when map loads successfully
 - ✅ Search hidden when map fails to load (missing token)
 - ✅ All search functionality preserved (autocomplete, geolocation, keyboard nav)
@@ -235,6 +246,7 @@ This ensures the search is functional when visible. If the map fails to load (e.
 - ✅ Layout responsive on desktop, tablet, mobile viewports
 
 ### Build Verification
+
 - ✅ TypeScript compilation passes (no type errors)
 - ✅ Linter passes (0 errors, only pre-existing warnings)
 - ✅ No breaking changes to existing tests
@@ -268,6 +280,7 @@ This ensures the search is functional when visible. If the map fails to load (e.
 **After (with Mapbox token):** The search field would appear centered in the header between the navigation links and status indicator. Due to missing Mapbox token in dev environment, the search is conditionally hidden (as expected per the implementation).
 
 **Layout diagram:**
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ [🔥 Fire Sim] [Scenario] [Gallery] [Settings]             │

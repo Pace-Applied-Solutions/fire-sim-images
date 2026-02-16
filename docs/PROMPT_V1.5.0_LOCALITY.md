@@ -44,11 +44,11 @@ GET https://api.mapbox.com/geocoding/v5/mapbox.places/{lng},{lat}.json
 
 Formats locality based on place type:
 
-| Place Type | Format | Example |
-|------------|--------|---------|
-| **locality** or **place** | "near {town}, {state}" | near Bungendore, New South Wales |
+| Place Type                       | Format                        | Example                                     |
+| -------------------------------- | ----------------------------- | ------------------------------------------- |
+| **locality** or **place**        | "near {town}, {state}"        | near Bungendore, New South Wales            |
 | **district** or **neighborhood** | "in the {area} area, {state}" | in the Blue Mountains area, New South Wales |
-| **region** | "in {state}" | in Victoria |
+| **region**                       | "in {state}"                  | in Victoria                                 |
 
 ---
 
@@ -66,7 +66,7 @@ export async function reverseGeocode(
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?...`;
   const response = await fetch(url);
   const data = await response.json();
-  
+
   const feature = data.features[0];
   return formatLocalityDescription(feature);
 }
@@ -88,7 +88,7 @@ export async function getPerimeterLocality(
 useEffect(() => {
   const fetchGeoContext = async () => {
     const context = await generationApi.getGeoContext(perimeter.geometry);
-    
+
     // Get locality from reverse geocoding
     if (perimeterMeta?.centroid) {
       const locality = await getPerimeterLocality(perimeterMeta.centroid);
@@ -96,10 +96,10 @@ useEffect(() => {
         context.locality = locality;
       }
     }
-    
+
     setGeoContext(context);
   };
-  
+
   fetchGeoContext();
 }, [perimeter, perimeterMeta]);
 ```
@@ -110,16 +110,16 @@ useEffect(() => {
 
 ```typescript
 scene: (data) => {
-  const localityContext = data.locality 
-    ? ` This location is ${data.locality}, Australia.` 
+  const localityContext = data.locality
+    ? ` This location is ${data.locality}, Australia.`
     : ' This location is in New South Wales, Australia.';
-  
+
   return (
     `First, establish the landscape with strict adherence to the reference imagery.${localityContext} ` +
     `The terrain is ${data.terrainDescription}, ` +
     `covered with ${data.vegetationDescriptor}...`
   );
-}
+};
 ```
 
 ---
@@ -129,17 +129,19 @@ scene: (data) => {
 ### Bungendore, NSW (Locality)
 
 **Location Data:**
+
 - Centroid: [149.45°E, 35.25°S]
 - Reverse Geocoded: "Bungendore, New South Wales"
 
 **Prompt Scene Section:**
+
 ```
-First, establish the landscape with strict adherence to the reference imagery. 
-This location is near Bungendore, New South Wales, Australia. The terrain is 
-moderate slopes, covered with dry eucalyptus forest with sparse understorey, 
-at approximately 720 metres elevation. A road runs nearby. Preserve every 
-topographic feature exactly where it appears in the reference — hills, gullies, 
-flat paddocks, tree lines, bare earth patches, fence lines, and any built 
+First, establish the landscape with strict adherence to the reference imagery.
+This location is near Bungendore, New South Wales, Australia. The terrain is
+moderate slopes, covered with dry eucalyptus forest with sparse understorey,
+at approximately 720 metres elevation. A road runs nearby. Preserve every
+topographic feature exactly where it appears in the reference — hills, gullies,
+flat paddocks, tree lines, bare earth patches, fence lines, and any built
 structures.
 ```
 
@@ -154,16 +156,18 @@ structures.
 ### Blue Mountains, NSW (District)
 
 **Location Data:**
+
 - Centroid: [150.31°E, 33.72°S]
 - Reverse Geocoded: "Blue Mountains, New South Wales"
 
 **Prompt Scene Section:**
+
 ```
-First, establish the landscape with strict adherence to the reference imagery. 
-This location is in the Blue Mountains area, New South Wales, Australia. The 
-terrain is steep slopes, covered with wet eucalyptus forest with dense fern 
-understorey, at approximately 950 metres elevation. Deep valleys and ridgelines 
-visible. Preserve every topographic feature exactly where it appears in the 
+First, establish the landscape with strict adherence to the reference imagery.
+This location is in the Blue Mountains area, New South Wales, Australia. The
+terrain is steep slopes, covered with wet eucalyptus forest with dense fern
+understorey, at approximately 950 metres elevation. Deep valleys and ridgelines
+visible. Preserve every topographic feature exactly where it appears in the
 reference...
 ```
 
@@ -178,15 +182,17 @@ reference...
 ### Bendigo Region, Victoria (Place)
 
 **Location Data:**
+
 - Centroid: [144.28°E, 36.75°S]
 - Reverse Geocoded: "Bendigo, Victoria"
 
 **Prompt Scene Section:**
+
 ```
-First, establish the landscape with strict adherence to the reference imagery. 
-This location is near Bendigo, Victoria, Australia. The terrain is flat terrain, 
-covered with grassland with scattered woodland, at approximately 250 metres 
-elevation. Open agricultural land. Preserve every topographic feature exactly 
+First, establish the landscape with strict adherence to the reference imagery.
+This location is near Bendigo, Victoria, Australia. The terrain is flat terrain,
+covered with grassland with scattered woodland, at approximately 250 metres
+elevation. Open agricultural land. Preserve every topographic feature exactly
 where it appears in the reference...
 ```
 
@@ -201,15 +207,17 @@ where it appears in the reference...
 ### Remote NSW (No Locality - Fallback)
 
 **Location Data:**
+
 - Centroid: [150.00°E, 31.00°S]
 - Reverse Geocoded: (none - too remote)
 
 **Prompt Scene Section:**
+
 ```
-First, establish the landscape with strict adherence to the reference imagery. 
-This location is in New South Wales, Australia. The terrain is gently sloping 
-terrain, covered with dry eucalyptus forest with sparse understorey, at 
-approximately 350 metres elevation. Remote bushland area. Preserve every 
+First, establish the landscape with strict adherence to the reference imagery.
+This location is in New South Wales, Australia. The terrain is gently sloping
+terrain, covered with dry eucalyptus forest with sparse understorey, at
+approximately 350 metres elevation. Remote bushland area. Preserve every
 topographic feature exactly where it appears in the reference...
 ```
 
@@ -223,26 +231,31 @@ topographic feature exactly where it appears in the reference...
 ## Geographic Context by Region
 
 ### NSW Southern Tablelands
+
 **Towns:** Bungendore, Braidwood, Cooma, Goulburn  
 **Landscape:** Rolling hills, 600-900m elevation, dry sclerophyll, rural  
 **Locality helps AI understand:** Highland pastoral character
 
 ### Blue Mountains
+
 **Areas:** Katoomba, Blackheath, Wentworth Falls  
 **Landscape:** Escarpment, 800-1100m elevation, wet sclerophyll, deep valleys  
 **Locality helps AI understand:** Dramatic sandstone topography
 
 ### Victorian Goldfields
+
 **Towns:** Bendigo, Ballarat, Castlemaine  
 **Landscape:** Flat to gently rolling, 200-500m elevation, grassy woodland  
 **Locality helps AI understand:** Open agricultural plains
 
 ### Sydney Basin
+
 **Areas:** Penrith, Camden, Richmond  
 **Landscape:** Undulating, 50-200m elevation, dry sclerophyll, urban fringe  
 **Locality helps AI understand:** Peri-urban interface
 
 ### Central West NSW
+
 **Towns:** Orange, Bathurst, Mudgee  
 **Landscape:** Hills and valleys, 600-1000m elevation, mixed vegetation  
 **Locality helps AI understand:** Cool climate highlands
@@ -252,12 +265,14 @@ topographic feature exactly where it appears in the reference...
 ## Technical Details
 
 ### API Usage
+
 - **Endpoint:** Mapbox Geocoding API v5
 - **Cost:** Included in free tier (50,000 requests/month)
 - **Response Time:** ~100-300ms
 - **Rate Limit:** No strict limit, standard fair use
 
 ### Error Handling
+
 ```typescript
 try {
   const locality = await getPerimeterLocality(centroid);
@@ -271,12 +286,14 @@ try {
 ```
 
 ### Performance
+
 - Single API call per scenario
 - Only when perimeter changes
 - Cached in geoContext
 - No repeated queries
 
 ### Fallback Strategy
+
 1. **Try reverse geocoding** - Get most specific locality
 2. **If fails** - Use generic "New South Wales, Australia"
 3. **If no state** - Use "Australia" only
@@ -289,15 +306,18 @@ try {
 ### For AI Model
 
 ✅ **Regional Context**
+
 - Understands landscape characteristics of specific areas
 - "Hills around Bungendore" evokes tablelands topography
 - "Grasslands near Bendigo" suggests open Victorian plains
 
 ✅ **Elevation Correlation**
+
 - Blue Mountains (high) vs Sydney Basin (low)
 - Influences vegetation and terrain rendering
 
 ✅ **Landscape Types**
+
 - Coastal vs inland
 - Mountains vs plains
 - Agricultural vs wilderness
@@ -305,11 +325,13 @@ try {
 ### For Trainers
 
 ✅ **Automatic**
+
 - No manual location entry required
 - Works for any Australian location
 - Immediate on perimeter draw
 
 ✅ **Accurate**
+
 - Uses authoritative Mapbox data
 - Updated regularly
 - Consistent formatting
@@ -317,11 +339,13 @@ try {
 ### For System
 
 ✅ **Minimal Overhead**
+
 - Single API call per scenario
 - Fast response (~200ms)
 - Graceful degradation
 
 ✅ **Optional**
+
 - Works without locality
 - Non-blocking failure
 - Backwards compatible
@@ -333,8 +357,8 @@ try {
 ### Before v1.5.0
 
 ```
-First, establish the landscape with strict adherence to the reference imagery. 
-The terrain is moderate slopes, covered with dry eucalyptus forest with sparse 
+First, establish the landscape with strict adherence to the reference imagery.
+The terrain is moderate slopes, covered with dry eucalyptus forest with sparse
 understorey, at approximately 720 metres elevation in New South Wales, Australia.
 ```
 
@@ -345,9 +369,9 @@ understorey, at approximately 720 metres elevation in New South Wales, Australia
 ### After v1.5.0
 
 ```
-First, establish the landscape with strict adherence to the reference imagery. 
-This location is near Bungendore, New South Wales, Australia. The terrain is 
-moderate slopes, covered with dry eucalyptus forest with sparse understorey, 
+First, establish the landscape with strict adherence to the reference imagery.
+This location is near Bungendore, New South Wales, Australia. The terrain is
+moderate slopes, covered with dry eucalyptus forest with sparse understorey,
 at approximately 720 metres elevation.
 ```
 
@@ -359,14 +383,15 @@ at approximately 720 metres elevation.
 
 ### Manual Testing Locations
 
-| Location | Expected Locality | Verified |
-|----------|------------------|----------|
-| Bungendore | near Bungendore, New South Wales | ✅ |
-| Blue Mountains | in the Blue Mountains area, New South Wales | ✅ |
-| Bendigo | near Bendigo, Victoria | ✅ |
-| Remote NSW | in New South Wales, Australia (fallback) | ✅ |
+| Location       | Expected Locality                           | Verified |
+| -------------- | ------------------------------------------- | -------- |
+| Bungendore     | near Bungendore, New South Wales            | ✅       |
+| Blue Mountains | in the Blue Mountains area, New South Wales | ✅       |
+| Bendigo        | near Bendigo, Victoria                      | ✅       |
+| Remote NSW     | in New South Wales, Australia (fallback)    | ✅       |
 
 ### Automated Testing
+
 ✅ All 120 tests passing  
 ✅ TypeScript compilation clean  
 ✅ Locality field optional (no breaking changes)
@@ -396,13 +421,13 @@ at approximately 720 metres elevation.
 
 ## Version History
 
-| Version | Date | Key Features |
-|---------|------|-------------|
+| Version    | Date       | Key Features                                                                                                            |
+| ---------- | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **v1.5.0** | 2026-02-16 | ✨ **Locality context**<br>• Mapbox reverse geocoding<br>• Automatic location detection<br>• Regional landscape context |
-| v1.4.0 | 2026-02-16 | Fire size/scale, polygon removal |
-| v1.3.0 | 2026-02-16 | Landscape adherence, directional narratives |
-| v1.2.0 | 2026-02-14 | Ground perspectives |
-| v1.0.0 | 2026-01-15 | Initial template |
+| v1.4.0     | 2026-02-16 | Fire size/scale, polygon removal                                                                                        |
+| v1.3.0     | 2026-02-16 | Landscape adherence, directional narratives                                                                             |
+| v1.2.0     | 2026-02-14 | Ground perspectives                                                                                                     |
+| v1.0.0     | 2026-01-15 | Initial template                                                                                                        |
 
 ---
 
@@ -413,6 +438,7 @@ at approximately 720 metres elevation.
 **Result:** Specific geographic context improves landscape understanding
 
 **Examples:**
+
 - ✅ "near Bungendore, New South Wales" → tablelands context
 - ✅ "in the Blue Mountains area, New South Wales" → escarpment context
 - ✅ "near Bendigo, Victoria" → goldfields plains context
