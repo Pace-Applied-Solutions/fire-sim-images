@@ -122,18 +122,28 @@ async function checkBlobStorage(): Promise<HealthCheck> {
   const startTime = Date.now();
 
   try {
+    let blobServiceClient;
+
+    // Try connection string first (local development)
     const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    if (connectionString) {
+      blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    } else {
+      // Fall back to account name with managed identity (Azure deployment)
+      const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+      if (!accountName) {
+        return {
+          service: 'Blob Storage',
+          status: 'degraded',
+          message: 'Storage account not configured',
+          latencyMs: Date.now() - startTime,
+        };
+      }
 
-    if (!connectionString) {
-      return {
-        service: 'Blob Storage',
-        status: 'degraded',
-        message: 'Connection string not configured',
-        latencyMs: Date.now() - startTime,
-      };
+      const credential = new DefaultAzureCredential();
+      const blobUrl = `https://${accountName}.blob.core.windows.net`;
+      blobServiceClient = new BlobServiceClient(blobUrl, credential);
     }
-
-    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
 
     // Try to list containers (lightweight operation)
     const iterator = blobServiceClient.listContainers();
@@ -162,7 +172,8 @@ async function checkKeyVault(): Promise<HealthCheck> {
   const startTime = Date.now();
 
   try {
-    const vaultUrl = process.env.KEY_VAULT_URL;
+    // Support both KEY_VAULT_URL (local) and KEY_VAULT_URI (Azure)
+    const vaultUrl = process.env.KEY_VAULT_URL || process.env.KEY_VAULT_URI;
 
     if (!vaultUrl) {
       return {
@@ -176,9 +187,25 @@ async function checkKeyVault(): Promise<HealthCheck> {
     const credential = new DefaultAzureCredential();
     const client = new SecretClient(vaultUrl, credential);
 
-    // Try to list secrets (just get the first page)
-    const iterator = client.listPropertiesOfSecrets();
-    await iterator.next();
+    // Check connectivity with a lightweight operation (get vault properties)
+    // Using getSecret as a light check but catching permission errors gracefully
+    try {
+      const iterator = client.listPropertiesOfSecrets();
+      await iterator.next();
+    } catch (iterError: unknown) {
+      // If we get a 403 (permission denied), it still means the vault is accessible
+      // Just the managed identity doesn't have permission to list - that's OK for health check
+      const errorMsg = iterError instanceof Error ? iterError.message : String(iterError);
+      if (errorMsg.includes('403') || errorMsg.includes('Forbidden')) {
+        return {
+          service: 'Key Vault',
+          status: 'healthy',
+          message: 'Connected (limited access)',
+          latencyMs: Date.now() - startTime,
+        };
+      }
+      throw iterError;
+    }
 
     return {
       service: 'Key Vault',
@@ -203,12 +230,18 @@ async function checkAIServices(): Promise<HealthCheck> {
   const startTime = Date.now();
 
   try {
-    // Check if we have Flux, AI Foundry, or OpenAI configuration
+    // Check if we have Azure AI Foundry configuration
+    const foundryProjectPath = process.env.FOUNDRY_PROJECT_PATH;
+    const foundryImageModel = process.env.FOUNDRY_IMAGE_MODEL;
+    const foundryRegion = process.env.FOUNDRY_PROJECT_REGION;
+
+    // Check for Flux (fallback provider)
     const fluxEndpoint = process.env.FLUX_ENDPOINT;
-    const foundryEndpoint = process.env.AI_FOUNDRY_ENDPOINT;
+
+    // Check for Azure OpenAI (alternative)
     const openaiEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
 
-    if (!fluxEndpoint && !foundryEndpoint && !openaiEndpoint) {
+    if (!foundryProjectPath && !fluxEndpoint && !openaiEndpoint) {
       return {
         service: 'AI Services',
         status: 'degraded',
@@ -219,14 +252,19 @@ async function checkAIServices(): Promise<HealthCheck> {
 
     // For now, just check that configuration exists
     // A real check would make a lightweight API call
+    let message = '';
+    if (foundryProjectPath && foundryImageModel && foundryRegion) {
+      message = `Azure AI Foundry configured (${foundryImageModel} in ${foundryRegion})`;
+    } else if (fluxEndpoint) {
+      message = 'Flux AI configured';
+    } else if (openaiEndpoint) {
+      message = 'Azure OpenAI configured';
+    }
+
     return {
       service: 'AI Services',
       status: 'healthy',
-      message: fluxEndpoint
-        ? 'Flux AI configured'
-        : foundryEndpoint
-          ? 'Azure AI Foundry configured'
-          : 'Azure OpenAI configured',
+      message,
       latencyMs: Date.now() - startTime,
     };
   } catch (error) {
