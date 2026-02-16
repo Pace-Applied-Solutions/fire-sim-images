@@ -16,7 +16,7 @@ export class FoundryImageProvider implements ImageGenerationProvider {
   constructor(private readonly config: FoundryConfig) {
     // Model ID comes from foundry config
     this.modelId = config.imageModel;
-    
+
     // Construct OpenAI-compatible endpoint from region and project path
     // If projectPath looks like an endpoint, use it directly
     if (config.projectPath.startsWith('http')) {
@@ -27,16 +27,13 @@ export class FoundryImageProvider implements ImageGenerationProvider {
       this.endpoint = `https://${config.projectRegion}.api.cognitive.microsoftml.com/projects/${config.projectPath}`;
       this.apiKey = config.projectAuthToken || '';
     }
-    
+
     this.apiVersion = '2024-12-01-preview';
   }
 
   async isAvailable(): Promise<boolean> {
     return Boolean(
-      this.config.projectPath &&
-      this.config.projectRegion &&
-      this.config.imageModel &&
-      this.apiKey
+      this.config.projectPath && this.config.projectRegion && this.config.imageModel && this.apiKey
     );
   }
 
@@ -98,9 +95,7 @@ export class FoundryImageProvider implements ImageGenerationProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(
-        `Foundry API error ${response.status}: ${text.substring(0, 500)}`
-      );
+      throw new Error(`Foundry API error ${response.status}: ${text.substring(0, 500)}`);
     }
 
     let payload: { data?: Array<{ b64_json?: string }> };
@@ -109,7 +104,9 @@ export class FoundryImageProvider implements ImageGenerationProvider {
         data?: Array<{ b64_json?: string }>;
       };
     } catch (error) {
-      throw new Error(`Failed to parse Foundry API response: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to parse Foundry API response: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     const b64 = payload.data?.[0]?.b64_json;

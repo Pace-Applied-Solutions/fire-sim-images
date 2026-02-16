@@ -110,3 +110,57 @@
     width: 36px;
   }
 }
+
+/* Mobile behavior - bottom drawer */
+@media (max-width: 768px) {
+  .panel {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 64px; /* Space for tab bar */
+    width: 100%;
+    max-height: 70vh;
+    border-left: none;
+    border-top: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transform: translateY(0);
+    transition: transform var(--transition-base);
+    z-index: calc(var(--z-dropdown) + 10);
+  }
+
+  .panel.closed {
+    width: 100%;
+    transform: translateY(100%);
+    border-top: none;
+  }
+
+  .header {
+    cursor: pointer;
+    min-height: 56px;
+    padding: 1rem;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+
+  .toggleButton {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .edgeTab {
+    display: none;
+  }
+
+  .content {
+    padding: 1rem;
+    padding-bottom: 1.5rem;
+  }
+}

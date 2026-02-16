@@ -41,18 +41,22 @@ export const ScenarioPage: React.FC = () => {
   };
 
   return (
-    <Layout sidebar={<ScenarioInputPanel />} main={
-      <>
-        <MapContainer />
-        {scenarioState === 'generating' && generationProgress && !generationResult && (
-          <div className={styles.progressOverlay}>
-            <div className={styles.progressCard}>
-              <div className={styles.spinner} />
-              <p className={styles.progressText}>{generationProgress}</p>
+    <Layout
+      sidebar={<ScenarioInputPanel />}
+      main={
+        <>
+          <MapContainer />
+          {scenarioState === 'generating' && generationProgress && !generationResult && (
+            <div className={styles.progressOverlay}>
+              <div className={styles.progressCard}>
+                <div className={styles.spinner} />
+                <p className={styles.progressText}>{generationProgress}</p>
+              </div>
             </div>
-          </div>
-        )}
-      </>
-    } results={renderResults()} />
+          )}
+        </>
+      }
+      results={renderResults()}
+    />
   );
 };

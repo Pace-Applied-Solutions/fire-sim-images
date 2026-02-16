@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import type { FirePerimeter, ScenarioInputs, GenerationResult, GeoContext, ViewPoint } from '@fire-sim/shared';
+import type {
+  FirePerimeter,
+  ScenarioInputs,
+  GenerationResult,
+  GeoContext,
+  ViewPoint,
+} from '@fire-sim/shared';
 
 export type ScenarioState =
   | 'idle'

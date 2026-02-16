@@ -211,7 +211,7 @@ export async function captureViewpointScreenshots(
  */
 export async function captureVegetationScreenshot(
   map: MapboxMap,
-  perimeterInfo: PerimeterInfo,
+  perimeterInfo: PerimeterInfo
 ): Promise<string | null> {
   // Check the vegetation layer exists
   if (!map.getLayer('nsw-vegetation-layer')) {
@@ -226,8 +226,7 @@ export async function captureVegetationScreenshot(
     bearing: map.getBearing(),
     pitch: map.getPitch(),
   };
-  const wasVisible =
-    map.getLayoutProperty('nsw-vegetation-layer', 'visibility') === 'visible';
+  const wasVisible = map.getLayoutProperty('nsw-vegetation-layer', 'visibility') === 'visible';
 
   // Turn vegetation layer ON
   map.setLayoutProperty('nsw-vegetation-layer', 'visibility', 'visible');

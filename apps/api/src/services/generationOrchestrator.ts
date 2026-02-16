@@ -131,9 +131,9 @@ export class GenerationOrchestrator {
   }
 
   /**
-  * Execute the full generation pipeline with anchor image strategy.
-  * Pass 1: Generate a ground-level anchor view
-  * Pass 2: Generate remaining views using anchor as reference
+   * Execute the full generation pipeline with anchor image strategy.
+   * Pass 1: Generate a ground-level anchor view
+   * Pass 2: Generate remaining views using anchor as reference
    */
   private async executeGeneration(scenarioId: string, request: GenerationRequest): Promise<void> {
     const progress = progressStore.get(scenarioId)!;
@@ -167,8 +167,10 @@ export class GenerationOrchestrator {
           lats.reduce((a: number, b: number) => a + b, 0) / lats.length,
         ];
         const perimeterBbox: [number, number, number, number] = [
-          Math.min(...lngs), Math.min(...lats),
-          Math.max(...lngs), Math.max(...lats),
+          Math.min(...lngs),
+          Math.min(...lats),
+          Math.max(...lngs),
+          Math.max(...lats),
         ];
 
         logger.info('Querying NSW SVTM vegetation context', { centroid });
@@ -193,8 +195,9 @@ export class GenerationOrchestrator {
       // Step 2: Determine anchor viewpoint (prefer ground-level, fallback to first available)
       const maxImages = 10;
       const viewpointsToGenerate = request.requestedViews.slice(0, maxImages);
-      const anchorViewpoint = viewpointsToGenerate.find((viewpoint) => viewpoint.startsWith('ground_'))
-        ?? (viewpointsToGenerate.includes('helicopter_above')
+      const anchorViewpoint =
+        viewpointsToGenerate.find((viewpoint) => viewpoint.startsWith('ground_')) ??
+        (viewpointsToGenerate.includes('helicopter_above')
           ? 'helicopter_above'
           : viewpointsToGenerate.includes('aerial')
             ? 'aerial'
@@ -343,7 +346,7 @@ export class GenerationOrchestrator {
         anchorImageData,
         request.mapScreenshots,
         request.vegetationMapScreenshot,
-        vegetationPromptText || undefined,
+        vegetationPromptText || undefined
       );
 
       // Step 5: Upload images to blob storage and generate SAS URLs
@@ -423,14 +426,11 @@ export class GenerationOrchestrator {
               model: metadata.model,
             });
           } catch (uploadError) {
-            const uploadErr = uploadError instanceof Error ? uploadError : new Error(String(uploadError));
-            logger.error(
-              `Failed to upload image: ${uploadErr.message}`,
-              uploadErr,
-              {
-                viewpoint,
-              }
-            );
+            const uploadErr =
+              uploadError instanceof Error ? uploadError : new Error(String(uploadError));
+            logger.error(`Failed to upload image: ${uploadErr.message}`, uploadErr, {
+              viewpoint,
+            });
             progress.failedImages++;
           }
         } else {
@@ -586,7 +586,7 @@ export class GenerationOrchestrator {
     anchorImage?: Buffer,
     mapScreenshots?: Record<ViewPoint, string>,
     vegetationMapScreenshot?: string,
-    vegetationPromptText?: string,
+    vegetationPromptText?: string
   ): Promise<
     Array<
       PromiseSettledResult<{

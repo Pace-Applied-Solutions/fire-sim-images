@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/appStore';
-import type { ScenarioInputs, FireDangerRating, ViewPoint, GenerationResult } from '@fire-sim/shared';
+import type {
+  ScenarioInputs,
+  FireDangerRating,
+  ViewPoint,
+  GenerationResult,
+} from '@fire-sim/shared';
 import area from '@turf/area';
 import centroid from '@turf/centroid';
 import bbox from '@turf/bbox';
@@ -173,8 +178,11 @@ export const ScenarioInputPanel: React.FC = () => {
       temperature: profile.temperature,
       humidity: profile.humidity,
       windSpeed: profile.windSpeed,
-      flameHeightM: Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10,
-      rateOfSpreadKmh: Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) / 10,
+      flameHeightM:
+        Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10,
+      rateOfSpreadKmh:
+        Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) /
+        10,
     };
 
     setInputs(newInputs);
@@ -221,8 +229,11 @@ export const ScenarioInputPanel: React.FC = () => {
   useEffect(() => {
     if (geoContext?.vegetationType) {
       const fireBehaviour = getFireBehaviour(inputs.fireDangerRating, geoContext.vegetationType);
-      const newFlameHeight = Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10;
-      const newROS = Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) / 10;
+      const newFlameHeight =
+        Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10;
+      const newROS =
+        Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) /
+        10;
 
       const newInputs = { ...inputs, flameHeightM: newFlameHeight, rateOfSpreadKmh: newROS };
       setInputs(newInputs);
@@ -312,13 +323,19 @@ export const ScenarioInputPanel: React.FC = () => {
 
       // Poll for completion — update partial results progressively
       const result = await generationApi.pollForCompletion(startResponse.scenarioId, (status) => {
-        const progressMsg = status.status === 'in_progress'
-          ? `Generating images... ${status.completedImages}/${status.totalImages} complete`
-          : status.status === 'pending'
-            ? 'Waiting for generation to start...'
-            : status.progress;
+        const progressMsg =
+          status.status === 'in_progress'
+            ? `Generating images... ${status.completedImages}/${status.totalImages} complete`
+            : status.status === 'pending'
+              ? 'Waiting for generation to start...'
+              : status.progress;
         setGenerationProgress(progressMsg);
-        console.log('Generation progress:', status.progress, 'thinkingText:', status.thinkingText ? `${status.thinkingText.length} chars` : '(none)');
+        console.log(
+          'Generation progress:',
+          status.progress,
+          'thinkingText:',
+          status.thinkingText ? `${status.thinkingText.length} chars` : '(none)'
+        );
 
         // Always update generationResult during polling so the
         // Results Panel stays current with thinking text, images, and status
@@ -628,12 +645,17 @@ export const ScenarioInputPanel: React.FC = () => {
               />
             </div>
             <span className={styles.fieldHint}>
-              {(inputs.flameHeightM ?? 1) < 0.5 ? 'Smouldering / minimal flames' :
-               (inputs.flameHeightM ?? 1) < 1.5 ? 'Low surface fire' :
-               (inputs.flameHeightM ?? 1) < 3 ? 'Moderate surface fire' :
-               (inputs.flameHeightM ?? 1) < 8 ? 'Active fire, some crown involvement' :
-               (inputs.flameHeightM ?? 1) < 20 ? 'Very intense, crown fire likely' :
-               'Extreme — full crown fire'}
+              {(inputs.flameHeightM ?? 1) < 0.5
+                ? 'Smouldering / minimal flames'
+                : (inputs.flameHeightM ?? 1) < 1.5
+                  ? 'Low surface fire'
+                  : (inputs.flameHeightM ?? 1) < 3
+                    ? 'Moderate surface fire'
+                    : (inputs.flameHeightM ?? 1) < 8
+                      ? 'Active fire, some crown involvement'
+                      : (inputs.flameHeightM ?? 1) < 20
+                        ? 'Very intense, crown fire likely'
+                        : 'Extreme — full crown fire'}
             </span>
           </div>
 
@@ -665,11 +687,15 @@ export const ScenarioInputPanel: React.FC = () => {
               />
             </div>
             <span className={styles.fieldHint}>
-              {(inputs.rateOfSpreadKmh ?? 1) < 1 ? 'Slow creep' :
-               (inputs.rateOfSpreadKmh ?? 1) < 4 ? 'Walking pace' :
-               (inputs.rateOfSpreadKmh ?? 1) < 10 ? 'Fast — outrunning on foot difficult' :
-               (inputs.rateOfSpreadKmh ?? 1) < 25 ? 'Very fast — vehicle speed' :
-               'Extreme — near-instantaneous spread'}
+              {(inputs.rateOfSpreadKmh ?? 1) < 1
+                ? 'Slow creep'
+                : (inputs.rateOfSpreadKmh ?? 1) < 4
+                  ? 'Walking pace'
+                  : (inputs.rateOfSpreadKmh ?? 1) < 10
+                    ? 'Fast — outrunning on foot difficult'
+                    : (inputs.rateOfSpreadKmh ?? 1) < 25
+                      ? 'Very fast — vehicle speed'
+                      : 'Extreme — near-instantaneous spread'}
             </span>
           </div>
           <p className={styles.ratingHint}>
@@ -719,7 +745,9 @@ export const ScenarioInputPanel: React.FC = () => {
           <div className={styles.perimeterGrid}>
             <div className={styles.perimeterStat}>
               <span className={styles.perimeterLabel}>Area</span>
-              <span className={styles.perimeterValue}>{perimeterMeta.areaHectares.toFixed(2)} ha</span>
+              <span className={styles.perimeterValue}>
+                {perimeterMeta.areaHectares.toFixed(2)} ha
+              </span>
             </div>
             <div className={styles.perimeterStat}>
               <span className={styles.perimeterLabel}>Centre</span>

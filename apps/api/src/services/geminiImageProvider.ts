@@ -202,16 +202,18 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     // Use systemInstruction for consistent scene guidance across multi-image sets
     if (isProModel) {
       body.systemInstruction = {
-        parts: [{
-          text:
-            'You are a photorealistic bushfire scenario renderer for Australian fire service training. ' +
-            'Generate a single high-quality image per request. Each image is part of a multi-perspective set ' +
-            'depicting the SAME fire event at the SAME moment in time. Maintain strict visual consistency: ' +
-            'identical smoke plume shape and colour, identical flame intensity, identical vegetation state, ' +
-            'identical weather conditions (cloud cover, haze, lighting), and identical terrain features across all perspectives. ' +
-            'Use Australian flora (eucalyptus, banksia, spinifex) and realistic fire behaviour. ' +
-            'Never include people, animals, vehicles, or text overlays in the image.',
-        }],
+        parts: [
+          {
+            text:
+              'You are a photorealistic bushfire scenario renderer for Australian fire service training. ' +
+              'Generate a single high-quality image per request. Each image is part of a multi-perspective set ' +
+              'depicting the SAME fire event at the SAME moment in time. Maintain strict visual consistency: ' +
+              'identical smoke plume shape and colour, identical flame intensity, identical vegetation state, ' +
+              'identical weather conditions (cloud cover, haze, lighting), and identical terrain features across all perspectives. ' +
+              'Use Australian flora (eucalyptus, banksia, spinifex) and realistic fire behaviour. ' +
+              'Never include people, animals, vehicles, or text overlays in the image.',
+          },
+        ],
       };
     }
 
@@ -224,19 +226,19 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(
-        `Image model API error ${response.status}: ${text.substring(0, 500)}`
-      );
+      throw new Error(`Image model API error ${response.status}: ${text.substring(0, 500)}`);
     }
 
     // ── Read SSE stream with inactivity timeout ─────────────────
     const { parts: allParts, thinkingText } = await this.readSSEStream(
       response,
       INACTIVITY_TIMEOUT_MS,
-      options?.onThinkingUpdate,
+      options?.onThinkingUpdate
     );
 
-    console.log(`[GeminiImageProvider] SSE stream complete. Parts: ${allParts.length}, thinkingText: ${thinkingText ? `${thinkingText.length} chars` : '(none)'}`);
+    console.log(
+      `[GeminiImageProvider] SSE stream complete. Parts: ${allParts.length}, thinkingText: ${thinkingText ? `${thinkingText.length} chars` : '(none)'}`
+    );
 
     // Reconstruct canonical payload for extractResponse()
     const payload: Record<string, unknown> = {
@@ -246,9 +248,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     const extracted = this.extractResponse(payload);
 
     if (!extracted.imageBase64) {
-      const thinkingPreview = thinkingText
-        ? `\n\nModel thinking:\n${thinkingText}`
-        : '';
+      const thinkingPreview = thinkingText ? `\n\nModel thinking:\n${thinkingText}` : '';
       throw Object.assign(
         new Error(
           `Image model API returned no image data — the model may still be processing.${thinkingPreview}`
@@ -301,7 +301,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
   private async readSSEStream(
     response: Response,
     inactivityTimeoutMs: number,
-    onThinkingUpdate?: (text: string) => void,
+    onThinkingUpdate?: (text: string) => void
   ): Promise<{ parts: GeminiPart[]; thinkingText: string | undefined }> {
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
@@ -323,15 +323,19 @@ export class GeminiImageProvider implements ImageGenerationProvider {
           new Promise<{ done: true; value: undefined }>((resolve) => {
             inactivityTimer = setTimeout(
               () => resolve({ done: true, value: undefined }),
-              inactivityTimeoutMs,
+              inactivityTimeoutMs
             );
           }),
         ]);
 
         if (readResult.done) {
-          console.log(`[GeminiSSE] Stream ended. Parts: ${allParts.length}, thinking chunks: ${thinkingParts.length}`);
+          console.log(
+            `[GeminiSSE] Stream ended. Parts: ${allParts.length}, thinking chunks: ${thinkingParts.length}`
+          );
           if (buffer.length > 0) {
-            console.log(`[GeminiSSE] Warning: ${buffer.length} chars left in buffer (data may be lost)`);
+            console.log(
+              `[GeminiSSE] Warning: ${buffer.length} chars left in buffer (data may be lost)`
+            );
           }
           break;
         }
@@ -353,9 +357,11 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
             try {
               const chunk = JSON.parse(jsonStr);
-              const candidates = chunk.candidates as Array<{
-                content?: { parts?: GeminiPart[] };
-              }> | undefined;
+              const candidates = chunk.candidates as
+                | Array<{
+                    content?: { parts?: GeminiPart[] };
+                  }>
+                | undefined;
               const parts = candidates?.[0]?.content?.parts;
               if (!parts) continue;
 
@@ -396,9 +402,11 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     imageBase64: string | undefined;
     text: string | undefined;
   } {
-    const candidates = payload.candidates as Array<{
-      content?: { parts?: GeminiPart[] };
-    }> | undefined;
+    const candidates = payload.candidates as
+      | Array<{
+          content?: { parts?: GeminiPart[] };
+        }>
+      | undefined;
 
     if (!candidates?.length) {
       return { imageBase64: undefined, text: undefined };

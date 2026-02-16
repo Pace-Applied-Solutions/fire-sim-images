@@ -22,14 +22,23 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
     }
   }, [scenarioState, generationResult, setResultsPanelOpen]);
 
+  const handleHeaderClick = () => {
+    if (window.innerWidth <= 768) {
+      toggleResultsPanel();
+    }
+  };
+
   return (
     <aside className={`${styles.panel} ${isResultsPanelOpen ? styles.open : styles.closed}`}>
       {isResultsPanelOpen ? (
         <>
-          <div className={styles.header}>
+          <div className={styles.header} onClick={handleHeaderClick}>
             <h2 className={styles.title}>Generated Results</h2>
             <button
-              onClick={toggleResultsPanel}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleResultsPanel();
+              }}
               className={styles.toggleButton}
               aria-label="Close results panel"
               title="Close results"

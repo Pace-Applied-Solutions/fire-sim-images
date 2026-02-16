@@ -30,6 +30,7 @@ When clicked, the button opens a modal dialog that displays:
 ### Component Architecture
 
 **PromptModal Component** (`apps/web/src/components/GeneratedImages/PromptModal.tsx`):
+
 - React functional component with TypeScript
 - Props: `prompt` (string), `viewpoint` (string), `onClose` (callback)
 - Follows the same modal pattern as `ImageLightbox` for consistency
@@ -37,6 +38,7 @@ When clicked, the button opens a modal dialog that displays:
 - Click-outside-to-close behavior
 
 **Styling** (`apps/web/src/components/GeneratedImages/PromptModal.module.css`):
+
 - Fixed overlay with semi-transparent background (z-index: 9999)
 - Modal centered with max-width of 800px
 - Scrollable content area for long prompts
@@ -44,6 +46,7 @@ When clicked, the button opens a modal dialog that displays:
 - Responsive design with mobile support
 
 **Integration** (`apps/web/src/components/GeneratedImages/GeneratedImages.tsx`):
+
 - State management: `promptModalData` stores current prompt and viewpoint
 - Handlers: `showPromptModal()` and `closePromptModal()` control visibility
 - Button rendered in `.actions` section of both anchor and regular image cards
@@ -74,6 +77,7 @@ Prompts are stored at the **image level**, not the scenario level:
 ## Testing
 
 **Unit Tests** (`apps/web/src/components/GeneratedImages/__tests__/PromptModal.test.tsx`):
+
 - Renders with prompt text
 - Close button functionality
 - Overlay click to close
@@ -81,6 +85,7 @@ Prompts are stored at the **image level**, not the scenario level:
 - Viewpoint name formatting (e.g., "helicopter_north" → "Helicopter North")
 
 **Test Coverage**:
+
 - All close behaviors verified
 - Component rendering validated
 - Props correctly passed and displayed
@@ -88,11 +93,13 @@ Prompts are stored at the **image level**, not the scenario level:
 ## Usage Scenarios
 
 ### For Developers (Pre-1.0)
+
 - **Prompt iteration**: Quickly view prompts to understand what's being requested
 - **Quality assurance**: Compare prompts across viewpoints to ensure consistency
 - **Debugging**: Identify issues with prompt generation or templating
 
 ### For Trainers (Post-1.0)
+
 - **Transparency**: Understand how AI generates specific images
 - **Training material**: Use prompts as teaching examples for fire behavior
 - **Feedback**: Provide informed feedback on image accuracy

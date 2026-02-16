@@ -90,7 +90,7 @@ export class AzureImageProvider implements ImageGenerationProvider {
       }
       headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.key}`,
+        Authorization: `Bearer ${this.config.key}`,
       };
     } else {
       // OpenAI-compatible format
@@ -117,12 +117,10 @@ export class AzureImageProvider implements ImageGenerationProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(
-        `Image model API error ${response.status}: ${text.substring(0, 500)}`
-      );
+      throw new Error(`Image model API error ${response.status}: ${text.substring(0, 500)}`);
     }
 
-    const payload = await response.json() as Record<string, unknown>;
+    const payload = (await response.json()) as Record<string, unknown>;
 
     // Extract base64 image data — handle both response formats
     const b64 = this.extractBase64(payload);

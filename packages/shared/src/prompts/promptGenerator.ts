@@ -215,7 +215,10 @@ function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: Vi
     template.sections.safety,
   ];
 
-  return sections.join('\n\n').replace(/[ \t]+/g, ' ').trim();
+  return sections
+    .join('\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
 }
 
 /**

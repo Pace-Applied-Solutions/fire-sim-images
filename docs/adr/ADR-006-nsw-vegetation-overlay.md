@@ -20,22 +20,23 @@ The SVTM provides authoritative, spatially resolved vegetation formation data ac
 
 ## Data Source
 
-**NSW State Vegetation Type Map (SVTM)**  
-- Publisher: NSW Department of Climate Change, Energy, the Environment and Water  
-- License: CC-BY 4.0  
-- Coverage: All of NSW  
-- Resolution: 5m GeoTIFF raster, mapped at 1:5,000–1:25,000 scale  
-- Current release: C2.0.M2.2 (December 2025)  
+**NSW State Vegetation Type Map (SVTM)**
+
+- Publisher: NSW Department of Climate Change, Energy, the Environment and Water
+- License: CC-BY 4.0
+- Coverage: All of NSW
+- Resolution: 5m GeoTIFF raster, mapped at 1:5,000–1:25,000 scale
+- Current release: C2.0.M2.2 (December 2025)
 - Catalog: [SEED](https://datasets.seed.nsw.gov.au/dataset/nsw-state-vegetation-type-map1e498)
 
 ### Confirmed Endpoints
 
-| Endpoint | URL | Notes |
-|----------|-----|-------|
-| **ArcGIS MapServer** | `https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer` | Raster layer, WKID 4283 (GDA94) |
-| **WMS 1.3.0** | `https://mapprod3.environment.nsw.gov.au/arcgis/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer/WmsServer` | GetMap (PNG/JPEG), GetFeatureInfo, MaxSize 4096×4096 |
-| **Export (REST)** | `.../MapServer/export?bbox=...&format=png&transparent=true&f=image` | Direct image export, **CORS enabled** (`access-control-allow-origin: *`) |
-| **Identify (REST)** | `.../MapServer/identify?geometry=lng,lat&geometryType=esriGeometryPoint&sr=4283&f=json` | Returns Formation name, Class name, VIS_ID per pixel |
+| Endpoint             | URL                                                                                                           | Notes                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **ArcGIS MapServer** | `https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer`      | Raster layer, WKID 4283 (GDA94)                                          |
+| **WMS 1.3.0**        | `https://mapprod3.environment.nsw.gov.au/arcgis/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer/WmsServer` | GetMap (PNG/JPEG), GetFeatureInfo, MaxSize 4096×4096                     |
+| **Export (REST)**    | `.../MapServer/export?bbox=...&format=png&transparent=true&f=image`                                           | Direct image export, **CORS enabled** (`access-control-allow-origin: *`) |
+| **Identify (REST)**  | `.../MapServer/identify?geometry=lng,lat&geometryType=esriGeometryPoint&sr=4283&f=json`                       | Returns Formation name, Class name, VIS_ID per pixel                     |
 
 No API key required. All endpoints are publicly accessible.
 
@@ -43,49 +44,49 @@ No API key required. All endpoints are publicly accessible.
 
 The SVTM classifies vegetation into 17 formation categories, each rendered as a distinct color on the map:
 
-| Formation | Fire Relevance |
-|-----------|---------------|
-| Alpine complex | Low fuel loads, stunted shrubs |
-| Arid shrublands (Acacia subformation) | Spinifex/mulga fuels |
-| Arid shrublands (Chenopod subformation) | Sparse fuel, low intensity |
-| **Cleared** | Minimal vegetation, structures |
+| Formation                                              | Fire Relevance                          |
+| ------------------------------------------------------ | --------------------------------------- |
+| Alpine complex                                         | Low fuel loads, stunted shrubs          |
+| Arid shrublands (Acacia subformation)                  | Spinifex/mulga fuels                    |
+| Arid shrublands (Chenopod subformation)                | Sparse fuel, low intensity              |
+| **Cleared**                                            | Minimal vegetation, structures          |
 | **Dry sclerophyll forests (Shrub/grass subformation)** | High fire risk, dominant in eastern NSW |
-| **Dry sclerophyll forests (Shrubby subformation)** | Dense shrub layer, high intensity |
-| Forested wetlands | Moist, lower fire risk |
-| Freshwater wetlands | Water-adjacent, seasonal drying |
-| **Grasslands** | Rapid spread, low intensity |
-| **Grassy woodlands** | Mixed fuel, moderate spread |
-| **Heathlands** | Dense, volatile fuels |
-| Rainforests | Typically fire-resistant, high moisture |
-| Saline wetlands | Coastal, salt-tolerant |
-| Semi-arid woodlands (Grassy subformation) | Sparse, grass-driven fires |
-| Semi-arid woodlands (Shrubby subformation) | Mixed fuel model |
-| **Wet sclerophyll forests (Grassy subformation)** | Tall forest, heavy fuel |
-| **Wet sclerophyll forests (Shrubby subformation)** | Dense understorey, extreme fire |
+| **Dry sclerophyll forests (Shrubby subformation)**     | Dense shrub layer, high intensity       |
+| Forested wetlands                                      | Moist, lower fire risk                  |
+| Freshwater wetlands                                    | Water-adjacent, seasonal drying         |
+| **Grasslands**                                         | Rapid spread, low intensity             |
+| **Grassy woodlands**                                   | Mixed fuel, moderate spread             |
+| **Heathlands**                                         | Dense, volatile fuels                   |
+| Rainforests                                            | Typically fire-resistant, high moisture |
+| Saline wetlands                                        | Coastal, salt-tolerant                  |
+| Semi-arid woodlands (Grassy subformation)              | Sparse, grass-driven fires              |
+| Semi-arid woodlands (Shrubby subformation)             | Mixed fuel model                        |
+| **Wet sclerophyll forests (Grassy subformation)**      | Tall forest, heavy fuel                 |
+| **Wet sclerophyll forests (Shrubby subformation)**     | Dense understorey, extreme fire         |
 
 Bold = most common in fire scenarios for eastern NSW.
 
 ### Mapping to Existing VEGETATION_TYPES
 
-| SVTM Formation | Current VEGETATION_TYPE | Descriptor Match |
-|---|---|---|
-| Dry sclerophyll forests (Shrub/grass) | Dry Sclerophyll Forest | ✅ Good |
-| Dry sclerophyll forests (Shrubby) | Dry Sclerophyll Forest | ✅ Good (could differentiate) |
-| Wet sclerophyll forests (Grassy) | Wet Sclerophyll Forest | ✅ Good |
-| Wet sclerophyll forests (Shrubby) | Wet Sclerophyll Forest | ✅ Good (could differentiate) |
-| Grasslands | Grassland | ✅ Exact |
-| Grassy woodlands | Grassy Woodland | ✅ Exact |
-| Heathlands | Heath | ✅ Exact |
-| Rainforests | Rainforest | ✅ Exact |
-| Alpine complex | Alpine Complex | ✅ Exact |
-| Cleared | Cleared/Urban | ✅ Close |
-| Forested wetlands | Riverine Forest / Swamp Sclerophyll | ⚠️ Approximate |
-| Freshwater wetlands | *(not in current list)* | ❌ New |
-| Saline wetlands | *(not in current list)* | ❌ New |
-| Arid shrublands (Acacia) | *(not in current list)* | ❌ New |
-| Arid shrublands (Chenopod) | *(not in current list)* | ❌ New |
-| Semi-arid woodlands (Grassy) | *(not in current list)* | ❌ New |
-| Semi-arid woodlands (Shrubby) | *(not in current list)* | ❌ New |
+| SVTM Formation                        | Current VEGETATION_TYPE             | Descriptor Match              |
+| ------------------------------------- | ----------------------------------- | ----------------------------- |
+| Dry sclerophyll forests (Shrub/grass) | Dry Sclerophyll Forest              | ✅ Good                       |
+| Dry sclerophyll forests (Shrubby)     | Dry Sclerophyll Forest              | ✅ Good (could differentiate) |
+| Wet sclerophyll forests (Grassy)      | Wet Sclerophyll Forest              | ✅ Good                       |
+| Wet sclerophyll forests (Shrubby)     | Wet Sclerophyll Forest              | ✅ Good (could differentiate) |
+| Grasslands                            | Grassland                           | ✅ Exact                      |
+| Grassy woodlands                      | Grassy Woodland                     | ✅ Exact                      |
+| Heathlands                            | Heath                               | ✅ Exact                      |
+| Rainforests                           | Rainforest                          | ✅ Exact                      |
+| Alpine complex                        | Alpine Complex                      | ✅ Exact                      |
+| Cleared                               | Cleared/Urban                       | ✅ Close                      |
+| Forested wetlands                     | Riverine Forest / Swamp Sclerophyll | ⚠️ Approximate                |
+| Freshwater wetlands                   | _(not in current list)_             | ❌ New                        |
+| Saline wetlands                       | _(not in current list)_             | ❌ New                        |
+| Arid shrublands (Acacia)              | _(not in current list)_             | ❌ New                        |
+| Arid shrublands (Chenopod)            | _(not in current list)_             | ❌ New                        |
+| Semi-arid woodlands (Grassy)          | _(not in current list)_             | ❌ New                        |
+| Semi-arid woodlands (Shrubby)         | _(not in current list)_             | ❌ New                        |
 
 **Result:** 10/17 formations map well to existing types. 7 would need new descriptors (mostly arid/semi-arid and wetland types less common in fire training scenarios).
 
@@ -106,12 +107,13 @@ User draws perimeter → Map captures terrain screenshots (aerial, ground_north,
 ```
 
 **Frontend changes:**
+
 1. Add WMS raster source to `MapContainer.tsx`:
    ```typescript
    map.addSource('nsw-vegetation', {
      type: 'raster',
      tiles: [
-       'https://mapprod3.environment.nsw.gov.au/arcgis/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer/WmsServer?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:4326&width=256&height=256&bbox={bbox-epsg-4326}'
+       'https://mapprod3.environment.nsw.gov.au/arcgis/services/Vegetation_IBCA/nswmap_2_3a_ext/MapServer/WmsServer?service=WMS&request=GetMap&layers=0&styles=&format=image/png&transparent=true&version=1.3.0&crs=EPSG:4326&width=256&height=256&bbox={bbox-epsg-4326}',
      ],
      tileSize: 256,
    });
@@ -134,16 +136,16 @@ User draws perimeter → Map captures terrain screenshots (aerial, ground_north,
    - Toggle vegetation layer OFF
    - Include as `vegetationMapScreenshot` in the request
 
-**API changes:**
-4. In `geminiImageProvider.ts`, include the vegetation screenshot as a second image in the `contents.parts` array with instructions:
-   ```
-   "The following image is a vegetation formation map from the NSW State Vegetation Type Map.
-   Color-coded areas show different vegetation formations. Use this to ensure each part of the
-   landscape has the correct vegetation type — the terrain near ridgelines may be dry sclerophyll,
-   gullies may contain wet sclerophyll or rainforest, and flat areas may be grassland or cleared."
-   ```
+**API changes:** 4. In `geminiImageProvider.ts`, include the vegetation screenshot as a second image in the `contents.parts` array with instructions:
 
-**Pros:** Visual spatial context — the AI sees *where* each vegetation type is relative to terrain features. User can also see and verify the vegetation data. Follows the user's stated design ("turns the layer on as part of the screenshots").
+```
+"The following image is a vegetation formation map from the NSW State Vegetation Type Map.
+Color-coded areas show different vegetation formations. Use this to ensure each part of the
+landscape has the correct vegetation type — the terrain near ridgelines may be dry sclerophyll,
+gullies may contain wet sclerophyll or rainforest, and flat areas may be grassland or cleared."
+```
+
+**Pros:** Visual spatial context — the AI sees _where_ each vegetation type is relative to terrain features. User can also see and verify the vegetation data. Follows the user's stated design ("turns the layer on as part of the screenshots").
 
 **Cons:** Extra ~100KB per request. WMS tiles may load slowly. 3D perspective views of a flat color layer aren't useful (aerial-only is fine). Depends on external government server availability.
 
@@ -162,6 +164,7 @@ User draws perimeter → Frontend captures terrain screenshots only
 ```
 
 **API changes:**
+
 1. New service `vegetationService.ts`:
    ```typescript
    async function queryVegetationAtPoints(
@@ -191,6 +194,7 @@ Combine both: visual overlay screenshot AND spatial text query. Maximum context 
 **Option A (Client-Side WMS Overlay)** for Phase 1, with the ability to add Option B later.
 
 Rationale:
+
 - Aligns with user's stated design intent
 - The AI models are strong at interpreting visual data (this is their strength)
 - A color-coded map overlay is exactly the kind of structured visual that image models understand well
@@ -209,6 +213,7 @@ The `mergedOptions` object (line ~68) explicitly lists only `size`, `quality`, `
 **This means map screenshots are NOT currently being sent to the AI model.** The terrain grounding feature is broken.
 
 Fix:
+
 ```typescript
 const mergedOptions: ImageGenOptions = {
   size: options?.size || this.config.defaultSize,
@@ -216,9 +221,9 @@ const mergedOptions: ImageGenOptions = {
   style: options?.style || this.config.defaultStyle,
   seed: options?.seed,
   onThinkingUpdate: options?.onThinkingUpdate,
-  mapScreenshot: options?.mapScreenshot,           // ← ADD
-  referenceImage: options?.referenceImage,         // ← ADD
-  referenceStrength: options?.referenceStrength,    // ← ADD
+  mapScreenshot: options?.mapScreenshot, // ← ADD
+  referenceImage: options?.referenceImage, // ← ADD
+  referenceStrength: options?.referenceStrength, // ← ADD
 };
 ```
 

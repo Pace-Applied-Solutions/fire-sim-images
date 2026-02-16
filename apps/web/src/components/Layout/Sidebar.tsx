@@ -9,15 +9,24 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ children }) => {
   const { isSidebarOpen, toggleSidebar } = useAppStore();
 
+  const handleHeaderClick = () => {
+    if (window.innerWidth <= 768) {
+      toggleSidebar();
+    }
+  };
+
   return (
     <>
       <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : styles.closed}`}>
         {isSidebarOpen ? (
           <>
-            <div className={styles.header}>
+            <div className={styles.header} onClick={handleHeaderClick}>
               <h2 className={styles.title}>Scenario Inputs</h2>
               <button
-                onClick={toggleSidebar}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSidebar();
+                }}
                 className={styles.toggleButton}
                 aria-label="Close sidebar"
                 title="Close sidebar"

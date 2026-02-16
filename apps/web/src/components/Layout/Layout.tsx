@@ -3,6 +3,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { MainArea } from './MainArea';
 import { ResultsPanel } from './ResultsPanel';
+import { MobileTabBar } from './MobileTabBar';
 import styles from './Layout.module.css';
 
 interface LayoutProps {
@@ -20,6 +21,7 @@ export const Layout: React.FC<LayoutProps> = ({ sidebar, main, results }) => {
         <MainArea>{main}</MainArea>
         {results && <ResultsPanel>{results}</ResultsPanel>}
       </div>
+      <MobileTabBar />
     </div>
   );
 };

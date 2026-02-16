@@ -54,7 +54,8 @@ export const Header: React.FC = () => {
                   key={check.service}
                   className={styles.serviceDot}
                   style={{
-                    backgroundColor: SERVICE_STATUS_COLORS[check.status] || 'var(--color-status-idle)',
+                    backgroundColor:
+                      SERVICE_STATUS_COLORS[check.status] || 'var(--color-status-idle)',
                   }}
                   title={`${check.service}: ${check.status}`}
                   aria-label={`${check.service} status: ${check.status}`}
@@ -81,7 +82,8 @@ export const Header: React.FC = () => {
                     <div
                       className={styles.healthServiceDot}
                       style={{
-                        backgroundColor: SERVICE_STATUS_COLORS[check.status] || 'var(--color-status-idle)',
+                        backgroundColor:
+                          SERVICE_STATUS_COLORS[check.status] || 'var(--color-status-idle)',
                       }}
                     />
                     <div className={styles.healthServiceInfo}>
@@ -91,9 +93,7 @@ export const Header: React.FC = () => {
                         {check.message && ` — ${check.message}`}
                       </div>
                       {check.latencyMs !== undefined && (
-                        <div className={styles.healthServiceLatency}>
-                          {check.latencyMs}ms
-                        </div>
+                        <div className={styles.healthServiceLatency}>{check.latencyMs}ms</div>
                       )}
                     </div>
                   </div>

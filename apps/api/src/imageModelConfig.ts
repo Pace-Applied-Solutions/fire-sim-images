@@ -80,7 +80,9 @@ const safeGetSecret = async (
   }
 };
 
-export const getImageModelConfig = async (context: InvocationContext): Promise<ImageModelConfig | null> => {
+export const getImageModelConfig = async (
+  context: InvocationContext
+): Promise<ImageModelConfig | null> => {
   if (cache.config) {
     return cache.config;
   }
@@ -103,15 +105,15 @@ export const getImageModelConfig = async (context: InvocationContext): Promise<I
 
       const [model, key, url] = await Promise.all([
         safeGetSecret(client, 'ImageModel--Model')
-          .then(v => v ?? safeGetSecret(client, 'ImageModel--Deployment'))
-          .then(v => v ?? safeGetSecret(client, 'Flux--Deployment')),
+          .then((v) => v ?? safeGetSecret(client, 'ImageModel--Deployment'))
+          .then((v) => v ?? safeGetSecret(client, 'Flux--Deployment')),
         safeGetSecret(client, 'ImageModel--Key')
-          .then(v => v ?? safeGetSecret(client, 'ImageModel--ApiKey'))
-          .then(v => v ?? safeGetSecret(client, 'Flux--ApiKey')),
+          .then((v) => v ?? safeGetSecret(client, 'ImageModel--ApiKey'))
+          .then((v) => v ?? safeGetSecret(client, 'Flux--ApiKey')),
         safeGetSecret(client, 'ImageModel--Url')
-          .then(v => v ?? safeGetSecret(client, 'ImageModel--BaseUrl'))
-          .then(v => v ?? safeGetSecret(client, 'ImageModel--Endpoint'))
-          .then(v => v ?? safeGetSecret(client, 'Flux--Endpoint')),
+          .then((v) => v ?? safeGetSecret(client, 'ImageModel--BaseUrl'))
+          .then((v) => v ?? safeGetSecret(client, 'ImageModel--Endpoint'))
+          .then((v) => v ?? safeGetSecret(client, 'Flux--Endpoint')),
       ]);
 
       const kvConfig: ImageModelConfig = {
@@ -141,11 +143,15 @@ export const getImageModelConfig = async (context: InvocationContext): Promise<I
   // Final check
   if (isComplete(envConfig)) {
     cache.config = envConfig;
-    console.log('[ImageModelConfig] Using config from environment variables (after Key Vault fallback)');
+    console.log(
+      '[ImageModelConfig] Using config from environment variables (after Key Vault fallback)'
+    );
     return envConfig;
   }
 
-  context.warn('[ImageModelConfig] Image model config not available. Set IMAGE_MODEL, IMAGE_MODEL_KEY, and IMAGE_MODEL_URL. Using mock provider.');
+  context.warn(
+    '[ImageModelConfig] Image model config not available. Set IMAGE_MODEL, IMAGE_MODEL_KEY, and IMAGE_MODEL_URL. Using mock provider.'
+  );
   return null;
 };
 
