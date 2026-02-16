@@ -1,3 +1,4 @@
+import '../setup.js';
 /**
  * Azure Function: Delete Scenario
  * DELETE /api/scenarios/{scenarioId}

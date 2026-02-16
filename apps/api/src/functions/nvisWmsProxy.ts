@@ -1,3 +1,4 @@
+import '../setup.js';
 /**
  * WMS proxy for NVIS vegetation map services.
  *

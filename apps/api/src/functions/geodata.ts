@@ -1,3 +1,4 @@
+import '../setup.js';
 import functions from '@azure/functions';
 import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import crypto from 'node:crypto';

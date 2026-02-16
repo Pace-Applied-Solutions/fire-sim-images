@@ -1,3 +1,4 @@
+import '../setup.js';
 import functions from '@azure/functions';
 import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { GenerationOrchestrator } from '../services/generationOrchestrator.js';
