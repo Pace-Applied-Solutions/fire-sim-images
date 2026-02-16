@@ -217,7 +217,6 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
                 src={image.url}
                 alt={`${image.viewPoint} view`}
                 className={styles.image}
-                loading="lazy"
               />
               <div className={styles.imageOverlay}>
                 <span className={styles.viewIcon}>🔍</span>

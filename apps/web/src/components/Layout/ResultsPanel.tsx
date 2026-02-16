@@ -17,16 +17,17 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
   return (
     <aside className={`${styles.panel} ${isResultsPanelOpen ? styles.open : styles.closed}`}>
       <div className={styles.header}>
-        <h2 className={styles.title}>Generated Results</h2>
+        {isResultsPanelOpen && <h2 className={styles.title}>Generated Results</h2>}
         <button
           onClick={toggleResultsPanel}
           className={styles.toggleButton}
           aria-label={isResultsPanelOpen ? 'Close results panel' : 'Open results panel'}
+          title={isResultsPanelOpen ? 'Close results' : 'Open results'}
         >
           {isResultsPanelOpen ? '→' : '←'}
         </button>
       </div>
-      <div className={styles.content}>{children}</div>
+      {isResultsPanelOpen && <div className={styles.content}>{children}</div>}
     </aside>
   );
 };

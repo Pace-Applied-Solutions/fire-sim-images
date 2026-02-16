@@ -20,7 +20,7 @@ export function initializeAppInsights(): ApplicationInsights | null {
   const connectionString = import.meta.env.VITE_APPLICATIONINSIGHTS_CONNECTION_STRING;
 
   if (!connectionString) {
-    console.warn('[AppInsights] Connection string not configured. Telemetry disabled.');
+    // Silently return null in development/local environments
     return null;
   }
 
