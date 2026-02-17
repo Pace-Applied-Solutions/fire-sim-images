@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { useAppStore } from '../store/appStore';
-import { useLabStore } from '../store/labStore';
+import React from 'react';
 import { Header } from '../components/Layout/Header';
+import { MapContainer } from '../components/Map/MapContainer';
+import { LabMapCanvas } from '../components/PromptLab/LabMapCanvas';
 import { ReferenceImageTray } from '../components/PromptLab/ReferenceImageTray';
 import { GeneratedImagesCollector } from '../components/PromptLab/GeneratedImagesCollector';
 import { PromptEditor } from '../components/PromptLab/PromptEditor';
@@ -15,19 +15,15 @@ import styles from './PromptLabPage.module.css';
  * Allows manual camera positioning, prompt editing, and iterative experimentation.
  */
 export const PromptLabPage: React.FC = () => {
-  const perimeter = useAppStore((s) => s.perimeter);
-  const geoContext = useAppStore((s) => s.geoContext);
-  const scenarioInputs = useAppStore((s) => s.scenarioInputs);
-
   return (
     <div className={styles.page}>
       <Header />
       <div className={styles.container}>
         <div className={styles.leftColumn}>
           <div className={styles.mapSection}>
-            <div className={styles.mapPlaceholder}>
-              Map Canvas (TODO)
-            </div>
+            <LabMapCanvas>
+              <MapContainer />
+            </LabMapCanvas>
           </div>
           <div className={styles.referenceSection}>
             <div className={styles.sectionHeader}>Reference Images</div>

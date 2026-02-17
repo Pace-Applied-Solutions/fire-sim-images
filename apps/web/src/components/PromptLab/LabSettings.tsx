@@ -18,17 +18,17 @@ export const LabSettings: React.FC = () => {
 
   const viewpoints: ViewPoint[] = [
     'aerial',
+    'helicopter_north',
+    'helicopter_south',
+    'helicopter_east',
+    'helicopter_west',
+    'helicopter_above',
     'ground_north',
     'ground_south',
     'ground_east',
     'ground_west',
-    'heli_north',
-    'heli_south',
-    'heli_east',
-    'heli_west',
-    'heli_overhead',
-    'satellite',
-    'oblique',
+    'ground_above',
+    'ridge',
   ];
 
   const handleRandomizeSeed = () => {

@@ -211,7 +211,7 @@ const createInitialSections = (): Record<PromptSectionKey, LabPromptSection> => 
   },
 });
 
-export const useLabStore = create<LabStore>((set, get) => ({
+export const useLabStore = create<LabStore>((set) => ({
   // ── Reference images ──
   referenceImages: [],
   addReferenceImage: (img) =>

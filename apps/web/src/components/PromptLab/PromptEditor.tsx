@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { useLabStore } from '../../store/labStore';
-import { generatePrompts } from '@fire-sim/shared';
+import { DEFAULT_PROMPT_TEMPLATE, generatePrompts } from '@fire-sim/shared';
 import { PromptSection } from './PromptSection';
 import { FinalPromptPreview } from './FinalPromptPreview';
 import { GenerateButton } from './GenerateButton';
@@ -31,32 +31,36 @@ export const PromptEditor: React.FC = () => {
     if (!perimeter || !geoContext || !scenarioInputs) return;
 
     try {
-      const prompts = generatePrompts({
+      // Generate prompts using the default template
+      const request = {
         perimeter,
         geoContext,
-        scenarioInputs,
-        viewpoint: selectedViewpoint,
-      });
-
-      // Update auto-text for each section
-      const sectionMap: Record<PromptSectionKey, string> = {
-        style: prompts.style,
-        behaviorPrinciples: prompts.behaviorPrinciples,
-        referenceImagery: prompts.referenceImagery,
-        locality: prompts.locality,
-        terrain: prompts.terrain,
-        features: prompts.features,
-        vegetation: prompts.vegetation,
-        fireGeometry: prompts.fireGeometry,
-        fireBehavior: prompts.fireBehavior,
-        weather: prompts.weather,
-        perspective: prompts.perspective,
-        safety: prompts.safety,
+        inputs: scenarioInputs,
+        requestedViews: [selectedViewpoint],
       };
 
-      Object.entries(sectionMap).forEach(([key, text]) => {
-        updateAutoText(key as PromptSectionKey, text);
-      });
+      generatePrompts(request); // Generate validation
+
+      // For now, just use the template sections directly
+      // We'll populate them with sample data
+      const template = DEFAULT_PROMPT_TEMPLATE;
+
+      // Update auto-text for static sections
+      updateAutoText('style', template.sections.style);
+      updateAutoText('behaviorPrinciples', template.sections.behaviorPrinciples);
+      updateAutoText('safety', template.sections.safety);
+
+      // For dynamic sections, we need to create PromptData
+      // For now, just use placeholders - we'll implement full integration later
+      updateAutoText('referenceImagery', 'Reference imagery section (auto-generated from scenario data)');
+      updateAutoText('locality', geoContext.locality || 'Location data pending');
+      updateAutoText('terrain', 'Terrain description (auto-generated from scenario data)');
+      updateAutoText('features', 'Features description (auto-generated from scenario data)');
+      updateAutoText('vegetation', geoContext.vegetationType || 'Vegetation data pending');
+      updateAutoText('fireGeometry', 'Fire geometry (auto-generated from perimeter)');
+      updateAutoText('fireBehavior', `Intensity: ${scenarioInputs.intensity}, Stage: ${scenarioInputs.fireStage}`);
+      updateAutoText('weather', `${scenarioInputs.temperature}°C, ${scenarioInputs.humidity}% humidity, Wind: ${scenarioInputs.windSpeed} km/h ${scenarioInputs.windDirection}`);
+      updateAutoText('perspective', `Viewpoint: ${selectedViewpoint}`);
     } catch (err) {
       console.error('Failed to generate prompts:', err);
     }
