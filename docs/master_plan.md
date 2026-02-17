@@ -893,6 +893,13 @@ Update this section after each issue or change.
     - **Testing:** All 29 tests pass. Manual testing confirms panel now opens for each generation.
     - **Impact:** Restores proper panel opening behavior while preserving the anti-refresh optimizations from PR #127.
 
+  - **Results Panel: Single Scroll Reasoning UX (Feb 17, 2026):**
+    - **Problem addressed:** The model reasoning UI was sticky and scrollable inside the results panel, creating a floating overlay and multiple nested scroll areas that made reading and interacting with results difficult.
+    - **Solution:** Removed sticky positioning and internal scrolling from the reasoning panel so it flows inline with the results content and the results panel remains the only scroll container.
+    - **Files modified:**
+      - `apps/web/src/components/GeneratedImages/GeneratedImages.module.css` (removed sticky positioning and internal scrolling on reasoning panel)
+    - **Impact:** Cleaner, single-scroll results experience with reasoning updates embedded in the panel flow.
+
   - **Infrastructure Wipe of IMAGE_MODEL_KEY Breaking Image Generation (Feb 17, 2026):**
     - **Problem addressed:** After an infrastructure deployment, image generation broke completely. The results panel opened but showed no thinking text and no images. Gallery showed black spaces above entries. Console logs referenced "Stable Diffusion" instead of "Gemini", indicating the mock provider was being used instead of the real Gemini API.
     - **Root cause:** Infrastructure deployment (`az deployment group create`) set `IMAGE_MODEL_KEY` to empty string because:
