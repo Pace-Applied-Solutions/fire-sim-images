@@ -39,10 +39,18 @@ export const PromptEditor: React.FC = () => {
         requestedViews: [selectedViewpoint],
       };
 
-      generatePrompts(request); // Generate validation
+      const promptSet = generatePrompts(request);
 
-      // For now, just use the template sections directly
-      // We'll populate them with sample data
+      // Find the prompt for the selected viewpoint
+      const prompt = promptSet.prompts.find((p) => p.viewpoint === selectedViewpoint);
+      if (!prompt) {
+        console.error('No prompt found for viewpoint:', selectedViewpoint);
+        return;
+      }
+
+      // Parse the generated prompt text to extract sections
+      // The prompt is structured with double newlines between sections
+      const fullPrompt = prompt.promptText;
       const template = DEFAULT_PROMPT_TEMPLATE;
 
       // Update auto-text for static sections
@@ -50,17 +58,39 @@ export const PromptEditor: React.FC = () => {
       updateAutoText('behaviorPrinciples', template.sections.behaviorPrinciples);
       updateAutoText('safety', template.sections.safety);
 
-      // For dynamic sections, we need to create PromptData
-      // For now, just use placeholders - we'll implement full integration later
-      updateAutoText('referenceImagery', 'Reference imagery section (auto-generated from scenario data)');
-      updateAutoText('locality', geoContext.locality || 'Location data pending');
-      updateAutoText('terrain', 'Terrain description (auto-generated from scenario data)');
-      updateAutoText('features', 'Features description (auto-generated from scenario data)');
-      updateAutoText('vegetation', geoContext.vegetationType || 'Vegetation data pending');
-      updateAutoText('fireGeometry', 'Fire geometry (auto-generated from perimeter)');
-      updateAutoText('fireBehavior', `Intensity: ${scenarioInputs.intensity}, Stage: ${scenarioInputs.fireStage}`);
-      updateAutoText('weather', `${scenarioInputs.temperature}°C, ${scenarioInputs.humidity}% humidity, Wind: ${scenarioInputs.windSpeed} km/h ${scenarioInputs.windDirection}`);
-      updateAutoText('perspective', `Viewpoint: ${selectedViewpoint}`);
+      // For dynamic sections, parse them from the generated prompt
+      // We'll extract each section by matching against known patterns
+      // This is a simplified approach - the sections are in order in the template
+      const sections = fullPrompt.split('\n\n').filter((s) => s.trim());
+
+      // Map sections to their keys based on order in template
+      // The order is: style, behaviorPrinciples, referenceImagery, locality, terrain,
+      // features, vegetation, fireGeometry, fireBehavior, weather, perspective, safety
+
+      if (sections.length >= 12) {
+        updateAutoText('referenceImagery', sections[2]);
+        updateAutoText('locality', sections[3]);
+        updateAutoText('terrain', sections[4]);
+        updateAutoText('features', sections[5]);
+        updateAutoText('vegetation', sections[6]);
+        updateAutoText('fireGeometry', sections[7]);
+        updateAutoText('fireBehavior', sections[8]);
+        updateAutoText('weather', sections[9]);
+        updateAutoText('perspective', sections[10]);
+      } else {
+        // Fallback: generate sections individually
+        // This won't be as accurate but ensures we have content
+        console.warn('Unexpected prompt structure, using fallback section parsing');
+        updateAutoText('referenceImagery', 'Reference imagery section (auto-generated)');
+        updateAutoText('locality', geoContext.locality || 'Location data pending');
+        updateAutoText('terrain', geoContext.slope ? `Terrain with ${geoContext.slope.mean.toFixed(1)}° average slope` : 'Terrain data');
+        updateAutoText('features', 'Features in the area');
+        updateAutoText('vegetation', geoContext.vegetationType || 'Vegetation data pending');
+        updateAutoText('fireGeometry', 'Fire geometry from perimeter');
+        updateAutoText('fireBehavior', `Intensity: ${scenarioInputs.intensity}, Stage: ${scenarioInputs.fireStage}`);
+        updateAutoText('weather', `${scenarioInputs.temperature}°C, ${scenarioInputs.humidity}% humidity, Wind: ${scenarioInputs.windSpeed} km/h ${scenarioInputs.windDirection}`);
+        updateAutoText('perspective', `Viewpoint: ${selectedViewpoint}`);
+      }
     } catch (err) {
       console.error('Failed to generate prompts:', err);
     }
