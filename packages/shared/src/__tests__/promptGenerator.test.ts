@@ -329,6 +329,41 @@ describe('Prompt Generator', () => {
       });
     });
 
+    it('should not contain confusing polygon outline references', () => {
+      const result = generatePrompts(mockRequest);
+
+      result.prompts.forEach((prompt) => {
+        const text = prompt.promptText;
+
+        // Should NOT contain references to "red polygon" which confused the model
+        expect(text.toLowerCase()).not.toContain('red polygon');
+
+        // Should NOT contain language about showing/not showing polygon outline
+        // (negative instructions can confuse AI models)
+        expect(text.toLowerCase()).not.toContain('polygon outline');
+
+        // Should emphasize natural fire boundaries instead
+        expect(text.toLowerCase()).toContain('flames');
+        expect(text.toLowerCase()).toContain('smoke');
+        expect(text.toLowerCase()).toContain('burned');
+      });
+    });
+
+    it('should explicitly prohibit UI overlays and markers', () => {
+      const result = generatePrompts(mockRequest);
+
+      result.prompts.forEach((prompt) => {
+        const text = prompt.promptText;
+
+        // Should contain explicit prohibition of UI elements
+        const hasUIProhibition =
+          text.toLowerCase().includes('no ui') ||
+          text.toLowerCase().includes('do not include') && text.toLowerCase().includes('overlay');
+
+        expect(hasUIProhibition).toBe(true);
+      });
+    });
+
     it('should not contain excessive whitespace', () => {
       const result = generatePrompts(mockRequest);
 
