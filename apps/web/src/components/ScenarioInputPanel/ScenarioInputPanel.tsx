@@ -429,13 +429,25 @@ export const ScenarioInputPanel: React.FC = () => {
           status.thinkingText ? `${status.thinkingText.length} chars` : '(none)'
         );
 
+        // Preserve existing images/anchor if the poll response lacks results (avoids regressions)
+        const existingResult = useAppStore.getState().generationResult;
+        const hasNewImages = !!status.results?.images?.length;
+        const images =
+          hasNewImages && status.results
+            ? status.results.images
+            : existingResult?.images && existingResult.images.length > 0
+              ? existingResult.images
+              : [];
+        const anchorImage =
+          status.results?.anchorImage ?? (existingResult?.anchorImage ? existingResult.anchorImage : undefined);
+
         // Always update generationResult during polling so the
         // Results Panel stays current with thinking text, images, and status
         setGenerationResult({
           id: startResponse.scenarioId,
           status: status.status as GenerationResult['status'],
-          images: status.results?.images || [],
-          anchorImage: status.results?.anchorImage,
+          images,
+          anchorImage,
           createdAt: status.createdAt,
           thinkingText: status.thinkingText,
         });
