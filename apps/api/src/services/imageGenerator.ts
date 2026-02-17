@@ -9,8 +9,7 @@ import type {
   ImageGenResult,
 } from './imageGenerationProvider.js';
 import { StableDiffusionProvider } from './stableDiffusionProvider.js';
-import { AzureImageProvider } from './fluxImageProvider.js';
-import { GeminiImageProvider, isGeminiConfig } from './geminiImageProvider.js';
+import { GeminiImageProvider } from './geminiImageProvider.js';
 import { getImageModelConfig } from '../imageModelConfig.js';
 
 export interface ImageGeneratorConfig {
@@ -45,19 +44,12 @@ export class ImageGeneratorService {
    * Generate an image from a prompt with retry logic.
    */
   async generateImage(prompt: string, options?: ImageGenOptions): Promise<ImageGenResult> {
-    // Attempt to switch to real image provider if configured and available
+    // Attempt to switch to Gemini provider if configured and available
     if (this.provider instanceof StableDiffusionProvider) {
       const imageConfig = await getImageModelConfig(this.context);
       if (imageConfig) {
-        if (isGeminiConfig(imageConfig)) {
-          this.context.log(`[ImageGenerator] Switching to Gemini provider (${imageConfig.model})`);
-          this.provider = new GeminiImageProvider(imageConfig);
-        } else {
-          this.context.log(
-            `[ImageGenerator] Switching to ${imageConfig.model} provider from StableDiffusion fallback`
-          );
-          this.provider = new AzureImageProvider(imageConfig);
-        }
+        this.context.log(`[ImageGenerator] Switching to Gemini provider (${imageConfig.model})`);
+        this.provider = new GeminiImageProvider(imageConfig);
       } else {
         this.context.warn(
           '[ImageGenerator] Image model config not available, using StableDiffusion mock provider. This will generate placeholder images.'
