@@ -34,7 +34,7 @@ export interface LabReferenceImage {
   id: string; // uuid
   dataUrl: string; // base64 data URL
   label: string; // "Map Screenshot", "Vegetation Overlay", etc.
-  type: 'map_screenshot' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
+  type: 'map_screenshot' | 'aerial_overview' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
   included: boolean; // whether to send with the generation request
   sourceViewpoint?: ViewPoint;
   capturedAt: string; // ISO timestamp
@@ -60,6 +60,7 @@ interface LabStore {
   removeReferenceImage: (id: string) => void;
   toggleReferenceImage: (id: string) => void; // include/exclude
   reorderReferenceImages: (ids: string[]) => void;
+  clearReferenceImages: () => void;
 
   // ── Prompt sections ──
   promptSections: Record<PromptSectionKey, LabPromptSection>;
@@ -232,6 +233,7 @@ export const useLabStore = create<LabStore>((set) => ({
       const reordered = ids.map((id) => imageMap.get(id)).filter(Boolean) as LabReferenceImage[];
       return { referenceImages: reordered };
     }),
+  clearReferenceImages: () => set({ referenceImages: [] }),
 
   // ── Prompt sections ──
   promptSections: createInitialSections(),

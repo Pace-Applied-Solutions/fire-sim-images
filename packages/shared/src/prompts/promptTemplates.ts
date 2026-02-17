@@ -114,7 +114,7 @@ export const VIEWPOINT_PERSPECTIVES: Record<ViewPoint, string> = {
   helicopter_above:
     'Elevated aerial photograph from directly above the fire at 200 metres altitude, capturing the full extent of the fire perimeter and smoke plume',
   ground_north:
-    "You're standing on the ground to the north of the fire, looking south towards the approaching flame front. Ground-level photograph taken at eye level, approximately 500 metres from the fire edge",
+    'Ground-level photograph from the north side of the fire, looking toward the fire area',
   ground_south:
     "You're standing on the ground to the south of the fire, looking north across the burned area towards the active fire line. Ground-level photograph showing the burned area with fire visible in the distance",
   ground_east:
@@ -191,16 +191,21 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       const extentEwText = `${data.fireExtentEastWestKm.toFixed(2)} km east–west`;
 
       return (
-        `Reference imagery context: You have access to a 3D interactive map (Google Maps style) displaying this specific location. ` +
-        `The map shows both overhead (bird's-eye) and ground-level street view perspectives of the landscape. ` +
-        `A polygon overlay on the reference map shows the fire's exact perimeter and location—study this polygon carefully to understand the precise fire boundaries, including any irregular edges, indentations, or protrusions. ` +
+        `Reference imagery context: You have been provided three reference images that together define the fire scenario. ` +
+        `IMAGE 1 (Perspective View): This shows the exact viewing angle and perspective that the generated output must match. ` +
+        `Convert this 3D terrain visualisation into a photorealistic photograph from the same angle and field of view. ` +
+        `This is the most important reference — the output image must look like a real photograph taken from this exact camera position. ` +
+        `IMAGE 2 (Aerial Overview): A top-down aerial view showing the full fire perimeter from directly above. ` +
+        `A red polygon overlay shows the fire's exact perimeter boundaries — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
+        `IMAGE 3 (Vegetation Map): A vegetation classification overlay showing the spatial distribution of vegetation types across the fire area. ` +
+        `Use this to place the correct vegetation in corresponding areas of the generated image. ` +
         `The fire in the generated image must: ` +
         `(1) cover ${areaText}, ` +
         `(2) span ${extentNsText} and ${extentEwText}, ` +
-        `(3) follow the exact perimeter shape shown by the polygon overlay—match the irregular boundaries precisely. ` +
-        `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference map, ` +
+        `(3) follow the exact perimeter shape shown in the aerial overview polygon — match the irregular boundaries precisely. ` +
+        `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference images, ` +
         `with the fire (flames, smoke, and burned areas) occupying the complete specified extent and respecting the perimeter polygon boundaries. ` +
-        `Render only the natural landscape with fire—omit all map overlays, UI elements, and reference markers from the output.`
+        `Render only the natural landscape with fire — omit all map overlays, UI elements, and reference markers from the output.`
       );
     },
 
@@ -343,7 +348,9 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
 
     // Section 11: Set camera position and framing
     perspective: (viewpoint) =>
-      `Camera position: ${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
+      `Camera position: Generate the image from the exact same perspective, viewing angle, and field of view as shown in the first reference image (the perspective view). ` +
+      `${VIEWPOINT_PERSPECTIVES[viewpoint]}. ` +
+      `The output photograph must replicate this viewpoint precisely — same camera height, distance from fire, and look direction.`,
 
     // Section 12: Safety constraints and scene composition
     safety:

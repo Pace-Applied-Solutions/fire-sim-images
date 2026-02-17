@@ -14,74 +14,85 @@ interface LabMapCanvasProps {
  *
  * Wraps the MapContainer with floating capture buttons.
  * Provides clean screenshot capture (hides UI overlays).
+ * Supports the 3-screenshot strategy: perspective + aerial + vegetation.
  */
 export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
   const [isCapturing, setIsCapturing] = useState(false);
   const addReferenceImage = useLabStore((s) => s.addReferenceImage);
+  const clearReferenceImages = useLabStore((s) => s.clearReferenceImages);
+  const captureCurrentView = useAppStore((s) => s.captureCurrentView);
+  const captureAerialOverview = useAppStore((s) => s.captureAerialOverview);
   const captureVegetationScreenshot = useAppStore((s) => s.captureVegetationScreenshot);
   const toggleVegetationOverlay = useAppStore((s) => s.toggleVegetationOverlay);
   const showVegetationLabels = useLabStore((s) => s.showVegetationLabels);
+  const perimeter = useAppStore((s) => s.perimeter);
 
   /**
-   * Capture a clean map screenshot (no UI chrome).
-   * Hides all UI overlays before capturing.
+   * Capture a clean map screenshot of the user's current perspective.
+   * Uses the registered captureCurrentView function from appStore.
    */
   const handleMapCapture = useCallback(async () => {
+    if (!captureCurrentView) {
+      console.error('Current view capture function not available');
+      return;
+    }
+
     setIsCapturing(true);
     try {
-      const mapCanvas = document.querySelector('.mapboxgl-canvas') as HTMLCanvasElement;
-      if (!mapCanvas) {
-        console.error('Map canvas not found');
+      const dataUrl = await captureCurrentView();
+      if (!dataUrl) {
+        console.error('Perspective capture returned no data');
         return;
       }
 
-      // Find and hide UI overlays
-      const overlaySelectors = [
-        '.mapboxgl-ctrl-top-right',
-        '.mapboxgl-ctrl-top-left',
-        '.mapboxgl-ctrl-bottom-right',
-        '.mapboxgl-ctrl-bottom-left',
-        '.mapboxgl-control-container',
-      ];
-
-      const hiddenElements: HTMLElement[] = [];
-      overlaySelectors.forEach((selector) => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((el) => {
-          if (el instanceof HTMLElement && el.style.display !== 'none') {
-            hiddenElements.push(el);
-            el.style.display = 'none';
-          }
-        });
-      });
-
-      // Small delay to ensure render completes
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Capture the canvas
-      const dataUrl = mapCanvas.toDataURL('image/jpeg', 0.85);
-
-      // Restore hidden elements
-      hiddenElements.forEach((el) => {
-        el.style.display = '';
-      });
-
-      // Add to reference images
       const image: LabReferenceImage = {
         id: crypto.randomUUID(),
         dataUrl,
-        label: `Map Screenshot ${new Date().toLocaleTimeString()}`,
+        label: `Perspective View ${new Date().toLocaleTimeString()}`,
         type: 'map_screenshot',
         included: true,
         capturedAt: new Date().toISOString(),
       };
       addReferenceImage(image);
     } catch (err) {
-      console.error('Failed to capture map screenshot:', err);
+      console.error('Failed to capture perspective screenshot:', err);
     } finally {
       setIsCapturing(false);
     }
-  }, [addReferenceImage]);
+  }, [captureCurrentView, addReferenceImage]);
+
+  /**
+   * Capture an aerial overview screenshot (top-down, centered on fire perimeter).
+   */
+  const handleAerialCapture = useCallback(async () => {
+    if (!captureAerialOverview) {
+      console.error('Aerial overview capture function not available');
+      return;
+    }
+
+    setIsCapturing(true);
+    try {
+      const dataUrl = await captureAerialOverview();
+      if (!dataUrl) {
+        console.error('Aerial overview capture returned no data');
+        return;
+      }
+
+      const image: LabReferenceImage = {
+        id: crypto.randomUUID(),
+        dataUrl,
+        label: `Aerial Overview ${new Date().toLocaleTimeString()}`,
+        type: 'aerial_overview',
+        included: true,
+        capturedAt: new Date().toISOString(),
+      };
+      addReferenceImage(image);
+    } catch (err) {
+      console.error('Failed to capture aerial overview:', err);
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [captureAerialOverview, addReferenceImage]);
 
   /**
    * Capture vegetation overlay screenshot.
@@ -141,17 +152,115 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
     }
   }, [captureVegetationScreenshot, addReferenceImage, showVegetationLabels]);
 
+  /**
+   * Auto-capture all 3 reference images in sequence:
+   *   1. Perspective view (user's current camera angle)
+   *   2. Aerial overview (top-down, centered on fire perimeter)
+   *   3. Vegetation overlay (NVIS classification map)
+   * Clears existing reference images before capturing.
+   */
+  const handleCaptureAll = useCallback(async () => {
+    if (!captureCurrentView) {
+      console.error('Current view capture function not available');
+      return;
+    }
+
+    setIsCapturing(true);
+    try {
+      // Clear existing reference images so we get a clean set
+      clearReferenceImages();
+
+      // 1. Perspective view
+      const perspectiveDataUrl = await captureCurrentView();
+      if (perspectiveDataUrl) {
+        addReferenceImage({
+          id: crypto.randomUUID(),
+          dataUrl: perspectiveDataUrl,
+          label: 'Perspective View',
+          type: 'map_screenshot',
+          included: true,
+          capturedAt: new Date().toISOString(),
+        });
+      }
+
+      // 2. Aerial overview (only if perimeter exists)
+      if (captureAerialOverview && perimeter) {
+        const aerialDataUrl = await captureAerialOverview();
+        if (aerialDataUrl) {
+          addReferenceImage({
+            id: crypto.randomUUID(),
+            dataUrl: aerialDataUrl,
+            label: 'Aerial Overview',
+            type: 'aerial_overview',
+            included: true,
+            capturedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      // 3. Vegetation overlay
+      if (captureVegetationScreenshot) {
+        const vegDataUrl = await captureVegetationScreenshot();
+        if (vegDataUrl) {
+          const labeledDataUrl = await renderVegetationLabels(vegDataUrl, showVegetationLabels);
+          addReferenceImage({
+            id: crypto.randomUUID(),
+            dataUrl: labeledDataUrl,
+            label: 'Vegetation Overlay',
+            type: 'vegetation_overlay',
+            included: true,
+            capturedAt: new Date().toISOString(),
+          });
+
+          // Ensure vegetation layer is turned off after capture
+          if (toggleVegetationOverlay) {
+            setTimeout(() => {
+              const mapCanvas = document.querySelector('.mapboxgl-canvas') as HTMLCanvasElement;
+              if (mapCanvas && (mapCanvas as any).__mapboxgl_map?.getLayer?.('nvis-vegetation-layer')) {
+                const mapInstance = (mapCanvas as any).__mapboxgl_map;
+                const currentVisibility = mapInstance.getLayoutProperty('nvis-vegetation-layer', 'visibility') === 'visible';
+                if (currentVisibility) {
+                  toggleVegetationOverlay();
+                }
+              }
+            }, 500);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to auto-capture reference images:', err);
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [captureCurrentView, captureAerialOverview, captureVegetationScreenshot, perimeter, addReferenceImage, clearReferenceImages, showVegetationLabels, toggleVegetationOverlay]);
+
   return (
     <div className={styles.container}>
       {children}
       <div className={styles.captureButtons}>
         <button
+          className={`${styles.captureButton} ${styles.captureAllButton}`}
+          onClick={handleCaptureAll}
+          disabled={isCapturing}
+          title="Auto-capture all 3 reference images (perspective + aerial + vegetation)"
+        >
+          {isCapturing ? '⏳' : '📸'} Capture All
+        </button>
+        <button
           className={styles.captureButton}
           onClick={handleMapCapture}
           disabled={isCapturing}
-          title="Capture map screenshot"
+          title="Capture perspective view"
         >
-          {isCapturing ? '⏳' : '📷'} Capture
+          {isCapturing ? '⏳' : '📷'} Perspective
+        </button>
+        <button
+          className={styles.captureButton}
+          onClick={handleAerialCapture}
+          disabled={isCapturing || !perimeter}
+          title="Capture aerial overview (requires drawn perimeter)"
+        >
+          {isCapturing ? '⏳' : '🛰'} Aerial
         </button>
         <button
           className={styles.captureButton}

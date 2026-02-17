@@ -94,88 +94,111 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     const url = `${baseUrl}/models/${this.config.model}:streamGenerateContent?alt=sse&key=${this.config.key}`;
 
     // ── Prepare request body ───────────────────────────────────
-    const referenceImage = options?.mapScreenshot ?? options?.referenceImage;
+    // Three reference images in order:
+    //   1. Perspective View  — user's camera angle (defines output perspective)
+    //   2. Aerial Overview   — top-down, fire extent reference
+    //   3. Vegetation Map    — NVIS classification overlay
+    const perspectiveImage = options?.mapScreenshot ?? options?.referenceImage;
+    const aerialImage = options?.aerialOverviewScreenshot;
+    const vegScreenshot = options?.vegetationMapScreenshot;
     let effectivePrompt = prompt;
 
     const parts: Array<Record<string, unknown>> = [];
 
-    if (referenceImage) {
-      let base64Data: string;
-      if (Buffer.isBuffer(referenceImage)) {
-        base64Data = referenceImage.toString('base64');
-      } else if (typeof referenceImage === 'string') {
-        base64Data = referenceImage.replace(/^data:image\/\w+;base64,/, '');
-      } else {
-        base64Data = '';
-      }
+    /** Extract base64 payload from a data-URL string or Buffer. */
+    const toBase64 = (img: string | Buffer): string => {
+      if (Buffer.isBuffer(img)) return img.toString('base64');
+      if (typeof img === 'string') return img.replace(/^data:image\/\w+;base64,/, '');
+      return '';
+    };
 
+    // Count available reference images for prompt context
+    const imageCount = [perspectiveImage, aerialImage, vegScreenshot].filter(Boolean).length;
+
+    // ── Image 1: Perspective View (user's camera angle) ────────
+    if (perspectiveImage) {
+      const base64Data = toBase64(perspectiveImage);
       if (base64Data.length > 0) {
+        parts.push({ inline_data: { mime_type: 'image/png', data: base64Data } });
+
         effectivePrompt =
-          'You are looking at a 3D terrain visualisation of a real Australian landscape, rendered from a mapping application. ' +
-          'It shows the actual topography with a satellite or aerial photograph draped over the 3D terrain surface. ' +
-          'In this rendering, grassy paddocks and pasture appear as light brown, tan, or green areas. ' +
+          `You have been provided ${imageCount} reference image${imageCount > 1 ? 's' : ''} of a real Australian landscape.\n\n` +
+          'IMAGE 1 \u2014 PERSPECTIVE VIEW:\n' +
+          'This is a 3D terrain visualisation rendered from a mapping application, showing actual topography ' +
+          'with a satellite or aerial photograph draped over the 3D terrain surface. ' +
+          'Grassy paddocks and pasture appear as light brown, tan, or green areas. ' +
           'Tree canopy and bushland appear as darker green textured patches with visible individual tree crowns. ' +
           'Bare earth, fire breaks, and cleared land appear as pale brown or beige. ' +
-          'Roads appear as thin grey or dark lines, and buildings appear as small rectangular light-coloured shapes with visible rooftops.\n\n' +
-          'SCALE AND EXTENT: This reference image shows the FULL extent of the fire area. ' +
-          'The entire visible landscape in this image represents the fire perimeter \u2014 from edge to edge, top to bottom. ' +
-          'When you generate the photorealistic image, the fire (active flames, smoke, and burned areas) must occupy this ENTIRE visible extent. ' +
-          'Do not treat this as showing just a small portion \u2014 this is the complete fire footprint.\n\n' +
-          'Step 1: Study the terrain visualisation carefully \u2014 note the exact shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body.\n\n' +
-          'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera with a 28mm lens from the same angle and field of view. ' +
-          'Replace the map rendering style with photorealistic textures \u2014 real eucalyptus trees, real Australian bush vegetation, real grass, real soil, and a real sky with natural lighting and atmospheric haze. ' +
-          'The spatial layout must be identical to the reference.\n\n' +
-          'Step 3: Overlay the following fire scenario onto this faithful landscape rendering, ensuring the fire fills the entire extent shown:\n\n' +
-          prompt +
-          '\n\nDo not show any of the UI from the map screenshot, including minimap, buttons, or red polygon lines. Adherence to reality exactly like the screenshot map terrain is critical.';
-
-        parts.push({
-          inline_data: {
-            mime_type: 'image/png',
-            data: base64Data,
-          },
-        });
+          'Roads appear as thin grey or dark lines, and buildings as small rectangular light-coloured shapes.\n\n' +
+          'THIS IMAGE DEFINES THE EXACT PERSPECTIVE for your output. Generate your photorealistic image from ' +
+          'the same viewing angle, camera position, distance, and field of view as shown here. ' +
+          'Convert this 3D terrain into a photorealistic photograph as if captured by a real camera with a 28mm lens from this exact position.\n\n';
       }
     }
 
-    // ── Vegetation overlay image (NSW SVTM) ────────────────────
-    // If a vegetation map screenshot is provided, include it as a second reference
-    // image with instructions for the AI to use it for vegetation spatial accuracy.
-    const vegScreenshot = options?.vegetationMapScreenshot;
-    if (vegScreenshot) {
-      let vegBase64: string;
-      if (Buffer.isBuffer(vegScreenshot)) {
-        vegBase64 = vegScreenshot.toString('base64');
-      } else if (typeof vegScreenshot === 'string') {
-        vegBase64 = vegScreenshot.replace(/^data:image\/\w+;base64,/, '');
-      } else {
-        vegBase64 = '';
-      }
-
-      if (vegBase64.length > 0) {
-        parts.push({
-          inline_data: {
-            mime_type: 'image/png',
-            data: vegBase64,
-          },
-        });
+    // ── Image 2: Aerial Overview (top-down, fire extent) ───────
+    if (aerialImage) {
+      const aerialBase64 = toBase64(aerialImage);
+      if (aerialBase64.length > 0) {
+        parts.push({ inline_data: { mime_type: 'image/png', data: aerialBase64 } });
 
         effectivePrompt +=
-          '\n\nVEGETATION CLASSIFICATION MAP: The previous image is a vegetation classification overlay from the ' +
-          'Australian National Vegetation Information System (NVIS). Each distinct colour represents a different ' +
-          'Major Vegetation Subgroup (MVS). This map shows the real spatial distribution of vegetation types ' +
-          'across the landscape. Use it to place the correct type of vegetation (forest, woodland, grassland, ' +
-          'shrubland, etc.) in the corresponding part of your generated image. ' +
-          'Where the satellite terrain image shows tree canopy, the NVIS map tells you WHAT TYPE of trees they are. ' +
-          'Where it shows open ground, the NVIS map tells you whether it is native grassland, cleared farmland, or heath.';
+          `IMAGE ${perspectiveImage ? '2' : '1'} \u2014 AERIAL OVERVIEW:\n` +
+          'This flat, top-down aerial view shows the FULL EXTENT of the fire area. ' +
+          'The entire visible landscape represents the fire perimeter \u2014 edge to edge. ' +
+          'Use this overview to understand the complete fire footprint, its scale, ' +
+          'and the spatial relationship between the fire and surrounding terrain features (roads, clearings, ridges, waterways). ' +
+          'The fire in your generated image must cover the same spatial extent shown here.\n\n';
+      }
+    }
+
+    // If we only have the perspective image (no aerial), add inline scale guidance
+    if (perspectiveImage && !aerialImage) {
+      effectivePrompt +=
+        'SCALE AND EXTENT: This reference image shows the FULL extent of the fire area. ' +
+        'The fire must occupy the ENTIRE visible extent \u2014 do not show just a small portion.\n\n';
+    }
+
+    // Add conversion instructions and embed the original scenario prompt
+    if (perspectiveImage || aerialImage) {
+      effectivePrompt +=
+        'CONVERSION STEPS:\n' +
+        'Step 1: Study all reference images carefully \u2014 note the exact shape and position of every hill, ridge, valley, ' +
+        'gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body.\n\n' +
+        'Step 2: Recreate this exact landscape as a photorealistic photograph' +
+        (perspectiveImage ? ' from the perspective shown in Image 1' : '') +
+        '. Replace the map rendering with photorealistic textures \u2014 real eucalyptus trees, real Australian bush vegetation, ' +
+        'real grass, real soil, and a real sky with natural lighting and atmospheric haze. ' +
+        'The spatial layout must be identical to the references.\n\n' +
+        'Step 3: Overlay the following fire scenario onto this faithful landscape rendering:\n\n' +
+        prompt +
+        '\n\nDo not show any UI from the map screenshots \u2014 no minimap, buttons, or red polygon lines. ' +
+        'Adherence to the terrain shown in the reference images is critical.';
+    }
+
+    // ── Image 3: Vegetation overlay (NSW SVTM) ────────────────
+    if (vegScreenshot) {
+      const vegBase64 = toBase64(vegScreenshot);
+      if (vegBase64.length > 0) {
+        const vegImageNum = [perspectiveImage, aerialImage].filter(Boolean).length + 1;
+        parts.push({ inline_data: { mime_type: 'image/png', data: vegBase64 } });
+
+        effectivePrompt +=
+          `\n\nIMAGE ${vegImageNum} \u2014 VEGETATION CLASSIFICATION MAP:\n` +
+          'This is a vegetation classification overlay from the Australian National Vegetation Information System (NVIS). ' +
+          'Each distinct colour represents a different Major Vegetation Subgroup (MVS). ' +
+          'This map shows the real spatial distribution of vegetation types across the landscape. ' +
+          'Use it to place the correct type of vegetation (forest, woodland, grassland, shrubland, etc.) ' +
+          'in the corresponding part of your generated image. ' +
+          'Where the terrain shows tree canopy, this map tells you WHAT TYPE of trees they are. ' +
+          'Where it shows open ground, the map tells you whether it is grassland, farmland, or heath.';
       }
     }
 
     // ── Spatial vegetation context from SVTM queries ───────────
-    // Append text-based vegetation context from ArcGIS identify queries
     if (options?.vegetationPromptText) {
       effectivePrompt +=
-        '\n\nSPATIAL VEGETATION DATA (from NVIS — National Vegetation Information System): ' +
+        '\n\nSPATIAL VEGETATION DATA (from NVIS): ' +
         options.vegetationPromptText;
     }
 
@@ -183,12 +206,12 @@ export class GeminiImageProvider implements ImageGenerationProvider {
       const legendLines = options.vegetationLegendItems
         .map((item) => {
           const descriptor = getNvisDescriptor(item.name);
-          return `- ${item.color} → ${item.name}: ${descriptor}`;
+          return `- ${item.color} \u2192 ${item.name}: ${descriptor}`;
         })
         .join('\n');
 
       effectivePrompt +=
-        '\n\nNVIS VEGETATION LEGEND (maps overlay colours to real-world vegetation):\n' +
+        '\n\nNVIS VEGETATION LEGEND:\n' +
         legendLines +
         '\nFor each coloured region in the vegetation overlay image, render the corresponding vegetation type ' +
         'described above. This is the key to translating the abstract colour map into photorealistic landscape.';

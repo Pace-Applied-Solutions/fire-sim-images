@@ -119,7 +119,8 @@ export const ScenarioInputPanel: React.FC = () => {
     setGenerationResult,
     setMapScreenshots,
     setError,
-    captureMapScreenshots,
+    captureCurrentView,
+    captureAerialOverview,
     captureVegetationScreenshot,
     vegetationLegendItems,
   } = useAppStore();
@@ -316,44 +317,27 @@ export const ScenarioInputPanel: React.FC = () => {
       setGenerationProgress('Starting generation...');
       setError(null);
 
-      // Default viewpoints: start at truck-level, sweep ground views, then finish with aerial
-      // This preserves a strong ground context before the overhead reference view.
-      const requestedViews: ViewPoint[] = [
-        'ground_north',
-        'ground_east',
-        'ground_south',
-        'ground_west',
-        'aerial',
-      ];
+      // 3-screenshot strategy:
+      //   1. User's current perspective (defines the output viewpoint)
+      //   2. Aerial overview (top-down, fire extent reference)
+      //   3. Vegetation overlay (NVIS classification)
+      const requestedViews: ViewPoint[] = ['ground_north'];
 
-      // Capture map screenshots from each viewpoint for terrain reference
       let mapScreenshots: Record<string, string> | undefined;
-      if (captureMapScreenshots) {
-        setGenerationProgress('Capturing terrain views...');
+      let aerialOverviewScreenshot: string | undefined;
+
+      // Screenshot 1: Capture user's current perspective view
+      if (captureCurrentView) {
+        setGenerationProgress('Capturing perspective view...');
         try {
-          mapScreenshots = await captureMapScreenshots(requestedViews);
-          const count = Object.keys(mapScreenshots).length;
-          console.log(`Captured ${count} map screenshots for terrain reference`);
-
-          // Validate that all requested screenshots were captured
-          if (count === 0) {
-            throw new Error('Failed to capture any terrain screenshots');
+          const perspectiveScreenshot = await captureCurrentView();
+          if (perspectiveScreenshot) {
+            mapScreenshots = { ground_north: perspectiveScreenshot };
+            setMapScreenshots(mapScreenshots);
+            console.log('Captured user perspective screenshot');
           }
-          if (count < requestedViews.length) {
-            console.warn(
-              `Only ${count}/${requestedViews.length} screenshots captured - some views failed`
-            );
-            addToast({
-              type: 'warning',
-              message: `Only ${count}/${requestedViews.length} terrain views captured - proceeding with available screenshots`,
-            });
-          }
-
-          // Store screenshots so the comparison view can access them
-          setMapScreenshots(mapScreenshots);
-          setGenerationProgress(`Captured ${count} terrain views. Starting AI generation...`);
         } catch (error) {
-          console.error('Map screenshot capture failed:', error);
+          console.error('Perspective screenshot capture failed:', error);
           const errorMsg = error instanceof Error ? error.message : 'Screenshot capture failed';
           setError(errorMsg);
           setScenarioState('error');
@@ -362,7 +346,6 @@ export const ScenarioInputPanel: React.FC = () => {
           return;
         }
       } else {
-        // No screenshot capture function available - cannot proceed
         setError('Map screenshot capture not available');
         setScenarioState('error');
         setGenerationProgress(null);
@@ -373,7 +356,21 @@ export const ScenarioInputPanel: React.FC = () => {
         return;
       }
 
-      // Capture vegetation overlay screenshot (NSW SVTM)
+      // Screenshot 2: Capture aerial overview (top-down, centered on fire)
+      if (captureAerialOverview) {
+        setGenerationProgress('Capturing aerial overview...');
+        try {
+          aerialOverviewScreenshot = await captureAerialOverview();
+          if (aerialOverviewScreenshot) {
+            console.log('Captured aerial overview screenshot');
+          }
+        } catch (error) {
+          console.warn('Aerial overview capture failed, proceeding without:', error);
+          // Non-fatal: continue without aerial overview
+        }
+      }
+
+      // Screenshot 3: Capture vegetation overlay (NSW SVTM)
       let vegetationMapScreenshot: string | undefined;
       if (captureVegetationScreenshot) {
         setGenerationProgress('Capturing vegetation data...');
@@ -389,6 +386,8 @@ export const ScenarioInputPanel: React.FC = () => {
         }
       }
 
+      setGenerationProgress('Starting AI generation...');
+
       // Start generation
       const startResponse = await generationApi.startGeneration({
         perimeter,
@@ -396,6 +395,7 @@ export const ScenarioInputPanel: React.FC = () => {
         geoContext,
         requestedViews,
         mapScreenshots: mapScreenshots as Record<ViewPoint, string>,
+        aerialOverviewScreenshot,
         vegetationMapScreenshot,
         vegetationLegendItems: vegetationLegendItems ?? undefined,
       });

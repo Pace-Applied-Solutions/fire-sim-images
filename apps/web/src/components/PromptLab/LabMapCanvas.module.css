@@ -41,3 +41,14 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.captureAllButton {
+  background-color: var(--color-primary, #3b82f6);
+  color: white;
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.captureAllButton:hover:not(:disabled) {
+  background-color: var(--color-primary-dark, #2563eb);
+  border-color: var(--color-primary-dark, #2563eb);
+}

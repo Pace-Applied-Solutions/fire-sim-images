@@ -8,7 +8,7 @@ import type { Feature, Polygon } from 'geojson';
 import type { FirePerimeter, ViewPoint } from '@fire-sim/shared';
 import { useAppStore } from '../../store/appStore';
 import { useToastStore } from '../../store/toastStore';
-import { captureViewpointScreenshots, captureVegetationScreenshot } from '../../utils/mapCapture';
+import { captureViewpointScreenshots, captureVegetationScreenshot, captureCurrentView, captureAerialOverview } from '../../utils/mapCapture';
 import {
   MAPBOX_TOKEN,
   DEFAULT_CENTER,
@@ -118,6 +118,8 @@ export const MapContainer = () => {
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
   const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
+  const setCaptureCurrentView = useAppStore((s) => s.setCaptureCurrentView);
+  const setCaptureAerialOverview = useAppStore((s) => s.setCaptureAerialOverview);
   const setCaptureVegetationScreenshot = useAppStore((s) => s.setCaptureVegetationScreenshot);
   const setToggleVegetationOverlay = useAppStore((s) => s.setToggleVegetationOverlay);
   const setVegetationLegendItems = useAppStore((s) => s.setVegetationLegendItems);
@@ -936,6 +938,8 @@ export const MapContainer = () => {
   useEffect(() => {
     if (!isMapLoaded || !metadata) {
       setCaptureMapScreenshots(null);
+      setCaptureCurrentView(null);
+      setCaptureAerialOverview(null);
       setCaptureVegetationScreenshot(null);
       return;
     }
@@ -954,6 +958,23 @@ export const MapContainer = () => {
       );
     };
 
+    const currentViewFn = async (): Promise<string> => {
+      const map = mapRef.current;
+      if (!map) return '';
+
+      return captureCurrentView(map);
+    };
+
+    const aerialFn = async (): Promise<string> => {
+      const map = mapRef.current;
+      if (!map) return '';
+
+      return captureAerialOverview(map, {
+        centroid: metadata.centroid,
+        bbox: metadata.bbox,
+      });
+    };
+
     const vegCaptureFn = async (): Promise<string | null> => {
       const map = mapRef.current;
       if (!map) return null;
@@ -965,13 +986,17 @@ export const MapContainer = () => {
     };
 
     setCaptureMapScreenshots(captureFn);
+    setCaptureCurrentView(currentViewFn);
+    setCaptureAerialOverview(aerialFn);
     setCaptureVegetationScreenshot(vegCaptureFn);
 
     return () => {
       setCaptureMapScreenshots(null);
+      setCaptureCurrentView(null);
+      setCaptureAerialOverview(null);
       setCaptureVegetationScreenshot(null);
     };
-  }, [isMapLoaded, metadata, setCaptureMapScreenshots, setCaptureVegetationScreenshot]);
+  }, [isMapLoaded, metadata, setCaptureMapScreenshots, setCaptureCurrentView, setCaptureAerialOverview, setCaptureVegetationScreenshot]);
 
   // Fly to viewpoint preset
   const flyToViewpoint = useCallback(

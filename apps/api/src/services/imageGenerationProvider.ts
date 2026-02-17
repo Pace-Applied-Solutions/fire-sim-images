@@ -10,7 +10,8 @@ export interface ImageGenOptions {
   seed?: number;
   referenceImage?: string | Buffer; // Base64 data URL or Buffer for reference/anchor image
   referenceStrength?: number; // 0-1, how much to adhere to reference (0.5 default)
-  mapScreenshot?: string | Buffer; // Map view screenshot for terrain grounding
+  mapScreenshot?: string | Buffer; // Map view screenshot for terrain grounding (user's perspective view)
+  aerialOverviewScreenshot?: string | Buffer; // Top-down aerial view of fire perimeter extent
   vegetationMapScreenshot?: string | Buffer; // NSW SVTM vegetation overlay screenshot
   vegetationPromptText?: string; // Spatial vegetation context text from SVTM queries
   vegetationLegendItems?: Array<{ name: string; color: string }>; // Visible legend items with color swatches

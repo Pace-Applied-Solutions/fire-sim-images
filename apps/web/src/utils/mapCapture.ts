@@ -248,6 +248,68 @@ function captureCanvas(map: MapboxMap): string {
 }
 
 /**
+ * Capture the current map view as-is (no camera repositioning).
+ * Used to capture the user's manually positioned perspective view.
+ */
+export async function captureCurrentView(map: MapboxMap): Promise<string> {
+  await waitForMapReady(map, 5000);
+  return captureCanvas(map);
+}
+
+/**
+ * Capture a top-down aerial overview screenshot centered on the fire perimeter.
+ * Positions the camera straight down (pitch 0, bearing 0) with 10% padding.
+ * Used as a fire extent reference for AI generation.
+ */
+export async function captureAerialOverview(
+  map: MapboxMap,
+  perimeterInfo: PerimeterInfo
+): Promise<string> {
+  // Save current camera position
+  const savedCamera = {
+    center: map.getCenter().toArray() as [number, number],
+    zoom: map.getZoom(),
+    bearing: map.getBearing(),
+    pitch: map.getPitch(),
+  };
+
+  // Move to flat aerial view centered on fire perimeter with 10% padding
+  const [minLng, minLat, maxLng, maxLat] = perimeterInfo.bbox;
+  map.setBearing(0);
+  map.setPitch(0);
+  const canvas = map.getCanvas();
+  const paddingX = Math.round(canvas.clientWidth * 0.1);
+  const paddingY = Math.round(canvas.clientHeight * 0.1);
+
+  map.fitBounds(
+    [
+      [minLng, minLat],
+      [maxLng, maxLat],
+    ],
+    {
+      padding: { top: paddingY, bottom: paddingY, left: paddingX, right: paddingX },
+      duration: 0,
+      maxZoom: 16,
+    }
+  );
+
+  await waitForMapReady(map, 8000);
+  const dataUrl = captureCanvas(map);
+
+  // Restore camera with smooth transition
+  map.easeTo({
+    center: savedCamera.center,
+    zoom: savedCamera.zoom,
+    bearing: savedCamera.bearing,
+    pitch: savedCamera.pitch,
+    duration: 400,
+    easing: (t) => t * (2 - t),
+  });
+
+  return dataUrl;
+}
+
+/**
  * Capture map screenshots for each requested viewpoint.
  * Smoothly transitions the camera between viewpoints, waits for all tiles
  * and terrain to render, then captures.

@@ -13,7 +13,7 @@ export interface LabGenerationRequest {
   /** Reference images as base64 data URLs */
   referenceImages: Array<{
     dataUrl: string;
-    type: 'map_screenshot' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
+    type: 'map_screenshot' | 'aerial_overview' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
   }>;
   /** Image size */
   size?: '1024x1024' | '1792x1024' | '1024x1792';

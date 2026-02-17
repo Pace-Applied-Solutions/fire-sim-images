@@ -126,7 +126,9 @@ export const ReferenceImageTray: React.FC = () => {
 function getTypeLabel(type: LabReferenceImage['type']): string {
   switch (type) {
     case 'map_screenshot':
-      return 'Map Screenshot';
+      return 'Perspective View';
+    case 'aerial_overview':
+      return 'Aerial Overview';
     case 'vegetation_overlay':
       return 'Vegetation Overlay';
     case 'uploaded':

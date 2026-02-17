@@ -151,6 +151,7 @@ export interface GenerationRequest {
   requestedViews: ViewPoint[];
   seed?: number; // Consistent seed for reproducibility across all viewpoints
   mapScreenshots?: Record<ViewPoint, string>; // Map view screenshots for terrain reference (base64 data URLs)
+  aerialOverviewScreenshot?: string; // Top-down aerial view centered on fire perimeter (base64 data URL)
   vegetationMapScreenshot?: string; // Aerial vegetation overlay screenshot (base64 data URL)
   vegetationLegendItems?: Array<{ name: string; color: string }>; // Visible legend items with color swatches
 }

@@ -18,6 +18,12 @@ export type ScenarioState =
 /** Function type for capturing map screenshots from specific viewpoints */
 export type CaptureMapScreenshotsFn = (viewpoints: ViewPoint[]) => Promise<Record<string, string>>;
 
+/** Function type for capturing the current map view as-is */
+export type CaptureCurrentViewFn = () => Promise<string>;
+
+/** Function type for capturing a top-down aerial overview */
+export type CaptureAerialOverviewFn = () => Promise<string>;
+
 /** Function type for capturing the vegetation overlay screenshot */
 export type CaptureVegetationScreenshotFn = () => Promise<string | null>;
 export interface VegetationLegendItem {
@@ -73,6 +79,14 @@ interface AppState {
   // Map screenshot capture (registered by MapContainer)
   captureMapScreenshots: CaptureMapScreenshotsFn | null;
   setCaptureMapScreenshots: (fn: CaptureMapScreenshotsFn | null) => void;
+
+  // Current view capture (registered by MapContainer)
+  captureCurrentView: CaptureCurrentViewFn | null;
+  setCaptureCurrentView: (fn: CaptureCurrentViewFn | null) => void;
+
+  // Aerial overview capture (registered by MapContainer)
+  captureAerialOverview: CaptureAerialOverviewFn | null;
+  setCaptureAerialOverview: (fn: CaptureAerialOverviewFn | null) => void;
 
   // Vegetation overlay screenshot capture (registered by MapContainer)
   captureVegetationScreenshot: CaptureVegetationScreenshotFn | null;
@@ -138,6 +152,14 @@ export const useAppStore = create<AppState>((set) => ({
   // Map screenshot capture
   captureMapScreenshots: null,
   setCaptureMapScreenshots: (fn) => set({ captureMapScreenshots: fn }),
+
+  // Current view capture
+  captureCurrentView: null,
+  setCaptureCurrentView: (fn) => set({ captureCurrentView: fn }),
+
+  // Aerial overview capture
+  captureAerialOverview: null,
+  setCaptureAerialOverview: (fn) => set({ captureAerialOverview: fn }),
 
   // Vegetation overlay screenshot capture
   captureVegetationScreenshot: null,

@@ -17,7 +17,7 @@ export interface LabGenerationRequest {
   /** Reference images as base64 data URLs */
   referenceImages: Array<{
     dataUrl: string;
-    type: 'map_screenshot' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
+    type: 'map_screenshot' | 'aerial_overview' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
   }>;
   /** Image size */
   size?: '1024x1024' | '1792x1024' | '1024x1792';
@@ -118,9 +118,12 @@ async function handleSSEGeneration(
   };
 
   try {
-    // Prepare reference images
+    // Prepare reference images — extract by type
     const mapScreenshot = body.referenceImages.find(
       (img) => img.type === 'map_screenshot'
+    )?.dataUrl;
+    const aerialOverview = body.referenceImages.find(
+      (img) => img.type === 'aerial_overview'
     )?.dataUrl;
     const vegetationOverlay = body.referenceImages.find(
       (img) => img.type === 'vegetation_overlay'
@@ -132,6 +135,7 @@ async function handleSSEGeneration(
       size: body.size,
       seed: body.seed,
       mapScreenshot: mapScreenshot,
+      aerialOverviewScreenshot: aerialOverview,
       vegetationMapScreenshot: vegetationOverlay,
       onThinkingUpdate: (thinkingText: string) => {
         // Only send if text has changed
@@ -211,9 +215,12 @@ async function handleJSONGeneration(
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   try {
-    // Prepare reference images
+    // Prepare reference images — extract by type
     const mapScreenshot = body.referenceImages.find(
       (img) => img.type === 'map_screenshot'
+    )?.dataUrl;
+    const aerialOverview = body.referenceImages.find(
+      (img) => img.type === 'aerial_overview'
     )?.dataUrl;
     const vegetationOverlay = body.referenceImages.find(
       (img) => img.type === 'vegetation_overlay'
@@ -224,6 +231,7 @@ async function handleJSONGeneration(
       size: body.size,
       seed: body.seed,
       mapScreenshot: mapScreenshot,
+      aerialOverviewScreenshot: aerialOverview,
       vegetationMapScreenshot: vegetationOverlay,
     });
 
