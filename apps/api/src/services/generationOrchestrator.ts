@@ -410,7 +410,7 @@ export class GenerationOrchestrator {
           
           progress.updatedAt = new Date().toISOString();
           // Persist anchor image progress immediately so polling picks it up
-          this.persistProgress(scenarioId, progress);
+          this.persistProgress(scenarioId, progress, true);
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           // Capture thinking text from the error if available
@@ -526,10 +526,10 @@ export class GenerationOrchestrator {
             // views are still generating.
             progress.images.push(generatedImage);
             progress.updatedAt = new Date().toISOString();
-            
+
             // Persist progress after each image completes so polling can see
             // incremental updates even across Function App instance restarts
-            this.persistProgress(scenarioId, progress);
+            this.persistProgress(scenarioId, progress, true);
 
             logger.info('Image generated and uploaded', {
               viewpoint,

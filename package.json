@@ -15,7 +15,7 @@
     "dev:swa": "swa start http://localhost:5173 --api-location http://localhost:7071 --port 4280",
     "dev:swa:full": "concurrently \"npm run dev:web\" \"npm run dev:api\" \"npm run dev:swa\"",
     "predev:swa:full": "node scripts/check-node-version.js",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",

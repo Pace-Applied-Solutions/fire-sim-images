@@ -11,6 +11,16 @@ dist/
 build/
 *.tsbuildinfo
 
+# TypeScript compiled outputs in source directories
+*.js
+*.d.ts
+*.js.map
+*.d.ts.map
+!*.config.js
+!eslint.config.js
+!vite.config.js
+!vitest.config.js
+
 # Environment files
 .env
 .env.local

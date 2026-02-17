@@ -977,6 +977,32 @@ Update this section after each issue or change.
     - **Impact:** Every prompt now grounds the image generation model with fire science fundamentals, improving tactical realism of generated visuals without requiring explicit flame angle, spread rate, or intensity calculations per request (principles are consistently present for all scenarios)
     - **Acceptance criteria met:** Fire behaviour principles integrated as system prompt section for all requests; all 120 tests passing; v1.8.0 template validated with sample generation; fire behaviour content is static and non-breaking to existing scenario inputs
 
+  - **Results Gallery Stability Fixes (Feb 17, 2026):**
+    - **Problem addressed (per audit):** Disappearing generation results and unstable results panel UX due to three issues:
+      1. **API build failures:** `npm run build` failed with `TS2307: Cannot find module '@fire-sim/shared'` errors preventing deployment
+      2. **Unstable persistence:** Progress persisted with 1-second debounce when images added, causing empty status responses when polls hit fresh Functions instances during that window
+      3. **Nested scroll containers:** Results panel had two vertical scrollbars (ResultsPanel .content + GeneratedImages .container) causing jumpy UX
+    - **Root causes:**
+      1. Workspace build script used `npm run build --workspaces` without guaranteed order; `@fire-sim/shared` wasn't built before API; API tsconfig missing `types: ["node"]`
+      2. `persistProgress()` called without `immediate: true` flag at lines 413 and 532 when anchor/derived images completed
+      3. Both `ResultsPanel.module.css` (.content) and `GeneratedImages.module.css` (.container) defined `overflow-y: auto` creating nested scroll regions
+    - **Solutions implemented:**
+      1. **Build order fix:** Updated root package.json build script to explicit sequence: `packages/shared` → `apps/api` → `apps/web`; added `types: ["node"]` to `apps/api/tsconfig.json`; updated `.gitignore` to prevent compiled outputs from being committed
+      2. **Immediate persistence:** Changed `persistProgress(scenarioId, progress)` to `persistProgress(scenarioId, progress, true)` at anchor image completion (line 413) and derived image completion (line 532); thinking text updates remain debounced to avoid flooding storage
+      3. **Single scroll container:** Removed `height: 100%` and `overflow-y: auto` from `GeneratedImages .container`; ResultsPanel .content is now the sole scroll container
+    - **Client guards verified:** Frontend polling callback (ScenarioInputPanel.tsx lines 433-442) already preserves existing images when poll lacks results—complements server-side immediate persistence for end-to-end stability
+    - **Files modified:**
+      - `package.json` (ordered build script)
+      - `apps/api/tsconfig.json` (added types: ["node"])
+      - `.gitignore` (ignore compiled TS outputs with config exceptions)
+      - `apps/api/src/services/generationOrchestrator.ts` (immediate persistence flags at lines 413, 532)
+      - `apps/web/src/components/GeneratedImages/GeneratedImages.module.css` (removed nested scroll)
+    - **Testing:** All 163 tests pass (29 web, 134 shared); `npm run build` succeeds without errors
+    - **Documentation:** Created `docs/current_state/stability_fixes_summary.md` with detailed changes, testing, and architecture implications
+    - **Impact:** Polling reliably reflects generation progress without regressions from cold instance polling; single-scroll results panel for stable UX; builds succeed for API workspace deployments
+    - **Audit references:** [generation_results_audit.md](docs/current_state/generation_results_audit.md), [results_stability_investigation_plan.md](docs/current_state/results_stability_investigation_plan.md)
+    - **Acceptance criteria met:** Builds succeed; persistence hardened with immediate writes for images; results panel single-scroll UX; client guards verified; changes documented in current_state/
+
 ## 14. Change Control Process
 
 Every change must:
