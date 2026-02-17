@@ -145,6 +145,584 @@ Key architectural principles include keeping data within the target agency's Azu
 - Default: SVD for internal pipelines and looping clips.
 - Optional: Runway or Pika for higher-quality manual workflows.
 
+## 8a. Authentication, Payments, and Membership Tiers (Design Specification)
+
+This section documents the comprehensive design for authentication, payment processing, and consumption-based membership tiers. This is a design-only phase; no implementation will occur until this design is reviewed and approved.
+
+### 8a.1 Authentication Provider Selection
+
+**Recommended Provider: Microsoft Entra External ID (CIAM)**
+
+After evaluating Auth0 and Microsoft Entra External ID, the recommendation is to use **Microsoft Entra External ID** for the following reasons:
+
+**Pros of Microsoft Entra External ID:**
+- **Cost-effective**: Free for first 50,000 monthly active users (MAUs), then predictable consumption-based pricing
+- **Azure integration**: Seamless integration with existing Azure infrastructure (Key Vault, App Service, Functions, Storage)
+- **Unified billing**: Single Azure subscription for all services
+- **Enterprise security**: Built-in conditional access, MFA, passwordless authentication, anomaly detection
+- **Managed identities**: Native support for service-to-service authentication within Azure
+- **Compliance**: GDPR, SOC 2, and other compliance frameworks built-in
+- **Low-code workflows**: Visual workflow builder for custom authentication flows
+- **Consistency**: Aligns with existing architectural principle of keeping all data and services within Azure tenant
+
+**Cons of Microsoft Entra External ID:**
+- Less flexible for multi-cloud scenarios (not a concern for this project)
+- Slightly steeper learning curve compared to Auth0 for developers unfamiliar with Microsoft ecosystem
+- Documentation can be complex for advanced customization scenarios
+
+**Why not Auth0:**
+- Pricing starts at $35/month and increases significantly with MAU growth
+- Requires additional integration effort with Azure services
+- Adds another external dependency and billing relationship
+- Less cost-effective for organizations already invested in Azure
+- Multi-cloud flexibility not needed for this single-tenant Azure solution
+
+**Implementation approach:**
+- Use Microsoft Entra External ID for all user authentication
+- Integrate via Microsoft Authentication Library (MSAL) for JavaScript
+- Store user profile data in Entra ID user attributes (agency affiliation, role, tier)
+- Use JWT tokens for API authorization
+- Leverage managed identities for service-to-service authentication
+
+### 8a.2 Stripe Payment Integration Design
+
+**Recommended Approach: Stripe Meters for Consumption-Based Billing**
+
+Stripe will handle all payment processing, subscription management, and usage tracking. The integration will use Stripe's modern **Meter API** for robust consumption-based billing.
+
+**Architecture:**
+
+1. **Stripe Products and Pricing**
+   - Create Stripe Products for each membership tier (Free, Starter, Professional, Enterprise)
+   - Use Stripe Prices with metered billing mode
+   - Define Stripe Meters for tracking consumption (scenarios generated, images created, videos produced)
+
+2. **Usage Tracking with Stripe Meters**
+   - Report usage events to Stripe via `meter_event` API endpoint
+   - Track three primary metrics:
+     - `scenarios_generated`: Each complete scenario generation flow
+     - `images_generated`: Individual images produced (across all perspectives)
+     - `videos_generated`: Video clips produced
+   - Use idempotency keys (scenario ID + metric + timestamp hash) to prevent duplicate billing
+   - Batch usage events when possible for high-volume customers
+   - Implement exponential backoff retry logic for resilience
+
+3. **Webhook Integration**
+   - Subscribe to Stripe webhooks for critical events:
+     - `customer.subscription.created`
+     - `customer.subscription.updated`
+     - `customer.subscription.deleted`
+     - `invoice.payment_succeeded`
+     - `invoice.payment_failed`
+     - `customer.subscription.trial_will_end`
+   - Validate webhook signatures for security
+   - Store webhook events in Azure Table Storage for audit trail
+   - Update user tier status in Entra ID custom attributes
+
+4. **Payment Flow**
+   - Use Stripe Checkout for subscription sign-up
+   - Use Stripe Customer Portal for self-service tier management
+   - Redirect users to Stripe-hosted pages for payment (reduces PCI compliance burden)
+   - Store Stripe Customer ID in Entra ID user profile
+
+### 8a.3 Membership Tier Structure
+
+**Tier Definitions:**
+
+| Tier | Monthly Base | Included Usage | Overage Pricing | Target User |
+|------|--------------|----------------|-----------------|-------------|
+| **Free** | $0 | 5 scenarios/month<br>15 images/month<br>0 videos | Not available (hard limit) | Trial users, small fire brigades |
+| **Starter** | $29 | 25 scenarios/month<br>100 images/month<br>10 videos/month | $2/scenario<br>$0.50/image<br>$3/video | Individual trainers, small teams |
+| **Professional** | $99 | 100 scenarios/month<br>500 images/month<br>50 videos/month | $1.50/scenario<br>$0.30/image<br>$2/video | Regional training centers, medium agencies |
+| **Enterprise** | Custom | Custom limits | Custom pricing | State/national agencies, large organizations |
+
+**Tier Features:**
+
+- **Free Tier**:
+  - Basic map and drawing tools
+  - Standard perspectives (ground, aerial, ridge)
+  - Email support
+  - No video generation
+  - Gallery limited to last 30 days
+  - No API access
+
+- **Starter Tier**:
+  - All Free features plus:
+  - Video generation (up to 10 seconds)
+  - Extended gallery (90 days)
+  - Priority email support
+  - Downloadable outputs
+  - Prompt customization
+
+- **Professional Tier**:
+  - All Starter features plus:
+  - Advanced prompt lab access
+  - Custom perspective angles
+  - Multi-perspective consistency improvements
+  - 1-year gallery retention
+  - Slack/Teams integration for support
+  - Basic API access (100 API calls/month)
+  - White-label branding options
+
+- **Enterprise Tier**:
+  - All Professional features plus:
+  - Unlimited gallery retention
+  - Dedicated account manager
+  - SLA guarantees (99.9% uptime)
+  - Custom model fine-tuning
+  - On-premises deployment options
+  - Full API access
+  - Custom integrations
+  - Training and onboarding
+
+**Consumption Tracking:**
+
+- Track usage per user per billing period
+- Reset counters at subscription renewal date
+- Display real-time usage in user dashboard
+- Send email alerts at 75%, 90%, and 100% of included usage
+- For Free tier: Hard limit (generation requests rejected after quota exhausted)
+- For paid tiers: Overage billing automatically applied
+
+### 8a.4 Edge Cases and Recovery Flows
+
+**Trial Periods:**
+- New Free tier users: Immediate access, no credit card required
+- Starter/Professional trial: 14-day free trial with full tier access
+- Trial usage counts toward first month quota after conversion
+- Email reminders at 7 days, 3 days, and 1 day before trial ends
+- Auto-downgrade to Free tier if no payment method added
+
+**Tier Upgrades:**
+- Immediate tier upgrade upon payment
+- Prorated billing for remainder of current period
+- Combined quota: remaining old tier quota + new tier quota for upgrade month
+- Usage tracking continues seamlessly
+- Preserve all existing scenarios and gallery items
+
+**Tier Downgrades:**
+- Schedule downgrade for end of current billing period
+- Show confirmation warning about quota reduction
+- No refund for unused portion of current period (Stripe standard)
+- If current usage exceeds new tier limits, disable new generations until next period
+- Retain all historical gallery items (don't delete)
+
+**Failed Payments:**
+- Stripe retries automatically based on Smart Retries configuration
+- Email customer immediately on first failure
+- Grace period: 3 days with limited access (read-only gallery, no new generations)
+- After 3 days: Downgrade to Free tier
+- Send recovery email with payment update link
+- Upon successful payment: Restore previous tier immediately
+
+**Payment Recovery:**
+- Stripe Customer Portal allows users to update payment methods
+- Automatic retry when payment method updated
+- Invoice status tracked via webhooks
+- Option to manually retry failed invoice via customer portal
+
+**Subscription Cancellation:**
+- User can cancel anytime via Stripe Customer Portal
+- Access continues until end of current billing period
+- No refunds (standard Stripe policy)
+- Downgrade to Free tier at period end
+- Retain gallery items per tier retention policy
+- Re-subscription allowed at any time
+
+**Usage Disputes:**
+- All meter events stored in Stripe with timestamps
+- Audit trail available in admin dashboard
+- Azure Function logs provide secondary verification
+- Manual adjustment capability for verified disputes
+- Transparent usage breakdown in user dashboard
+
+### 8a.5 Privacy, Data Storage, and Compliance
+
+**Data Storage Strategy:**
+
+- **User identity and authentication**: Microsoft Entra External ID (Azure AD)
+  - Email, name, agency affiliation
+  - Authentication tokens, MFA settings
+  - Custom attributes: tier level, Stripe customer ID
+
+- **Payment data**: Stripe (PCI-compliant, no card data stored in our system)
+  - Customer payment methods
+  - Subscription status
+  - Invoice history
+  - Usage meter events
+
+- **Application data**: Azure Storage (existing architecture)
+  - Generated images and videos (Blob Storage)
+  - Scenario metadata (Table Storage)
+  - Usage logs (Application Insights)
+
+- **Audit trail**: Azure Table Storage
+  - Stripe webhook events
+  - Tier changes
+  - Payment events
+  - Usage threshold alerts
+
+**Privacy Considerations:**
+
+- **Minimal data collection**: Only collect data necessary for service delivery and billing
+- **User consent**: Clear consent for data processing during sign-up
+- **Data retention**:
+  - User profile: Retained while account active, deleted 90 days after account closure
+  - Payment data: Retained by Stripe per their policies and compliance requirements
+  - Generated content: Deleted per tier retention policy (30 days to unlimited)
+  - Audit logs: 7 years for compliance
+
+- **Data portability**: Users can export all their scenarios and images via API or UI
+- **Right to deletion**: Users can delete account and all associated data
+- **No data sharing**: Data never shared with third parties except required service providers (Stripe, Azure)
+
+**Compliance Requirements:**
+
+- **GDPR** (if serving EU users):
+  - Lawful basis for processing: Contract performance and consent
+  - Data processing agreements with Stripe and Microsoft
+  - Privacy policy with clear data collection and usage explanation
+  - Cookie consent for analytics
+  - Data breach notification procedures
+
+- **PCI DSS**:
+  - Use Stripe Checkout and Customer Portal (Stripe-hosted)
+  - Never handle credit card data directly
+  - No card data stored in application database
+
+- **SOC 2** (for enterprise customers):
+  - Leverage Azure and Stripe SOC 2 compliance
+  - Document security controls
+  - Annual security audit recommended for Enterprise tier
+
+- **Australian Privacy Principles** (primary jurisdiction):
+  - Compliance with Privacy Act 1988
+  - Clear privacy policy
+  - Secure data handling
+  - User access and correction rights
+
+**Security Measures:**
+
+- All API endpoints require authentication (JWT tokens)
+- Stripe webhook signature verification
+- Secrets stored in Azure Key Vault (existing pattern)
+- TLS 1.2+ for all communications
+- Rate limiting on API endpoints to prevent abuse
+- Monitoring and alerting for suspicious activity
+
+### 8a.6 API Impact and Session Handling
+
+**API Changes Required:**
+
+1. **Authentication Middleware**
+   - Add MSAL token validation middleware to all API endpoints
+   - Extract user ID and tier from JWT claims
+   - Reject requests without valid token (except health check)
+
+2. **Usage Tracking Endpoints**
+   - `POST /api/usage/track` - Internal endpoint for recording meter events
+   - Called after successful image/video generation
+   - Idempotent with scenario ID in request
+   - Returns current usage for user's billing period
+
+3. **User Profile Endpoints**
+   - `GET /api/user/profile` - Get current user profile, tier, and usage stats
+   - `GET /api/user/usage` - Get detailed usage breakdown for current period
+   - `GET /api/user/subscription` - Get subscription status and billing info
+
+4. **Tier Enforcement**
+   - Check tier quota before allowing generation
+   - Return 402 Payment Required if Free tier quota exceeded
+   - Return 200 OK with overage flag for paid tiers
+   - Include usage headers in all API responses
+
+5. **Webhook Handler**
+   - `POST /api/webhooks/stripe` - Receive Stripe webhook events
+   - Verify signature
+   - Process event and update user tier in Entra ID
+   - Return 200 OK to acknowledge receipt
+
+**Session Handling:**
+
+- Use MSAL.js library for browser-based authentication
+- Store access token in memory (not localStorage for security)
+- Refresh token automatically using MSAL token renewal
+- Session timeout: 8 hours (configurable)
+- Automatic re-authentication when token expires
+- Preserve unsaved work across re-authentication
+
+**Data Model Changes:**
+
+- Add `UserProfile` type to shared package:
+  ```typescript
+  interface UserProfile {
+    userId: string; // Entra ID user object ID
+    email: string;
+    displayName: string;
+    tier: MembershipTier;
+    stripeCustomerId: string | null;
+    subscriptionStatus: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid';
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+    usage: UsageStats;
+  }
+
+  interface UsageStats {
+    scenariosGenerated: number;
+    imagesGenerated: number;
+    videosGenerated: number;
+    lastUpdated: Date;
+  }
+
+  type MembershipTier = 'free' | 'starter' | 'professional' | 'enterprise';
+  ```
+
+### 8a.7 User Journey Flows
+
+**New User Sign-Up Journey:**
+
+1. User visits application homepage (public, no auth required)
+2. User clicks "Sign Up" button
+3. Redirect to Entra External ID sign-up flow
+4. User creates account (email + password, or social login if enabled)
+5. Redirect back to application with authentication token
+6. Create user profile in Entra ID with tier = 'free'
+7. Show onboarding tutorial
+8. User can immediately start creating scenarios (Free tier quota)
+
+**Paid Subscription Sign-Up Journey:**
+
+1. Authenticated user clicks "Upgrade" in navigation or after quota warning
+2. Show tier comparison page with current usage stats
+3. User selects desired tier (Starter, Professional, or Enterprise)
+4. Redirect to Stripe Checkout with pre-filled customer email
+5. User enters payment details on Stripe-hosted page
+6. Stripe processes payment and creates subscription
+7. Stripe webhook notifies our API of successful subscription
+8. API updates user tier in Entra ID to new tier
+9. Redirect user back to application with success message
+10. User immediately gains access to new tier features and quota
+
+**Sign-In Journey (Returning User):**
+
+1. User visits application
+2. If no valid session, redirect to Entra External ID sign-in page
+3. User enters credentials (or uses SSO if configured)
+4. Redirect back to application with authentication token
+5. Load user profile and tier information
+6. Show user dashboard with usage stats and recent scenarios
+
+**Tier Management Journey:**
+
+1. User clicks "Manage Subscription" in settings
+2. Redirect to Stripe Customer Portal
+3. User can:
+   - View current plan and usage
+   - Update payment method
+   - Upgrade/downgrade tier
+   - Cancel subscription
+   - View invoice history
+4. Changes sync back to our system via webhooks
+5. User redirected back to application
+
+**Quota Exceeded Journey (Free Tier):**
+
+1. User attempts to generate scenario after exceeding Free tier quota
+2. API returns 402 Payment Required with quota details
+3. UI shows upgrade modal with tier comparison
+4. User can upgrade to paid tier or wait until next billing period
+5. If user upgrades, immediately unlock generation capability
+
+**Quota Warning Journey (Paid Tier):**
+
+1. User reaches 75% of included quota
+2. Email sent with usage stats and remaining quota
+3. In-app notification shown in dashboard
+4. Same process at 90% and 100%
+5. At 100%, overage billing starts automatically (no interruption)
+6. Monthly invoice includes base fee + overage charges
+
+**Failed Payment Journey:**
+
+1. Stripe automatic payment retry fails
+2. Email sent to user with payment failure notice
+3. In-app banner shown with "Update Payment Method" link
+4. User has 3-day grace period
+5. If payment not updated:
+   - Send final warning email
+   - Downgrade to Free tier at end of grace period
+   - Preserve all existing scenarios
+6. If user updates payment:
+   - Stripe retries invoice automatically
+   - User tier restored upon successful payment
+
+### 8a.8 Risk Assessment
+
+**Technical Risks:**
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Stripe API downtime | High (payments blocked) | Low | Use Stripe status page monitoring, implement graceful degradation, queue meter events with retry |
+| Entra ID authentication outage | High (users locked out) | Low | Cache user tier info, implement read-only mode for brief outages |
+| Webhook delivery failures | Medium (delayed tier updates) | Medium | Implement webhook retry queue, poll Stripe API as backup, log all webhook failures |
+| Usage tracking discrepancies | Medium (billing disputes) | Medium | Dual logging (Stripe + Azure), audit trail, manual reconciliation tools |
+| Token refresh failures | Medium (session interruption) | Low | Graceful re-authentication flow, preserve unsaved work |
+
+**Business Risks:**
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Pricing too high for market | High (low adoption) | Medium | Start with trial periods, gather feedback, flexible tier adjustments |
+| Pricing too low for sustainability | High (revenue loss) | Medium | Monitor cost per user, analyze margins monthly, build adjustment plan |
+| Churn after trial expiration | Medium (lost customers) | High | Improve onboarding, demonstrate value quickly, targeted retention emails |
+| Enterprise customers need custom contracts | Medium (sales complexity) | Medium | Build self-service tools first, add manual sales process for Enterprise tier |
+| Compliance violations | High (legal issues) | Low | Legal review of terms, privacy policy audit, compliance training |
+
+**Security Risks:**
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| JWT token theft | High (account takeover) | Low | Short token expiry (1 hour), secure token storage, monitor suspicious activity |
+| Webhook signature bypass | High (fraudulent tier updates) | Low | Always validate Stripe signatures, use HTTPS only, IP whitelist if possible |
+| User enumeration | Low (privacy leak) | Medium | Generic error messages, rate limiting on auth endpoints |
+| Payment fraud | Medium (financial loss) | Low | Leverage Stripe Radar (built-in fraud detection), manual review for suspicious patterns |
+| Data breach | High (privacy violation) | Low | Encryption at rest and in transit, least-privilege access, regular security audits |
+
+**Compliance Risks:**
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| GDPR violations | High (fines up to 4% revenue) | Low | Privacy policy review, data processing agreements, user consent flows |
+| PCI DSS non-compliance | High (unable to process payments) | Very Low | Use Stripe-hosted pages only, never store card data |
+| Data residency requirements | Medium (blocked in some regions) | Low | Document data storage locations, offer regional deployments for Enterprise |
+
+### 8a.9 Implementation Roadmap (Future Reference)
+
+**This is design only—no implementation until approved. For reference, implementation would follow this sequence:**
+
+**Phase 1: Authentication Foundation (Est. 2 weeks)**
+- Configure Microsoft Entra External ID tenant
+- Integrate MSAL.js in React application
+- Add authentication middleware to API
+- Implement sign-up and sign-in flows
+- User profile storage in Entra ID
+- Basic role-based access control
+
+**Phase 2: Stripe Integration (Est. 2 weeks)**
+- Create Stripe account and configure products/prices
+- Set up Stripe Meters for usage tracking
+- Implement webhook handler
+- Build tier enforcement in API
+- Add usage tracking to generation flows
+- Create admin dashboard for subscription management
+
+**Phase 3: User Dashboard and Tier Management (Est. 1 week)**
+- Build user profile page with usage stats
+- Integrate Stripe Customer Portal
+- Add tier comparison and upgrade flows
+- Implement quota warnings and enforcement
+- Email notification system
+
+**Phase 4: Testing and Hardening (Est. 1 week)**
+- End-to-end testing of all user journeys
+- Webhook reliability testing
+- Failed payment scenario testing
+- Security audit and penetration testing
+- Load testing for usage tracking endpoints
+- Documentation and runbooks
+
+**Phase 5: Compliance and Legal (Est. 1 week)**
+- Privacy policy creation
+- Terms of service
+- Data processing agreements
+- Cookie consent implementation
+- GDPR compliance checklist
+- Security and compliance documentation
+
+**Total estimated effort: 7 weeks for full implementation**
+
+### 8a.10 Success Criteria and Monitoring
+
+**Success Criteria:**
+
+- User can sign up and authenticate successfully (>99% success rate)
+- Paid subscription conversion rate >5% after 30 days
+- Payment success rate >95%
+- Webhook delivery rate >99.9%
+- Usage tracking accuracy >99.9% (compared to application logs)
+- Zero payment data stored in application database (PCI compliance)
+- All tier quota enforcement working correctly
+- Customer support tickets <1% of active users per month
+
+**Monitoring and Metrics:**
+
+- **Authentication metrics**:
+  - Sign-up completion rate
+  - Sign-in success rate
+  - Token refresh success rate
+  - Session duration
+
+- **Subscription metrics**:
+  - Trial-to-paid conversion rate
+  - Churn rate by tier
+  - Average revenue per user (ARPU)
+  - Lifetime value (LTV)
+  - Monthly recurring revenue (MRR)
+
+- **Usage metrics**:
+  - Average scenarios per user per tier
+  - Overage rate by tier
+  - Quota exhaustion rate (Free tier)
+  - API latency for usage tracking
+
+- **Payment metrics**:
+  - Payment success rate
+  - Failed payment recovery rate
+  - Dispute rate
+  - Refund rate
+
+- **Technical metrics**:
+  - Webhook delivery latency
+  - Webhook failure rate
+  - API authentication latency
+  - Stripe API error rate
+
+### 8a.11 Open Questions for Review
+
+These questions should be addressed during design review before implementation:
+
+1. **Should we offer annual billing at a discount (e.g., 2 months free)?**
+   - Pros: Better cash flow, lower churn, customer savings
+   - Cons: More complex refund scenarios, longer commitment
+
+2. **Should Free tier users be able to generate videos at all?**
+   - Current design: No videos for Free tier
+   - Alternative: Allow 1-2 videos per month to showcase feature
+
+3. **Should we implement usage pools for team/organization accounts?**
+   - Current design: Individual user quotas
+   - Alternative: Shared quota across team members (more complex)
+
+4. **What happens to historical scenarios when user downgrades below retention limit?**
+   - Current design: Retain all scenarios (soft limit)
+   - Alternative: Delete oldest scenarios beyond new tier limit (strict enforcement)
+
+5. **Should we gate advanced features (Prompt Lab, custom perspectives) by tier?**
+   - Current design: Yes, Professional+ only
+   - Alternative: Available to all tiers, only usage is metered
+
+6. **Should Enterprise tier be truly custom or have a starting configuration?**
+   - Current design: Fully custom (contact sales)
+   - Alternative: Start at $499/month with high quotas, then customize
+
+7. **Should we implement a referral program for growth?**
+   - Not in current design
+   - Could add: "Refer 3 users, get 1 month free" type incentives
+
+8. **Should we support team/organization billing (one payer, multiple users)?**
+   - Current design: Individual accounts only
+   - Alternative: Add organization accounts with admin management
+
 ## 9. Delivery Phases and Milestones
 
 **Phase 0: Project setup**
