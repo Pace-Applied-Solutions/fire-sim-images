@@ -93,9 +93,11 @@ interface LabStore {
   seed: number | null;
   imageSize: '1024x1024' | '1792x1024' | '1024x1792';
   selectedViewpoint: ViewPoint;
+  showVegetationLabels: boolean;
   setSeed: (seed: number | null) => void;
   setImageSize: (size: '1024x1024' | '1792x1024' | '1024x1792') => void;
   setSelectedViewpoint: (viewpoint: ViewPoint) => void;
+  setShowVegetationLabels: (show: boolean) => void;
 }
 
 // Default system instruction (Gemini multi-perspective consistency prompt)
@@ -319,7 +321,9 @@ export const useLabStore = create<LabStore>((set) => ({
   seed: null,
   imageSize: '1792x1024',
   selectedViewpoint: 'ground_north',
+  showVegetationLabels: true,
   setSeed: (seed) => set({ seed }),
   setImageSize: (size) => set({ imageSize: size }),
   setSelectedViewpoint: (viewpoint) => set({ selectedViewpoint: viewpoint }),
+  setShowVegetationLabels: (show) => set({ showVegetationLabels: show }),
 }));
