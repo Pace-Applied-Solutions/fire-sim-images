@@ -884,6 +884,15 @@ Update this section after each issue or change.
       - No content/scroll jumps during live updates ✅
       - UX feels stable, responsive, and communicative ✅
 
+  - **Results Panel Not Opening for Subsequent Generations (Feb 17, 2026):**
+    - **Problem addressed:** After the results panel refresh bug fix (PR #127), the panel would open for the first generation but not for subsequent generations without a page refresh. Images were generated successfully but not visible to the user.
+    - **Root cause:** The `hasOpenedRef` tracking flag was only reset when `scenarioState` was 'idle' or 'drawing', but these states are never actually set in the application code (only in tests). Once the panel opened for the first scenario, `hasOpenedRef.current` remained `true` permanently, causing the useEffect to early-return for all subsequent generations.
+    - **Solution:** Modified the ref reset useEffect to also reset `hasOpenedRef.current = false` when `scenarioState` becomes 'generating', which happens at the start of every new generation.
+    - **Files modified:**
+      - `apps/web/src/components/Layout/ResultsPanel.tsx` (added 'generating' state to ref reset condition)
+    - **Testing:** All 29 tests pass. Manual testing confirms panel now opens for each generation.
+    - **Impact:** Restores proper panel opening behavior while preserving the anti-refresh optimizations from PR #127.
+
   - **Bicep IaC: Gemini config variables (infra deploy persistence)**
     - **Problem addressed:** Infrastructure deployment (`az deployment group create`) was overwriting Function App settings because the Bicep template only included old Flux/Foundry variables (`IMAGE_MODEL_ENDPOINT`, `IMAGE_MODEL_DEPLOYMENT`). The Gemini-specific `IMAGE_MODEL`, `IMAGE_MODEL_KEY`, and `IMAGE_MODEL_URL` settings had to be re-applied manually after every deploy.
     - **Solution:**

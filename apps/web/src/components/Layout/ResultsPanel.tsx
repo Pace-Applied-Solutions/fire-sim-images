@@ -15,9 +15,9 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
   // Track if panel has been opened for current generation to prevent re-opening
   const hasOpenedRef = React.useRef(false);
 
-  // Reset flag when scenario state changes to idle or drawing
+  // Reset flag when scenario state changes to idle, drawing, or when a new generation starts
   useEffect(() => {
-    if (scenarioState === 'idle' || scenarioState === 'drawing') {
+    if (scenarioState === 'idle' || scenarioState === 'drawing' || scenarioState === 'generating') {
       hasOpenedRef.current = false;
     }
   }, [scenarioState]);
