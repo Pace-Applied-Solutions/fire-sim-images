@@ -119,7 +119,7 @@ export class LabApiClient {
             callbacks.onError(errorMessage);
           }
           reject(new Error(errorMessage));
-        } catch (err) {
+        } catch {
           const errorMessage = 'Connection error';
           if (callbacks?.onError) {
             callbacks.onError(errorMessage);
