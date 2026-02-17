@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import area from '@turf/area';
 import bbox from '@turf/bbox';
 import type { GenerationRequest, ViewPoint } from '../types.js';
-import { VEGETATION_DESCRIPTORS, getEffectiveVegetationType } from '../constants.js';
+import { VEGETATION_DESCRIPTORS, VEGETATION_DETAILS } from '../constants.js';
 import type { PromptData, PromptSet, GeneratedPrompt, PromptTemplate } from './promptTypes.js';
 import {
   DEFAULT_PROMPT_TEMPLATE,
@@ -147,16 +147,14 @@ function generateWindDescription(windSpeed: number, windDirection: string): stri
 }
 
 /**
- * Calculates fire dimensions and geometry from perimeter.
- * Returns area in hectares, extent in kilometres (N-S and E-W), shape, aspect ratio, and orientation.
+ * Calculates fire dimensions from perimeter bounding box.
+ * Returns area in hectares, extent in kilometres (N-S and E-W), and shape descriptor.
  */
 function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
   areaHectares: number;
   extentNorthSouthKm: number;
   extentEastWestKm: number;
   shape: string;
-  aspectRatio: number;
-  primaryAxis?: string;
 } {
   // Calculate area in square metres, convert to hectares
   const areaM2 = area(perimeter);
@@ -182,38 +180,17 @@ function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
   const extentNorthSouthKm = latDiff * kmPerDegreeLat;
   const extentEastWestKm = lngDiff * kmPerDegreeLng;
 
-  // Calculate aspect ratio (longest dimension / shortest dimension)
-  const longerExtent = Math.max(extentNorthSouthKm, extentEastWestKm);
-  const shorterExtent = Math.min(extentNorthSouthKm, extentEastWestKm);
-  const aspectRatio = shorterExtent > 0 ? longerExtent / shorterExtent : 1.0;
-
-  // Determine shape based on aspect ratio
-  let shape: string;
-  if (aspectRatio < 1.3) {
-    shape = 'roughly circular';
-  } else if (aspectRatio < 2.0) {
-    shape = 'moderately elongated';
-  } else if (aspectRatio < 3.5) {
-    shape = 'elongated';
-  } else {
-    shape = 'very elongated';
-  }
-
-  // Determine primary axis orientation (which direction is longest)
-  let primaryAxis: string | undefined;
-  if (aspectRatio >= 1.3) {
-    // Only specify axis if fire is meaningfully elongated
-    if (extentNorthSouthKm > extentEastWestKm) {
-      // Fire is taller than wide
-      if (aspectRatio >= 2.0) {
-        primaryAxis = 'north-south';
-      }
-    } else {
-      // Fire is wider than tall
-      if (aspectRatio >= 2.0) {
-        primaryAxis = 'east-west';
-      }
-    }
+  // Determine fire shape based on aspect ratio
+  const aspectRatio = extentNorthSouthKm / extentEastWestKm;
+  let shape = 'roughly circular';
+  if (aspectRatio > 2) {
+    shape = 'elongated north–south';
+  } else if (aspectRatio < 0.5) {
+    shape = 'elongated east–west';
+  } else if (aspectRatio > 1.3) {
+    shape = 'extended north–south';
+  } else if (aspectRatio < 0.77) {
+    shape = 'extended east–west';
   }
 
   return {
@@ -221,8 +198,6 @@ function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
     extentNorthSouthKm,
     extentEastWestKm,
     shape,
-    aspectRatio,
-    primaryAxis,
   };
 }
 
@@ -232,10 +207,7 @@ function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
 function preparePromptData(request: GenerationRequest): PromptData {
   const { inputs, geoContext, perimeter } = request;
 
-  // Get effective vegetation type (respects manual override)
-  const effectiveVegType = getEffectiveVegetationType(geoContext);
-
-  if (!effectiveVegType) {
+  if (!geoContext.vegetationType) {
     throw new Error(
       `Invalid geoContext: vegetationType is required. Received: ${JSON.stringify(geoContext)}`
     );
@@ -254,7 +226,7 @@ function preparePromptData(request: GenerationRequest): PromptData {
   }
 
   const vegetationDescriptor =
-    VEGETATION_DESCRIPTORS[effectiveVegType] || effectiveVegType.toLowerCase();
+    VEGETATION_DESCRIPTORS[geoContext.vegetationType] || geoContext.vegetationType.toLowerCase();
 
   const terrainDescription = generateTerrainDescription(geoContext);
   const nearbyFeatures = generateNearbyFeatures(geoContext);
@@ -264,11 +236,25 @@ function preparePromptData(request: GenerationRequest): PromptData {
   const windDescription = generateWindDescription(inputs.windSpeed, inputs.windDirection);
   const timeOfDayLighting = TIME_OF_DAY_LIGHTING[inputs.timeOfDay];
 
-  // Calculate fire dimensions and geometry from perimeter
-  const { areaHectares, extentNorthSouthKm, extentEastWestKm, shape, aspectRatio, primaryAxis } =
-    calculateFireDimensions(perimeter);
+  // Get vegetation type directly (already validated to exist)
+  const effectiveVegType = geoContext.vegetationType;
+
+  // Calculate fire dimensions from perimeter
+  const { areaHectares, extentNorthSouthKm, extentEastWestKm, shape } = calculateFireDimensions(perimeter);
+
+  // Get vegetation details or fall back to basic descriptor
+  const vegetationDetails = VEGETATION_DETAILS[effectiveVegType] || {
+    canopyHeight: 'unknown',
+    canopyType: 'unknown',
+    understorey: 'unknown',
+    groundFuel: 'variable',
+    fuelLoad: 'unknown',
+    flammability: 'unknown',
+  };
 
   return {
+    vegetationType: effectiveVegType,
+    vegetationDetails,
     vegetationDescriptor,
     terrainDescription,
     elevation: geoContext.elevation.mean,
@@ -290,8 +276,6 @@ function preparePromptData(request: GenerationRequest): PromptData {
     fireExtentNorthSouthKm: extentNorthSouthKm,
     fireExtentEastWestKm: extentEastWestKm,
     fireShape: shape,
-    fireAspectRatio: aspectRatio,
-    firePrimaryAxis: primaryAxis,
     locality: geoContext.locality,
   };
 }
@@ -300,12 +284,18 @@ function preparePromptData(request: GenerationRequest): PromptData {
  * Composes a complete prompt from template sections and data.
  */
 function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: ViewPoint): string {
-  // Gemini best practice: compose as a flowing narrative with step-by-step
-  // structure separated by line breaks for clarity.
+  // Gemini best practice: structured, atomic sections separated by line breaks
+  // for clarity and independent interpretation by the model
   const sections = [
     template.sections.style,
-    template.sections.scene(data),
-    template.sections.fire(data),
+    template.sections.behaviorPrinciples,
+    template.sections.referenceImagery(data),
+    template.sections.locality(data),
+    template.sections.terrain(data),
+    template.sections.features(data),
+    template.sections.vegetation(data),
+    template.sections.fireGeometry(data),
+    template.sections.fireBehavior(data),
     template.sections.weather(data),
     template.sections.perspective(viewpoint),
     template.sections.safety,

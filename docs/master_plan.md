@@ -884,6 +884,18 @@ Update this section after each issue or change.
       - No content/scroll jumps during live updates ✅
       - UX feels stable, responsive, and communicative ✅
 
+  - **Bicep IaC: Gemini config variables (infra deploy persistence)**
+    - **Problem addressed:** Infrastructure deployment (`az deployment group create`) was overwriting Function App settings because the Bicep template only included old Flux/Foundry variables (`IMAGE_MODEL_ENDPOINT`, `IMAGE_MODEL_DEPLOYMENT`). The Gemini-specific `IMAGE_MODEL`, `IMAGE_MODEL_KEY`, and `IMAGE_MODEL_URL` settings had to be re-applied manually after every deploy.
+    - **Solution:**
+      1. **New Bicep params:** Added `imageModel`, `imageModelUrl`, and `imageModelKey` (with `@secure()` decorator) to `main.bicep`
+      2. **Key Vault secret:** `imageModelKey` is stored as `ImageModel--Key` in Key Vault (conditional on non-empty), matching the existing `ContentSafety--Key` pattern
+      3. **App settings via Key Vault reference:** `IMAGE_MODEL_KEY` app setting uses `@Microsoft.KeyVault(SecretUri=...)` so the Function App resolves it at startup via managed identity
+      4. **Dev parameters:** Updated `dev.bicepparam` with `imageModel = 'gemini-3-pro-image-preview'` and `imageModelUrl = 'https://generativelanguage.googleapis.com/v1beta'`. API key passed at deploy time (not committed)
+    - **Files modified:**
+      - `infra/main.bicep` (new params, Key Vault secret resource, additional app settings)
+      - `infra/parameters/dev.bicepparam` (Gemini model + URL defaults)
+    - **Testing:** Bicep compiles successfully
+
 ## 14. Change Control Process
 
 Every change must:

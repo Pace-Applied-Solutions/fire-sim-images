@@ -85,6 +85,7 @@ export const GENERATION_CONFIG = {
 
 /**
  * Vegetation descriptors mapped to natural language for prompts.
+ * @deprecated Use VEGETATION_DETAILS for richer context instead.
  */
 export const VEGETATION_DESCRIPTORS: Record<string, string> = {
   'Dry Sclerophyll Forest': 'dry eucalyptus forest with sparse understorey and leaf litter',
@@ -101,6 +102,140 @@ export const VEGETATION_DESCRIPTORS: Record<string, string> = {
   'Alpine Complex': 'alpine heath and grass mosaic with stunted shrubs and herbfields',
   'Plantation Forest': 'structured plantation rows with dense fuel between tree lines',
   'Cleared/Urban': 'cleared land or urban area with minimal vegetation and structures',
+};
+
+/**
+ * Detailed vegetation characteristics for prompt generation.
+ * Provides structured information about canopy, understorey, fuel structure, and fire behavior.
+ */
+export interface VegetationDetails {
+  simpleName: string;
+  canopyHeight: string;
+  canopyType: string;
+  understorey: string;
+  groundFuel: string;
+  fuelLoad: string;
+  flammability: string;
+}
+
+export const VEGETATION_DETAILS: Record<string, VegetationDetails> = {
+  'Dry Sclerophyll Forest': {
+    simpleName: 'Dry Sclerophyll Forest',
+    canopyHeight: '15–30 metres',
+    canopyType: 'eucalypts (stringybarks, hard-barked species) with open crown spacing',
+    understorey: 'sparse shrubs and small trees (wattles, acacias, proteaceous shrubs)',
+    groundFuel: 'heavy accumulation of leaf litter, bark, and fallen branches; sparse grass tufts',
+    fuelLoad: 'high (10–20 tonnes/hectare); continuous fuel layer from ground to canopy',
+    flammability: 'highly flammable; cured leaf litter ignites readily; crown fire potential high under drought conditions',
+  },
+  'Wet Sclerophyll Forest': {
+    simpleName: 'Wet Sclerophyll Forest',
+    canopyHeight: '30–60 metres',
+    canopyType: 'tall eucalypts (mountain ash, alpine ash) with dense crowns',
+    understorey: 'dense ferns (tree ferns and bracken), shrubs, and small trees',
+    groundFuel: 'heavy moist leaf litter, ferns, logs, and moss; suppressed by moisture',
+    fuelLoad: 'very high (15–25 tonnes/hectare) but often moist, reducing fire intensity',
+    flammability: 'moderate to high risk during drought; crown fire likely under extreme conditions',
+  },
+  Grassland: {
+    simpleName: 'Grassland',
+    canopyHeight: 'herbaceous layer only (0.3–1 metre)',
+    canopyType: 'native or introduced grasses (cured to straw-like consistency)',
+    understorey: 'sparse forbs and low shrubs',
+    groundFuel: 'continuous cured grass; minimal litter',
+    fuelLoad: 'moderate (3–8 tonnes/hectare); low standing dead material',
+    flammability: 'extremely flammable when cured; rapid fire spread; minimal vertical fuel continuity limits crown fire',
+  },
+  Heath: {
+    simpleName: 'Heath',
+    canopyHeight: '1–3 metres (low shrubland)',
+    canopyType: 'dense ericaceous shrubs (heaths, banksias) with interlocking crowns',
+    understorey: 'very dense understorey of low shrubs and ground-hugging species',
+    groundFuel: 'accumulation of small twigs, seed capsules, and sparse litter; often moist near coast',
+    fuelLoad: 'high (8–12 tonnes/hectare); continuous fine fuel',
+    flammability: 'highly flammable; dense canopy carries fire; prolific seed set creates post-fire regeneration spike',
+  },
+  Rainforest: {
+    simpleName: 'Rainforest',
+    canopyHeight: '20–40 metres (emergents up to 50 metres)',
+    canopyType: 'dense broadleaf canopy with multiple stories',
+    understorey: 'dense undergrowth of small trees, climbing vines, and shrubs',
+    groundFuel: 'moist litter, fallen logs, and decomposing debris',
+    fuelLoad: 'very high (20–30 tonnes/hectare) but very moist',
+    flammability: 'low fire risk under normal conditions due to high moisture; extreme weather events rare but catastrophic',
+  },
+  'Grassy Woodland': {
+    simpleName: 'Grassy Woodland',
+    canopyHeight: '10–20 metres (overstorey); grass layer 0.3–1 metre',
+    canopyType: 'scattered eucalypts with open crowns; 20–40% canopy cover',
+    understorey: 'native grasses (tussock-forming) and low shrubs',
+    groundFuel: 'moderate accumulation of grass, litter, and fine fallen branches',
+    fuelLoad: 'moderate to high (5–12 tonnes/hectare); discontinuous fuel layers',
+    flammability: 'high; rapid spread through grass layer; tree-to-tree fire possible under hot conditions',
+  },
+  'Cumberland Plain Woodland': {
+    simpleName: 'Cumberland Plain Woodland',
+    canopyHeight: '10–18 metres',
+    canopyType: 'eucalypts and acacias with sparse, irregular crowns on shale-derived soils',
+    understorey: 'scattered low shrubs (acacias, native cypress) and grasses',
+    groundFuel: 'sparse grass layer; limited litter due to shallow soils',
+    fuelLoad: 'moderate (4–8 tonnes/hectare); fragmented fuel mosaic',
+    flammability: 'moderate; ground fire spreads through grass; crown fire less likely due to fuel gaps',
+  },
+  'Riverine Forest': {
+    simpleName: 'Riverine Forest',
+    canopyHeight: '15–30 metres',
+    canopyType: 'eucalypts (river reds, swamp mahogany) with dense crowns along watercourses',
+    understorey: 'dense shrubs and small trees; moisture-dependent density',
+    groundFuel: 'moist litter and decomposing timber; flood-scoured clean areas',
+    fuelLoad: 'moderate to high (6–15 tonnes/hectare); mosaic of wet and dry patches',
+    flammability: 'moderate; moisture suppresses fire intensity; prone to spotting across water',
+  },
+  'Swamp Sclerophyll Forest': {
+    simpleName: 'Swamp Sclerophyll Forest',
+    canopyHeight: '20–40 metres',
+    canopyType: 'eucalypts (paperbark, swamp mahogany) with moderately dense crowns on wet soils',
+    understorey: 'dense shrubs and small trees adapted to waterlogging',
+    groundFuel: 'dense moss, saturated peat, and moist litter; often waterlogged',
+    fuelLoad: 'high (10–18 tonnes/hectare) but moisture-dependent; peat risks',
+    flammability: 'moderate under normal conditions; extreme risk during drought when peat dries out; peat fire hazard',
+  },
+  'Coastal Sand Heath': {
+    simpleName: 'Coastal Sand Heath',
+    canopyHeight: '2–6 metres (wind-limited)',
+    canopyType: 'dense, wind-pruned shrubs (banksia, tea-tree, she-oak); contorted growth forms',
+    understorey: 'very dense low shrubs and prostrate groundcover',
+    groundFuel: 'fine twigs, leaf litter, and sand inter-mix; often salt-laden and aerially pruned',
+    fuelLoad: 'high (8–15 tonnes/hectare) but brittle and loose',
+    flammability: 'extremely flammable; rapid surface fire; minimal vertical fuel but high flame length',
+  },
+  'Alpine Complex': {
+    simpleName: 'Alpine Complex',
+    canopyHeight: 'herb layer 0.5–2 metres; shrubs 1–3 metres',
+    canopyType: 'mosaic of alpine grassland, low shrubs, and herbfields; stunted trees above treeline',
+    understorey: 'dense grasses and forbs; low ericaceous and cushion plants',
+    groundFuel: 'dense tussock grass litter; peat accumulation in depression areas',
+    fuelLoad: 'moderate (5–10 tonnes/hectare) but highly variable by microhabitat',
+    flammability: 'moderate; winds accelerate spread; rare fires but extreme when they occur (peat burning)',
+  },
+  'Plantation Forest': {
+    simpleName: 'Plantation Forest',
+    canopyHeight: '20–35 metres (even-aged structure)',
+    canopyType: 'uniform conifer or eucalypt plantations (e.g., radiata pine, slash pine) with dense crowns',
+    understorey: 'minimal natural understorey; shade-suppressed or sprayed; uniform stocking densities',
+    groundFuel: 'uniform, deep layer of needles or small branches; often bone-dry in plantations',
+    fuelLoad: 'very high and uniform (15–25 tonnes/hectare); continuous vertical fuel ladder',
+    flammability: 'extremely dangerous; rapid fire spread in all directions; intense crown fire; high spotting potential',
+  },
+  'Cleared/Urban': {
+    simpleName: 'Cleared/Urban Area',
+    canopyHeight: 'sparse (0–5 metres in urban areas)',
+    canopyType: 'scattered planted trees or regenerating regrowth; buildings and structures present',
+    understorey: 'sparse or absent; maintained gardens, grass, or concrete',
+    groundFuel: 'minimal natural fuel; human structures, vehicles, debris',
+    fuelLoad: 'low natural (2–5 tonnes/hectare); hazard depends on structure density and maintenance',
+    flammability: 'low for natural vegetation; high risk from structure ignition and accumulated yard debris',
+  },
 };
 
 /**

@@ -77,6 +77,16 @@ param imageModelEndpoint string = ''
 @description('Image model deployment name (e.g., FLUX.1-Kontext-pro, gpt-image-1)')
 param imageModelDeployment string = ''
 
+@description('Image model name for direct API providers (e.g., gemini-3-pro-image-preview)')
+param imageModel string = ''
+
+@description('Image model base URL for direct API providers (e.g., https://generativelanguage.googleapis.com/v1beta)')
+param imageModelUrl string = ''
+
+@secure()
+@description('Image model API key for direct API providers (stored in Key Vault)')
+param imageModelKey string = ''
+
 @description('Content Safety SKU')
 @allowed([
   'F0'
@@ -217,6 +227,11 @@ module functionApp './modules/functionApp.bicep' = {
       FOUNDRY_IMAGE_MODEL: foundryImageModel
       IMAGE_MODEL_ENDPOINT: imageModelEndpoint
       IMAGE_MODEL_DEPLOYMENT: imageModelDeployment
+      IMAGE_MODEL: imageModel
+      IMAGE_MODEL_URL: imageModelUrl
+      // Key Vault reference for the API key — the Function App's managed identity
+      // reads the secret at runtime. This avoids storing the key in plain text.
+      IMAGE_MODEL_KEY: !empty(imageModelKey) ? '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/ImageModel--Key/)' : ''
     }
   }
 }
@@ -271,6 +286,17 @@ resource contentSafetyKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' =
   ]
   properties: {
     value: contentSafetyResource.listKeys().key1
+  }
+}
+
+// Store Image Model API key in Key Vault (when provided)
+resource imageModelKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(imageModelKey)) {
+  name: '${keyVaultName}/ImageModel--Key'
+  dependsOn: [
+    keyVault
+  ]
+  properties: {
+    value: imageModelKey
   }
 }
 
