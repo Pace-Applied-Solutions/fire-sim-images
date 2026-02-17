@@ -196,15 +196,15 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
         `Convert this 3D terrain visualisation into a photorealistic photograph from the same angle and field of view. ` +
         `This is the most important reference — the output image must look like a real photograph taken from this exact camera position. ` +
         `IMAGE 2 (Aerial Overview): A top-down aerial view showing the full fire perimeter from directly above. ` +
-        `A red polygon overlay shows the fire's exact perimeter boundaries — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
+        `The perimeter boundary overlay shows the fire's exact extent — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
         `IMAGE 3 (Vegetation Map): A vegetation classification overlay showing the spatial distribution of vegetation types across the fire area. ` +
         `Use this to place the correct vegetation in corresponding areas of the generated image. ` +
         `The fire in the generated image must: ` +
         `(1) cover ${areaText}, ` +
         `(2) span ${extentNsText} and ${extentEwText}, ` +
-        `(3) follow the exact perimeter shape shown in the aerial overview polygon — match the irregular boundaries precisely. ` +
+        `(3) follow the exact perimeter shape shown in the aerial overview — match the irregular boundaries precisely. ` +
         `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference images, ` +
-        `with the fire (flames, smoke, and burned areas) occupying the complete specified extent and respecting the perimeter polygon boundaries. ` +
+        `with the fire (flames, smoke, and burned areas) occupying the complete specified extent and respecting the perimeter boundaries. ` +
         `Render only the natural landscape with fire — omit all map overlays, UI elements, and reference markers from the output.`
       );
     },
