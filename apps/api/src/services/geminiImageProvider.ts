@@ -122,11 +122,12 @@ export class GeminiImageProvider implements ImageGenerationProvider {
           'When you generate the photorealistic image, the fire (active flames, smoke, and burned areas) must occupy this ENTIRE visible extent. ' +
           'Do not treat this as showing just a small portion \u2014 this is the complete fire footprint.\n\n' +
           'Step 1: Study the terrain visualisation carefully \u2014 note the exact shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body.\n\n' +
-          'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera from the same angle and field of view. ' +
+          'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera with a 28mm lens from the same angle and field of view. ' +
           'Replace the map rendering style with photorealistic textures \u2014 real eucalyptus trees, real Australian bush vegetation, real grass, real soil, and a real sky with natural lighting and atmospheric haze. ' +
           'The spatial layout must be identical to the reference.\n\n' +
           'Step 3: Overlay the following fire scenario onto this faithful landscape rendering, ensuring the fire fills the entire extent shown:\n\n' +
-          prompt;
+          prompt +
+          '\n\nDo not show any of the UI from the map screenshot, including minimap, buttons, or red polygon lines. Adherence to reality exactly like the screenshot map terrain is critical.';
 
         parts.push({
           inline_data: {
