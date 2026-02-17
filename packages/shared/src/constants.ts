@@ -74,6 +74,17 @@ export const VEGETATION_TYPES = [
 export const DEFAULT_VEGETATION_TYPE = 'Dry Sclerophyll Forest';
 
 /**
+ * Gets the effective vegetation type, respecting manual overrides.
+ * Returns manual type if set, otherwise auto-detected type, otherwise default.
+ */
+export function getEffectiveVegetationType(
+  geoContext: { vegetationType?: string; manualVegetationType?: string } | null | undefined
+): string {
+  if (!geoContext) return DEFAULT_VEGETATION_TYPE;
+  return geoContext.manualVegetationType || geoContext.vegetationType || DEFAULT_VEGETATION_TYPE;
+}
+
+/**
  * Generation configuration defaults.
  */
 export const GENERATION_CONFIG = {
@@ -381,7 +392,7 @@ export const NVIS_MVS_DESCRIPTORS: Record<string, string> = {
   'Melaleuca forests and woodlands':
     'paperbark forest on waterlogged soils with sedge and reed understorey; paperbark is highly flammable when dry',
   // Heathlands
-  Heathlands:
+  'Heathlands':
     'low dense heath with banksia, tea-tree, and grevillea over sandy or rocky substrate; very high surface fuel loads and fire intensity',
   // Grasslands
   'Tussock grasslands':
@@ -411,8 +422,10 @@ export const NVIS_MVS_DESCRIPTORS: Record<string, string> = {
   // Cleared / urban
   Cleared:
     'cleared agricultural land, pasture, or urban area with minimal native vegetation and scattered structures',
-  'Naturally bare': 'naturally bare rock, sand, or water body with no vegetation fuel',
-  Unclassified: 'vegetation type not classified or insufficient survey data',
+  'Naturally bare':
+    'naturally bare rock, sand, or water body with no vegetation fuel',
+  Unclassified:
+    'vegetation type not classified or insufficient survey data',
 };
 
 /**
@@ -430,15 +443,4 @@ export function getNvisDescriptor(mvsName: string): string {
   }
 
   return `${mvsName} (vegetation type with uncharacterised fire behaviour)`;
-}
-
-/**
- * Get the effective vegetation type from GeoContext.
- * Returns manual override if set, otherwise returns auto-detected type.
- */
-export function getEffectiveVegetationType(
-  geoContext: { vegetationType: string; manualVegetationType?: string } | null | undefined
-): string {
-  if (!geoContext) return DEFAULT_VEGETATION_TYPE;
-  return geoContext.manualVegetationType || geoContext.vegetationType;
 }
