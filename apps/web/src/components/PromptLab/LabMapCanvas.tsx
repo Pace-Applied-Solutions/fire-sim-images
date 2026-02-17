@@ -21,21 +21,47 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
 
   /**
    * Capture a clean map screenshot (no UI chrome).
-   * This is a simplified version - we'll enhance it to hide UI overlays.
+   * Hides all UI overlays before capturing.
    */
   const handleMapCapture = useCallback(async () => {
     setIsCapturing(true);
     try {
-      // For now, we'll use a simple canvas capture
-      // TODO: Implement full clean capture sequence with UI hiding
       const mapCanvas = document.querySelector('.mapboxgl-canvas') as HTMLCanvasElement;
       if (!mapCanvas) {
         console.error('Map canvas not found');
         return;
       }
 
+      // Find and hide UI overlays
+      const overlaySelectors = [
+        '.mapboxgl-ctrl-top-right',
+        '.mapboxgl-ctrl-top-left',
+        '.mapboxgl-ctrl-bottom-right',
+        '.mapboxgl-ctrl-bottom-left',
+        '.mapboxgl-control-container',
+      ];
+
+      const hiddenElements: HTMLElement[] = [];
+      overlaySelectors.forEach((selector) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el) => {
+          if (el instanceof HTMLElement && el.style.display !== 'none') {
+            hiddenElements.push(el);
+            el.style.display = 'none';
+          }
+        });
+      });
+
+      // Small delay to ensure render completes
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Capture the canvas
       const dataUrl = mapCanvas.toDataURL('image/jpeg', 0.85);
+
+      // Restore hidden elements
+      hiddenElements.forEach((el) => {
+        el.style.display = '';
+      });
 
       // Add to reference images
       const image: LabReferenceImage = {
@@ -66,17 +92,30 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
 
     setIsCapturing(true);
     try {
-      // This function is registered by MapContainer
-      // It will handle the capture automatically
-      // For the lab, we need to adapt it
-      console.log('Vegetation capture - integration pending');
-      // TODO: Wire to actual vegetation capture
+      // Call the registered vegetation capture function
+      const dataUrl = await captureVegetationScreenshot();
+
+      if (!dataUrl) {
+        console.error('Vegetation capture returned no data');
+        return;
+      }
+
+      // Add to reference images
+      const image: LabReferenceImage = {
+        id: crypto.randomUUID(),
+        dataUrl,
+        label: `Vegetation Overlay ${new Date().toLocaleTimeString()}`,
+        type: 'vegetation_overlay',
+        included: true,
+        capturedAt: new Date().toISOString(),
+      };
+      addReferenceImage(image);
     } catch (err) {
       console.error('Failed to capture vegetation screenshot:', err);
     } finally {
       setIsCapturing(false);
     }
-  }, [captureVegetationScreenshot]);
+  }, [captureVegetationScreenshot, addReferenceImage]);
 
   return (
     <div className={styles.container}>
