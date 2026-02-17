@@ -243,7 +243,18 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     // Section 7: Establish vegetation structure and characteristics
     vegetation: (data) => {
       const details = data.vegetationDetails;
-      const parts: string[] = [`Vegetation type: ${data.vegetationType}.`];
+      const parts: string[] = [];
+
+      // Add primary vegetation type
+      parts.push(`Vegetation type: ${data.vegetationType}.`);
+
+      // Add vegetation diversity if multiple types detected across perimeter
+      if (data.vegetationTypes && data.vegetationTypes.length > 1) {
+        parts.push(
+          `The fire burns through multiple vegetation zones: ${data.vegetationTypes.join(', ')}. ` +
+          `Depict the transition between these vegetation types as the fire spreads across the landscape.`
+        );
+      }
 
       // Only include known values, omit 'unknown' entries
       if (details.canopyHeight !== 'unknown') {

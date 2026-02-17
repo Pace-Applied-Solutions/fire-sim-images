@@ -63,6 +63,8 @@ export interface PromptData {
   };
   /** Deprecated: use vegetationDetails instead */
   vegetationDescriptor: string;
+  /** Array of vegetation types detected across the fire footprint (from NVIS sampling) */
+  vegetationTypes: string[];
   terrainDescription: string;
   terrainConfidence: 'low' | 'medium' | 'high';
   elevation: number;

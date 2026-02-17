@@ -256,6 +256,7 @@ function preparePromptData(request: GenerationRequest): PromptData {
     vegetationType: effectiveVegType,
     vegetationDetails,
     vegetationDescriptor,
+    vegetationTypes: geoContext.vegetationTypes || [],
     terrainDescription,
     terrainConfidence,
     elevation: geoContext.elevation.mean,

@@ -74,6 +74,8 @@ export interface RangeStatistic {
 export interface GeoContext {
   vegetationType: string;
   vegetationSubtype?: string;
+  /** Array of distinct vegetation types detected across the fire footprint (from NVIS sampling) */
+  vegetationTypes?: string[];
   fuelLoad?: FuelLoadCategory;
   dominantSpecies?: string[];
   elevation: RangeStatistic;
