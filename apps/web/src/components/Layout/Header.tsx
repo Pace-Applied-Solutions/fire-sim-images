@@ -38,6 +38,9 @@ export const Header: React.FC = () => {
           <Link to="/gallery" className={styles.navLink}>
             Gallery
           </Link>
+          <Link to="/lab" className={styles.navLink}>
+            Prompt Lab
+          </Link>
           <Link to="/settings" className={styles.navLink}>
             Settings
           </Link>

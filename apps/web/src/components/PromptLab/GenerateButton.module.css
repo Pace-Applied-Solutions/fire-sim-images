@@ -1,0 +1,76 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.button {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--color-primary-hover, var(--color-primary));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.button:disabled {
+  background-color: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.progress {
+  padding: 0.75rem;
+  background-color: var(--color-surface-elevated);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.progressText {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.thinking {
+  padding: 0.75rem;
+  background-color: var(--color-surface-elevated);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-warning, #f59e0b);
+}
+
+.thinkingLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.thinkingText {
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  font-style: italic;
+  max-height: 150px;
+  overflow-y: auto;
+}
