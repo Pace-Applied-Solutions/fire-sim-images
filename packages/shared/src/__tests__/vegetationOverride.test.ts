@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { getEffectiveVegetationType, DEFAULT_VEGETATION_TYPE } from '../constants.js';
-import type { GeoContext } from '../types.js';
 
 describe('getEffectiveVegetationType', () => {
   it('should return manual vegetation type when set', () => {
-    const geoContext: Partial<GeoContext> = {
+    const geoContext = {
       vegetationType: 'Wet Sclerophyll Forest',
       manualVegetationType: 'Grassland',
       isVegetationManuallySet: true,
@@ -15,7 +14,7 @@ describe('getEffectiveVegetationType', () => {
   });
 
   it('should return auto-detected vegetation type when manual is not set', () => {
-    const geoContext: Partial<GeoContext> = {
+    const geoContext = {
       vegetationType: 'Dry Sclerophyll Forest',
       isVegetationManuallySet: false,
     };
@@ -25,7 +24,7 @@ describe('getEffectiveVegetationType', () => {
   });
 
   it('should return auto-detected vegetation type when manual override is undefined', () => {
-    const geoContext: Partial<GeoContext> = {
+    const geoContext = {
       vegetationType: 'Heath',
     };
 
@@ -44,7 +43,7 @@ describe('getEffectiveVegetationType', () => {
   });
 
   it('should prioritize manual override even if empty string', () => {
-    const geoContext: Partial<GeoContext> = {
+    const geoContext = {
       vegetationType: 'Rainforest',
       manualVegetationType: '',
     };
@@ -55,7 +54,7 @@ describe('getEffectiveVegetationType', () => {
   });
 
   it('should handle manual override when auto-detected is empty', () => {
-    const geoContext: Partial<GeoContext> = {
+    const geoContext = {
       vegetationType: '',
       manualVegetationType: 'Plantation Forest',
       isVegetationManuallySet: true,
