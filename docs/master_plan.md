@@ -719,6 +719,21 @@ Update this section after each issue or change.
     - **Prompt version bump:** v1.4.0 → v1.5.0
     - **Testing:** All 120 tests passing, locality optional (no breaking changes)
     - **Documentation:** Created `docs/PROMPT_V1.5.0_LOCALITY.md` with geographic context examples, API details, regional characteristics
+  - **Prompt Template v1.6.0: Fire Shape, Scale, and Geometry (Feb 17, 2026):**
+    - **Problem addressed:** Generated images not reflecting polygon shape and orientation; fires appeared circular regardless of elongated perimeter; no orientation guidance
+    - **Shape classification:** Added automatic categorization based on aspect ratio: roughly circular (<1.3), moderately elongated (1.3-2.0), elongated (2.0-3.5), very elongated (>3.5)
+    - **Aspect ratio calculation:** Computes longest dimension ÷ shortest dimension from perimeter bounding box (1.0 = perfect circle/square, 5.0+ = very elongated)
+    - **Orientation detection:** Determines primary fire spread axis (north-south vs east-west) when aspect ratio ≥ 2.0
+    - **PromptData enhancement:** Added `fireShape`, `fireAspectRatio`, `firePrimaryAxis` fields to communicate geometry to AI model
+    - **Fire section updates:**
+      - Added shape description: "The fire perimeter has a [shape] shape, oriented primarily [axis]"
+      - New instruction: "Match the fire perimeter's shape and orientation precisely"
+      - Elongation emphasis: "If the fire is elongated in one direction, show that elongation clearly"
+    - **Reference image scale framing:** Enhanced Gemini provider with explicit context: "SCALE AND EXTENT: This reference image shows the FULL extent of the fire area. The entire visible landscape represents the fire perimeter — edge to edge, top to bottom."
+    - **Geometry algorithm:** Uses Turf.js bbox for extents, calculates N-S and E-W distances with latitude correction, derives aspect ratio and orientation
+    - **Prompt version bump:** v1.5.0 → v1.6.0
+    - **Testing:** All 120 tests passing, no breaking changes, backwards compatible
+    - **Documentation:** Created `docs/PROMPT_V1.6.0_GEOMETRY.md` with shape classification logic, orientation detection algorithm, usage examples, and test cases
   - **Vegetation Expansion Issue Package (Feb 16, 2026):**
     - Created comprehensive GitHub issue (27KB documentation) for interactive vegetation labels and national coverage expansion
     - **Problem:** No way to identify vegetation types (colors only); NSW-only coverage blocks scenarios in other states
