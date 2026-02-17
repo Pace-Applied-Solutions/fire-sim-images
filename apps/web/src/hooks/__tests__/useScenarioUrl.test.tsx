@@ -92,7 +92,7 @@ describe('useScenarioUrl', () => {
     vi.spyOn(generationApiModule.generationApi, 'getScenario').mockResolvedValue(mockScenario);
 
     // Render hook with URL parameter
-    const { result } = renderHook(() => useScenarioUrl(), {
+    renderHook(() => useScenarioUrl(), {
       wrapper: ({ children }) => (
         <MemoryRouter initialEntries={['/?scenario=test-scenario-123']}>
           {children}
@@ -126,7 +126,7 @@ describe('useScenarioUrl', () => {
       new Error('Scenario not found')
     );
 
-    const { result } = renderHook(() => useScenarioUrl(), {
+    renderHook(() => useScenarioUrl(), {
       wrapper: ({ children }) => (
         <MemoryRouter initialEntries={['/?scenario=invalid-id']}>{children}</MemoryRouter>
       ),
