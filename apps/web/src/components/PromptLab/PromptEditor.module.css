@@ -1,13 +1,13 @@
 .editor {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
 }
 
 .scrollContainer {
-  flex: 1;
-  overflow-y: auto;
+  flex: none;
+  overflow: visible;
   padding: 0.5rem;
 }
 

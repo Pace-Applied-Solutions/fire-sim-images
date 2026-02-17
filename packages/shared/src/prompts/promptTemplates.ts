@@ -215,18 +215,23 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       
       return (
         `Geographic context: ${localityText} ` +
-        `The elevation is approximately ${data.elevation} metres above sea level. ` +
         `Preserve all topographic features exactly as they appear in the geographic reference — hills, gullies, ridgelines, flat plateaus, and valleys. ` +
         `The generated image must be recognizable as this specific location based on satellite imagery and the reference map provided.`
       );
     },
 
-    // Section 5: Establish terrain characteristics
-    terrain: (data) =>
-      `Terrain: ${data.terrainDescription}. ` +
-      `The landscape is characterized by this specific slope profile, with corresponding exposure and water drainage patterns. ` +
-      `Match the slope visible in the reference 3D map exactly — every hill, valley, and ridge shown must be faithfully rendered. ` +
-      `Show the natural undulation and slopes of the specific region.`,
+    // Section 5: Establish terrain characteristics (only for high-confidence data)
+    terrain: (data) => {
+      if (data.terrainConfidence === 'low') {
+        return '';
+      }
+      return (
+        `Terrain: ${data.terrainDescription}. ` +
+        `The landscape is characterized by this specific slope profile, with corresponding exposure and water drainage patterns. ` +
+        `Match the slope visible in the reference 3D map exactly — every hill, valley, and ridge shown must be faithfully rendered. ` +
+        `Show the natural undulation and slopes of the specific region.`
+      );
+    },
 
     // Section 6: Establish nearby features and landmarks
     features: (data) =>
@@ -238,14 +243,30 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     // Section 7: Establish vegetation structure and characteristics
     vegetation: (data) => {
       const details = data.vegetationDetails;
+      const parts: string[] = [`Vegetation type: ${data.vegetationType}.`];
+
+      // Only include known values, omit 'unknown' entries
+      if (details.canopyHeight !== 'unknown') {
+        parts.push(`Canopy height: ${details.canopyHeight}.`);
+      }
+      if (details.canopyType !== 'unknown') {
+        parts.push(`Canopy composition: ${details.canopyType}.`);
+      }
+      if (details.understorey !== 'unknown') {
+        parts.push(`Understorey structure: ${details.understorey}.`);
+      }
+      if (details.groundFuel !== 'unknown') {
+        parts.push(`Ground fuel layer: ${details.groundFuel}.`);
+      }
+      if (details.fuelLoad !== 'unknown') {
+        parts.push(`Fuel load characteristics: ${details.fuelLoad}.`);
+      }
+      if (details.flammability !== 'unknown') {
+        parts.push(`Flammability profile: ${details.flammability}.`);
+      }
+
       return (
-        `Vegetation type: ${data.vegetationType}. ` +
-        `Canopy height: ${details.canopyHeight}. ` +
-        `Canopy composition: ${details.canopyType}. ` +
-        `Understorey structure: ${details.understorey}. ` +
-        `Ground fuel layer: ${details.groundFuel}. ` +
-        `Fuel load characteristics: ${details.fuelLoad}. ` +
-        `Flammability profile: ${details.flammability}. ` +
+        parts.join(' ') + ' ' +
         `Every vegetation component must match the specified type exactly as shown in the reference map — do not substitute or generalize.`
       );
     },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Header } from '../components/Layout/Header';
 import { MapContainer } from '../components/Map/MapContainer';
 import { LabMapCanvas } from '../components/PromptLab/LabMapCanvas';
@@ -16,8 +16,6 @@ import styles from './PromptLabPage.module.css';
  * Allows manual camera positioning, prompt editing, and iterative experimentation.
  */
 export const PromptLabPage: React.FC = () => {
-  const [scenarioConfigOpen, setScenarioConfigOpen] = useState(true);
-
   return (
     <div className={styles.page}>
       <Header />
@@ -27,24 +25,6 @@ export const PromptLabPage: React.FC = () => {
             <LabMapCanvas>
               <MapContainer />
             </LabMapCanvas>
-          </div>
-
-          <div className={styles.scenarioConfigSection}>
-            <button
-              className={styles.sectionToggle}
-              onClick={() => setScenarioConfigOpen(!scenarioConfigOpen)}
-              aria-expanded={scenarioConfigOpen}
-            >
-              <span className={styles.sectionHeader}>Scenario Configuration</span>
-              <span className={scenarioConfigOpen ? styles.chevronUp : styles.chevronDown}>
-                ▼
-              </span>
-            </button>
-            {scenarioConfigOpen && (
-              <div className={styles.scenarioConfigContent}>
-                <ScenarioInputPanel />
-              </div>
-            )}
           </div>
 
           <div className={styles.referenceSection}>
@@ -58,6 +38,11 @@ export const PromptLabPage: React.FC = () => {
         </div>
 
         <div className={styles.rightColumn}>
+          <div className={styles.scenarioConfigHeader}>
+            <span className={styles.scenarioConfigTitle}>Scenario Configuration</span>
+            <span className={styles.scenarioConfigSubtitle}>Matches main scenario controls</span>
+          </div>
+          <ScenarioInputPanel />
           <LabSettings />
           <div className={styles.promptEditorContainer}>
             <PromptEditor />

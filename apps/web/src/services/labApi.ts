@@ -80,82 +80,79 @@ export class LabApiClient {
     request: LabGenerationRequest,
     callbacks?: LabGenerationCallbacks
   ): Promise<LabGenerationResult> {
-    return new Promise((resolve, reject) => {
-      const eventSource = new EventSource(url);
-      let result: LabGenerationResult | null = null;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
+      body: JSON.stringify(request),
+    });
 
-      eventSource.addEventListener('thinking', (event) => {
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to generate image' }));
+      const errorMessage = error.error || `HTTP ${response.status}`;
+      callbacks?.onError?.(errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    const bodyText = await response.text();
+    const events = bodyText.split('\n\n').filter((chunk) => chunk.trim().length > 0);
+    let result: LabGenerationResult | null = null;
+
+    for (const eventChunk of events) {
+      const lines = eventChunk.split('\n').filter((line) => line.trim().length > 0);
+      const eventLine = lines.find((line) => line.startsWith('event:'));
+      const dataLine = lines.find((line) => line.startsWith('data:'));
+      const eventType = eventLine ? eventLine.replace('event:', '').trim() : '';
+      const dataPayload = dataLine ? dataLine.replace('data:', '').trim() : '';
+
+      if (!eventType) continue;
+
+      if (eventType === 'thinking') {
         try {
-          const data = JSON.parse(event.data);
-          if (callbacks?.onThinking) {
-            callbacks.onThinking(data.text);
-          }
+          const data = JSON.parse(dataPayload);
+          callbacks?.onThinking?.(data.text);
         } catch (err) {
           console.error('[LabApi] Failed to parse thinking event:', err);
         }
-      });
+      }
 
-      eventSource.addEventListener('result', (event) => {
+      if (eventType === 'result') {
         try {
-          const data = JSON.parse(event.data);
+          const data = JSON.parse(dataPayload);
           result = {
             dataUrl: data.dataUrl,
             thinkingText: data.thinkingText,
             metadata: data.metadata,
           };
-          if (callbacks?.onComplete) {
-            callbacks.onComplete(result);
-          }
+          callbacks?.onComplete?.(result);
         } catch (err) {
           console.error('[LabApi] Failed to parse result event:', err);
         }
-      });
+      }
 
-      eventSource.addEventListener('error', (event) => {
+      if (eventType === 'error') {
         try {
-          const data = JSON.parse((event as MessageEvent).data);
+          const data = JSON.parse(dataPayload);
           const errorMessage = data.error || 'Unknown error';
-          if (callbacks?.onError) {
-            callbacks.onError(errorMessage);
-          }
-          reject(new Error(errorMessage));
-        } catch {
-          const errorMessage = 'Connection error';
-          if (callbacks?.onError) {
-            callbacks.onError(errorMessage);
-          }
-          reject(new Error(errorMessage));
-        } finally {
-          eventSource.close();
+          callbacks?.onError?.(errorMessage);
+          throw new Error(errorMessage);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : 'Connection error';
+          callbacks?.onError?.(errorMessage);
+          throw new Error(errorMessage);
         }
-      });
+      }
+    }
 
-      eventSource.addEventListener('done', () => {
-        eventSource.close();
-        if (result) {
-          resolve(result);
-        } else {
-          const errorMessage = 'No result received';
-          if (callbacks?.onError) {
-            callbacks.onError(errorMessage);
-          }
-          reject(new Error(errorMessage));
-        }
-      });
+    if (!result) {
+      const errorMessage = 'No result received';
+      callbacks?.onError?.(errorMessage);
+      throw new Error(errorMessage);
+    }
 
-      // Send the request
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
-        },
-        body: JSON.stringify(request),
-      }).catch((err) => {
-        eventSource.close();
-        reject(err);
-      });
-    });
+    return result;
   }
 
   /**

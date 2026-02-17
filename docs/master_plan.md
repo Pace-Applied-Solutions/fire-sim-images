@@ -223,6 +223,18 @@ Update this section after each issue or change.
 
 - **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
+  - **Prompt locality elevation removed (Feb 17, 2026):** Dropped the elevation sentence from the locality prompt section to avoid misleading altitude values until real DEM-derived elevation is wired in.
+  - **Prompt Lab section mapping fix (Feb 17, 2026):** Added a shared `generatePromptSections` helper and switched Prompt Lab to use it so each section gets the correct content (no more behavior text leaking into locality/terrain).
+  - **Prompt Lab SSE 404 fix (Feb 17, 2026):** Reworked Prompt Lab SSE handling to use POST-based stream parsing instead of EventSource GET so `/api/lab/generate` no longer 404s.
+  - **Prompt Lab scenario panel render fix (Feb 17, 2026):** Rendered `ScenarioInputPanel` directly in the right column with a standalone header to prevent it from being hidden by wrapper styles.
+  - **Prompt Lab scenario panel visibility polish (Feb 17, 2026):** Added a distinct header and border to the Scenario Configuration panel to make it clearly visible above the prompt editor.
+  - **Prompt Lab scenario panel always visible (Feb 17, 2026):** Removed the accordion toggle so Scenario Configuration always renders in the right column.
+  - **Prompt Lab scroll restore (Feb 17, 2026):** Restored page height and column scroll behavior so the right panel scrolls properly without nested scroll containers.
+  - **Prompt Lab single-scroll layout (Feb 17, 2026):** Removed nested scroll containers in the right panel so Scenario Configuration and Prompt Editor scroll together as one column.
+  - **Scenario controls scroll fix (Feb 17, 2026):** Removed internal scrolling from `ScenarioInputPanel` so the parent container handles scroll, preventing hidden controls in Prompt Lab and sidebar.
+  - **Prompt Lab scenario controls placement (Feb 17, 2026):** Moved the Scenario Configuration panel to the right column so the header and controls are consistently visible in the Prompt Lab layout.
+  - **Prompt Lab prompt generation fix (Feb 17, 2026):** Replaced `node:crypto` usage in shared prompt generation with a browser-safe UUID helper so Prompt Lab auto-fill works in the web client.
+  - **Prompt Lab local API fix (Feb 17, 2026):** Registered the `labGenerate` Azure Function in the API entrypoint so `/api/lab/generate` resolves locally via the Vite proxy; unblocks Prompt Lab single-image generation.
   - **Generation & results stability audit (Feb 17, 2026):** Documented disappearing results risk when status polling hits new Function instances before progress is persisted, double-scroll results panel UX, and `@fire-sim/api` build failures resolving `@fire-sim/shared`. Added analysis of moving the orchestrator to Azure App Service (or Functions Premium with always-on) to reduce instance churn; see `docs/current_state/generation_results_audit.md`.
   - **Regression guard (Feb 17, 2026):** Frontend polling now preserves existing images/anchor when a status poll returns empty results, preventing UI regressions unrelated to instance churn; audit doc updated accordingly.
   - **Results stability investigation plan:** Added consolidated objectives/steps/key code references/success criteria in `docs/current_state/results_stability_investigation_plan.md` to guide further debugging.

@@ -64,6 +64,7 @@ export interface PromptData {
   /** Deprecated: use vegetationDetails instead */
   vegetationDescriptor: string;
   terrainDescription: string;
+  terrainConfidence: 'low' | 'medium' | 'high';
   elevation: number;
   nearbyFeatures: string;
   fireStage: string;
