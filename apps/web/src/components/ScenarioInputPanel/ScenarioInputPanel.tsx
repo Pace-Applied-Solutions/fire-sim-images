@@ -14,10 +14,12 @@ import {
   validateWeatherParameters,
   formatRating,
   getFireBehaviour,
+  getEffectiveVegetationType,
 } from '@fire-sim/shared';
 import { generationApi } from '../../services/generationApi';
 import { useToastStore } from '../../store/toastStore';
 import { getPerimeterLocality } from '../../utils/geocoding';
+import { VegetationSelector } from './VegetationSelector';
 import styles from './ScenarioInputPanel.module.css';
 
 const PRESETS: Record<string, ScenarioInputs> = {
@@ -165,12 +167,37 @@ export const ScenarioInputPanel: React.FC = () => {
     }
   };
 
+  const handleVegetationChange = (manualVegetationType: string | null) => {
+    if (!geoContext) return;
+
+    // Update geoContext with manual override or clear it
+    const updatedContext = {
+      ...geoContext,
+      manualVegetationType: manualVegetationType || undefined,
+      isVegetationManuallySet: manualVegetationType !== null,
+    };
+
+    setGeoContext(updatedContext);
+
+    // Recalculate fire behavior with the new vegetation type
+    const effectiveVegType = getEffectiveVegetationType(updatedContext);
+    const fireBehaviour = getFireBehaviour(inputs.fireDangerRating, effectiveVegType);
+    const newFlameHeight =
+      Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10;
+    const newROS =
+      Math.round(((fireBehaviour.rateOfSpread.min + fireBehaviour.rateOfSpread.max) / 2) * 10) / 10;
+
+    const newInputs = { ...inputs, flameHeightM: newFlameHeight, rateOfSpreadKmh: newROS };
+    setInputs(newInputs);
+    setScenarioInputs(newInputs);
+  };
+
   const handleRatingChange = (rating: FireDangerRating) => {
     // Update rating and load typical weather profile
     const profile = getWeatherProfileForRating(rating);
 
-    // Get fire behaviour based on rating and current vegetation type
-    const vegType = geoContext?.vegetationType || 'Dry Sclerophyll Forest';
+    // Get fire behaviour based on rating and current vegetation type (respecting manual override)
+    const vegType = getEffectiveVegetationType(geoContext);
     const fireBehaviour = getFireBehaviour(rating, vegType);
 
     const newInputs: ScenarioInputs = {
@@ -258,10 +285,14 @@ export const ScenarioInputPanel: React.FC = () => {
     fetchGeoContext();
   }, [perimeter, perimeterMeta, setGeoContext, addToast]);
 
-  // Update flame height and ROS when vegetation type changes (from geo context)
+  // Update flame height and ROS when auto-detected vegetation type first arrives
+  // This runs ONLY when geoContext.vegetationType changes (new perimeter drawn)
+  // Manual overrides are handled by handleVegetationChange, not this effect
+  // Intentionally using partial dependencies - only trigger on vegetation type change
   useEffect(() => {
-    if (geoContext?.vegetationType) {
-      const fireBehaviour = getFireBehaviour(inputs.fireDangerRating, geoContext.vegetationType);
+    if (geoContext?.vegetationType && !geoContext?.isVegetationManuallySet) {
+      const effectiveVegType = getEffectiveVegetationType(geoContext);
+      const fireBehaviour = getFireBehaviour(inputs.fireDangerRating, effectiveVegType);
       const newFlameHeight =
         Math.round(((fireBehaviour.flameHeight.min + fireBehaviour.flameHeight.max) / 2) * 10) / 10;
       const newROS =
@@ -272,7 +303,6 @@ export const ScenarioInputPanel: React.FC = () => {
       setInputs(newInputs);
       setScenarioInputs(newInputs);
     }
-    // Only re-run when vegetation type changes, not on every inputs change
   }, [geoContext?.vegetationType]);
 
   const handleGenerate = async () => {
@@ -749,6 +779,19 @@ export const ScenarioInputPanel: React.FC = () => {
           </p>
         </div>
       </section>
+
+      {/* Vegetation Section */}
+      {geoContext && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.sectionTitle}>Vegetation & Fuel</h3>
+          </div>
+
+          <div className={styles.sectionContent}>
+            <VegetationSelector geoContext={geoContext} onVegetationChange={handleVegetationChange} />
+          </div>
+        </section>
+      )}
 
       {/* Timing Section */}
       <section className={styles.section}>

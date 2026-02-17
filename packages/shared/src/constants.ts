@@ -69,6 +69,11 @@ export const VEGETATION_TYPES = [
 ] as const;
 
 /**
+ * Default vegetation type used as fallback when no context is available.
+ */
+export const DEFAULT_VEGETATION_TYPE = 'Dry Sclerophyll Forest';
+
+/**
  * Generation configuration defaults.
  */
 export const GENERATION_CONFIG = {
@@ -290,4 +295,15 @@ export function getNvisDescriptor(mvsName: string): string {
   }
 
   return `${mvsName} (vegetation type with uncharacterised fire behaviour)`;
+}
+
+/**
+ * Get the effective vegetation type from GeoContext.
+ * Returns manual override if set, otherwise returns auto-detected type.
+ */
+export function getEffectiveVegetationType(
+  geoContext: { vegetationType: string; manualVegetationType?: string } | null | undefined
+): string {
+  if (!geoContext) return DEFAULT_VEGETATION_TYPE;
+  return geoContext.manualVegetationType || geoContext.vegetationType;
 }

@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import area from '@turf/area';
 import bbox from '@turf/bbox';
 import type { GenerationRequest, ViewPoint } from '../types.js';
-import { VEGETATION_DESCRIPTORS } from '../constants.js';
+import { VEGETATION_DESCRIPTORS, getEffectiveVegetationType } from '../constants.js';
 import type { PromptData, PromptSet, GeneratedPrompt, PromptTemplate } from './promptTypes.js';
 import {
   DEFAULT_PROMPT_TEMPLATE,
@@ -192,7 +192,10 @@ function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
 function preparePromptData(request: GenerationRequest): PromptData {
   const { inputs, geoContext, perimeter } = request;
 
-  if (!geoContext.vegetationType) {
+  // Get effective vegetation type (respects manual override)
+  const effectiveVegType = getEffectiveVegetationType(geoContext);
+
+  if (!effectiveVegType) {
     throw new Error(
       `Invalid geoContext: vegetationType is required. Received: ${JSON.stringify(geoContext)}`
     );
@@ -211,7 +214,7 @@ function preparePromptData(request: GenerationRequest): PromptData {
   }
 
   const vegetationDescriptor =
-    VEGETATION_DESCRIPTORS[geoContext.vegetationType] || geoContext.vegetationType.toLowerCase();
+    VEGETATION_DESCRIPTORS[effectiveVegType] || effectiveVegType.toLowerCase();
 
   const terrainDescription = generateTerrainDescription(geoContext);
   const nearbyFeatures = generateNearbyFeatures(geoContext);

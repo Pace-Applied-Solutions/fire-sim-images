@@ -223,6 +223,7 @@ Update this section after each issue or change.
 
 - **Current focus:** Live deployment stability and perspective consistency
 - **Completed milestones:**
+  - **Vegetation type manual override:** Added UI feature allowing trainers to manually select vegetation type when NVIS auto-detection is unreliable (e.g., plantations, farms). New `VegetationSelector` component appears in "Vegetation & Fuel" section after perimeter is drawn. Stores manual override in `GeoContext` (`manualVegetationType`, `isVegetationManuallySet` fields). Fire behavior calculations and prompt generation use `getEffectiveVegetationType()` helper that prioritizes manual selection. Orange "Manual Override" badge shows active state. Users can revert to auto-detected type via dropdown. Includes 7 new unit tests, comprehensive documentation in `docs/current_state/vegetation_manual_override.md`. All 127 tests passing. No security vulnerabilities detected.
   - **Vegetation reference alignment:** Vegetation overlay screenshot now fits the fire perimeter to ~80% of the viewport (top-down) and is captured as PNG for accurate colors; legend items with colors are passed into prompts.
   - **Health indicator fallback:** Added same-origin `/api` fallback for the UI health check when a configured API base URL fails.
   - **NVIS legend colors:** Visible legend now samples raster colors and shows a swatch beside each vegetation subgroup.
