@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { useScenarioUrl } from '../useScenarioUrl';
 import { useAppStore } from '../../store/appStore';
 import * as generationApiModule from '../../services/generationApi';
@@ -94,9 +94,9 @@ describe('useScenarioUrl', () => {
     // Render hook with URL parameter
     const { result } = renderHook(() => useScenarioUrl(), {
       wrapper: ({ children }) => (
-        <BrowserRouter initialEntries={['/?scenario=test-scenario-123']}>
+        <MemoryRouter initialEntries={['/?scenario=test-scenario-123']}>
           {children}
-        </BrowserRouter>
+        </MemoryRouter>
       ),
     });
 
@@ -128,7 +128,7 @@ describe('useScenarioUrl', () => {
 
     const { result } = renderHook(() => useScenarioUrl(), {
       wrapper: ({ children }) => (
-        <BrowserRouter initialEntries={['/?scenario=invalid-id']}>{children}</BrowserRouter>
+        <MemoryRouter initialEntries={['/?scenario=invalid-id']}>{children}</MemoryRouter>
       ),
     });
 
@@ -146,7 +146,7 @@ describe('useScenarioUrl', () => {
     const getScenarioSpy = vi.spyOn(generationApiModule.generationApi, 'getScenario');
 
     renderHook(() => useScenarioUrl(), {
-      wrapper: ({ children }) => <BrowserRouter>{children}</BrowserRouter>,
+      wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
     });
 
     expect(getScenarioSpy).not.toHaveBeenCalled();
