@@ -1299,7 +1299,7 @@ export const MapContainer = () => {
       </div>
 
       {showToolbarHint && (
-        <div className={styles.toolbarHint}>
+        <div className={`${styles.toolbarHint} ${isResultsPanelOpen ? styles.resultsPanelOpen : ''}`}>
           <div className={styles.toolbarHintText}>
             <div className={styles.toolbarHintTitle}>
               {hasStartedDraw ? 'Click points on the map to draw a shape.' : 'Start drawing with ⬠'}
