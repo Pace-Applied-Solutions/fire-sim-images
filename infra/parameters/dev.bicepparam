@@ -31,6 +31,13 @@ param deployFoundry = false
 param imageModelEndpoint = 'https://firesim-fh-dev.cognitiveservices.azure.com'
 param imageModelDeployment = 'FLUX.1-Kontext-pro'
 
+// Direct API image model (Gemini)
+param imageModel = 'gemini-3-pro-image-preview'
+param imageModelUrl = 'https://generativelanguage.googleapis.com/v1beta'
+// IMPORTANT: imageModelKey must be passed at deploy time via --parameters or a .env file.
+// Do NOT commit the API key to source control.
+// Example: az deployment group create ... --parameters imageModelKey='your-key-here'
+
 // Content Safety
 param contentSafetySku = 'S0'
 

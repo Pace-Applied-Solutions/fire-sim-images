@@ -139,102 +139,173 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.6.0).
- * Structured template for generating photorealistic bushfire scenario prompts.
- * Updated to include fire shape, aspect ratio, and orientation for improved geometry communication.
+ * Default prompt template (v1.8.0).
+ * Structured template with atomic sections for generating photorealistic bushfire scenario prompts.
+ * Version 1.8.0: Added fire behaviour principles section as foundational reference for all image generation.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.6.0',
+  version: '1.8.0',
   sections: {
-    // Step 1 — Establish the photographic style and intent (Gemini best practice:
-    // provide context, use camera/lens language, describe purpose)
+    // Section 1: Establish photorealistic style and purpose
     style:
       'Create a photorealistic photograph for a fire service training exercise. ' +
       'The image should look like it was captured on location by a firefighter with a Canon EOS R5 and a 24-70mm f/2.8 lens. ' +
       'It depicts a real, specific place in the Australian landscape during a bushfire — not a generic or stock fire image. ' +
       'This is NOT an artistic interpretation — it must accurately depict the actual landscape as it exists. ' +
-      'Every landform, ridge line, valley contour, vegetation patch, and visible road or clearing in the reference terrain must be faithfully preserved. ' +
-      'Any man-made structures (buildings, roads, fences, clearings) visible in satellite imagery must appear in the same position and scale. ' +
-      'Match the reference landscape precisely — the generated image must be recognizable as this specific location.',
+      'Every landform, ridge line, valley contour, and visible road or clearing must be faithfully preserved. ' +
+      'Any man-made structures visible in satellite imagery must appear in the same position and scale.',
 
-    // Step 2 — Describe the scene narratively (Gemini best practice: hyper-specific,
-    // narrative description over keyword lists)
-    scene: (data) => {
-      const localityContext = data.locality
-        ? ` This location is ${data.locality}, Australia.`
-        : ' This location is in New South Wales, Australia.';
+    // Section 2: Fire behaviour principles (foundational reference for all scenarios)
+    behaviorPrinciples:
+      'FIRE BEHAVIOUR FUNDAMENTALS:\n\n' +
+      'Wildfires exhibit distinct structural and visual characteristics based on wind, terrain, and fuel. ' +
+      'Understand and depict these dynamics accurately in the generated image.\n\n' +
+      'HEAD FIRE (active, intense front): Flames lean forward into unburned fuel, driven by wind or upslope. ' +
+      'The tallest, fastest-spreading edge. Characterized by forward-angled flames and maximum heat release.\n\n' +
+      'FLANKS (sides): Slower lateral spread. Lower flames, less continuous fire. Reduced intensity compared to head.\n\n' +
+      'HEEL/TAIL (rear): Backing fire opposite the head. Often smoldering, low flames, slow progression or stagnant. ' +
+      'May self-extinguish if moving against wind or steep downslope.\n\n' +
+      'WIND EFFECTS:\n' +
+      '- Winds below 10 km/h: fire spreads nearly evenly in all directions (circular growth)\n' +
+      '- Winds 12-15 km/h: critical threshold where rate-of-spread (ROS) accelerates dramatically\n' +
+      '- Strong winds (30+ km/h): elliptical fire shape with narrow, intense head and elongated flanks\n' +
+      '- Flame behavior: flames angle forward and close to ground under high wind, driving rapid spread\n' +
+      '- Spotting: embers lofted downwind, creating spot fires ahead (forest fires can spot 2+ km away; extreme conditions up to 30 km)\n\n' +
+      'TERRAIN EFFECTS:\n' +
+      '- Upslope fires: flames race uphill with towering height (every 10° slope roughly doubles ROS)\n' +
+      '- Downslope fires: flames reduce intensity (50% slower than flat ground), shorter flame, more smoldering\n' +
+      '- Ridge/valley effects: canyons can create chimney effects; valleys trap smoke\n\n' +
+      'FUEL-DEPENDENT BEHAVIOR:\n' +
+      '- Grassland: rapid transient fires, moderate flames (3-5m), lower heat release\n' +
+      '- Forest (dry fuel): sustained intense flames (10-20m+), potential crown fire above 15m\n' +
+      '- Fuel load determines flame height: higher load equals taller flames and greater intensity\n' +
+      '- Moisture suppresses behavior; critically dry fuels enable extreme spread and intensity\n\n' +
+      'SMOKE & INTENSITY INDICATORS:\n' +
+      '- Low intensity: light wispy smoke, vertical flame orientation, minimal forward tilt\n' +
+      '- High intensity: towering pyrocumulus clouds, horizontal flame angle, massive smoke columns, dark overhead\n' +
+      '- Crown fire: flames engulf tree canopy (15m+), appear uniform and violent, extreme smoke production',
 
+    // Section 3: Reference imagery and fire perimeter polygon
+    referenceImagery: (data) => {
+      const areaText = `${data.fireAreaHectares.toFixed(1)} hectares`;
+      const extentNsText = `${data.fireExtentNorthSouthKm.toFixed(2)} km north–south`;
+      const extentEwText = `${data.fireExtentEastWestKm.toFixed(2)} km east–west`;
+      
       return (
-        `First, establish the landscape with strict adherence to the reference imagery.${localityContext} ` +
-        `The terrain is ${data.terrainDescription}, ` +
-        `covered with ${data.vegetationDescriptor}, ` +
-        `at approximately ${data.elevation} metres elevation. ` +
-        `${data.nearbyFeatures} ` +
-        `Preserve every topographic feature exactly where it appears in the reference — hills, gullies, flat paddocks, tree lines, bare earth patches, fence lines, and any built structures. ` +
-        `If the reference shows a building, road, or clearing, it must appear in the generated image in the same location with the same scale and orientation.`
+        `Reference imagery context: You have access to a 3D interactive map (Google Maps style) displaying this specific location. ` +
+        `The map shows both overhead (bird's-eye) and ground-level street view perspectives of the landscape. ` +
+        `A **red polygon outline is overlaid on the 3D map**, marking the fire perimeter and extent. ` +
+        `This red polygon indicates that the fire: ` +
+        `(1) covers ${areaText}, ` +
+        `(2) spans ${extentNsText} and ${extentEwText}, ` +
+        `(3) forms an ${data.fireShape} pattern. ` +
+        `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference map, ` +
+        `with the fire occupying the complete area defined by the red polygon outline.`
       );
     },
 
-    // Step 3 — Layer the fire behaviour on top (Gemini best practice: step-by-step
-    // instructions for complex multi-element scenes)
-    fire: (data) => {
-      // Use explicit flame height/ROS when provided (from trainer controls)
+    // Section 4: Establish locality and geographic context
+    locality: (data) => {
+      const localityText = data.locality 
+        ? `This specific location is ${data.locality}, Australia.` 
+        : 'This location is in New South Wales, Australia.';
+      
+      return (
+        `Geographic context: ${localityText} ` +
+        `The elevation is approximately ${data.elevation} metres above sea level. ` +
+        `Preserve all topographic features exactly as they appear in the geographic reference — hills, gullies, ridgelines, flat plateaus, and valleys. ` +
+        `The generated image must be recognizable as this specific location based on satellite imagery and the reference map provided.`
+      );
+    },
+
+    // Section 5: Establish terrain characteristics
+    terrain: (data) =>
+      `Terrain: ${data.terrainDescription}. ` +
+      `The landscape is characterized by this specific slope profile, with corresponding exposure and water drainage patterns. ` +
+      `Match the slope visible in the reference 3D map exactly — every hill, valley, and ridge shown must be faithfully rendered. ` +
+      `Show the natural undulation and slopes of the specific region.`,
+
+    // Section 6: Establish nearby features and landmarks
+    features: (data) =>
+      `Nearby features: ${data.nearbyFeatures} ` +
+      `These landmarks are a critical part of geographic recognition and are visible in the reference map. ` +
+      `They must appear in the correct positions relative to the fire and the red polygon extent. ` +
+      `Include any visible roads, water features, clearings, or distinctive landforms shown in the reference imagery.`,
+
+    // Section 7: Establish vegetation structure and characteristics
+    vegetation: (data) => {
+      const details = data.vegetationDetails;
+      return (
+        `Vegetation type: ${data.vegetationType}. ` +
+        `Canopy height: ${details.canopyHeight}. ` +
+        `Canopy composition: ${details.canopyType}. ` +
+        `Understorey structure: ${details.understorey}. ` +
+        `Ground fuel layer: ${details.groundFuel}. ` +
+        `Fuel load characteristics: ${details.fuelLoad}. ` +
+        `Flammability profile: ${details.flammability}. ` +
+        `Every vegetation component must match the specified type exactly as shown in the reference map — do not substitute or generalize.`
+      );
+    },
+
+    // Section 8: Establish fire geometry and scale
+    fireGeometry: (data) => {
+      const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares.`;
+      const extentDesc = `It spans ${data.fireExtentNorthSouthKm.toFixed(2)} km from north to south and ${data.fireExtentEastWestKm.toFixed(2)} km from east to west.`;
+      const shapeDesc = `The fire perimeter forms an ${data.fireShape} shape.`;
+      
+      return (
+        `Fire extent from reference map: ${areaDesc} ${extentDesc} ${shapeDesc} ` +
+        `The **red polygon outline visible in the reference 3D map** defines the fire's extent boundaries. ` +
+        `CRITICAL: The fire must occupy the ENTIRE mapped area shown by this red polygon. ` +
+        `Do NOT show the polygon outline itself in the generated image — the fire (flames, smoke, burned areas) must replace and fill the polygon boundaries. ` +
+        `All active fire edge, burned areas, and smoke must extend across the complete north–south and east–west extent as marked by the polygon.`
+      );
+    },
+
+    // Section 9: Specify fire intensity, behavior, and visual characteristics
+    fireBehavior: (data) => {
       const flameDesc =
         data.explicitFlameHeightM !== undefined
-          ? `Flames are approximately ${data.explicitFlameHeightM} metres high`
-          : `Flames are ${data.flameHeight} high`;
+          ? `Flame height: approximately ${data.explicitFlameHeightM} metres.`
+          : `Flame height: ${data.flameHeight}.`;
       const rosDesc =
         data.explicitRateOfSpreadKmh !== undefined
-          ? ` The fire is advancing at ${data.explicitRateOfSpreadKmh} km/h.`
+          ? ` Rate of spread: ${data.explicitRateOfSpreadKmh} km/h.`
           : '';
-      // Derive a realistic intensity qualifier from explicit flame height
       const qualifier =
         data.explicitFlameHeightM !== undefined
           ? getFlameHeightQualifier(data.explicitFlameHeightM)
           : data.intensityDescription.descriptor;
-
-      // Format fire size and geometry information
-      const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares`;
-      const extentDesc = `spanning ${data.fireExtentNorthSouthKm.toFixed(2)} kilometres from north to south and ${data.fireExtentEastWestKm.toFixed(2)} kilometres from east to west`;
-
-      // Shape description with orientation when applicable
-      let shapeDesc = `The fire perimeter has a ${data.fireShape} shape`;
-      if (data.firePrimaryAxis) {
-        shapeDesc += `, oriented primarily ${data.firePrimaryAxis}`;
-      }
-      shapeDesc += `.`;
-
+      
       return (
-        `Then, add the fire. A ${data.fireStage} is burning through the vegetation. ` +
+        `Fire behavior: A ${data.fireStage} is burning through the vegetation. ` +
         `${qualifier}. ` +
-        `${flameDesc} with ${data.smokeDescription}.${rosDesc} ` +
-        `The head fire is spreading ${data.spreadDirection}, driven by ${data.windDescription}. ` +
-        `${areaDesc}, ${extentDesc}. ${shapeDesc} ` +
-        `CRITICAL: The fire must fill the entire mapped area — this is not a small fire, but an incident of this specific scale. ` +
-        `Match the fire perimeter's shape and orientation precisely. ` +
-        `The active fire edge, smoke, and burned areas should occupy the full extent of the landscape shown in the reference imagery. ` +
-        `If the fire is elongated in one direction, show that elongation clearly. ` +
-        `Do NOT show any red polygon outline or boundary markers — the fire itself replaces any drawn perimeter lines.`
+        `${flameDesc}${rosDesc} ` +
+        `Smoke column: ${data.smokeDescription}. ` +
+        `Crown involvement: ${data.intensityDescription.crownInvolvement}. ` +
+        `Spotting activity: ${data.intensityDescription.spotting}. ` +
+        `Fire front direction: spreading ${data.spreadDirection}, driven by weather patterns. ` +
+        `The fire demonstrates behavior consistent with a ${data.intensityDescription.descriptor.toLowerCase()} fire in this fuel type and climate.`
       );
     },
 
-    // Step 4 — Set the atmospheric conditions (Gemini best practice: lighting and
-    // mood description integrated into the narrative)
+    // Section 10: Set atmospheric and weather conditions
     weather: (data) =>
-      `The conditions are ${data.temperature}°C with ${data.humidity}% relative humidity ` +
-      `and a ${data.windSpeed} km/h ${data.windDirection} wind. ` +
+      `Weather conditions: Temperature ${data.temperature}°C, relative humidity ${data.humidity}%, ` +
+      `${data.windDescription}. ` +
       `${data.timeOfDayLighting}.`,
 
-    // Step 5 — Set the camera (Gemini best practice: control the camera with
-    // photographic/cinematic language — shot type, angle, distance)
+    // Section 11: Set camera position and framing
     perspective: (viewpoint) =>
-      `Finally, set the camera position: ${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
+      `Camera position: ${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
 
-    // Gemini best practice: use semantic positive constraints instead of negative
-    // lists. Describe the desired scene positively.
+    // Section 12: Safety constraints and scene composition
     safety:
-      'The landscape is uninhabited wilderness — only natural terrain, vegetation, fire, and smoke are present. ' +
-      'The image contains only the natural scene with realistic textures, lighting, and atmospheric haze.',
+      'Render the landscape as visible in the reference imagery: include all natural terrain, vegetation, fire, and smoke. ' +
+      'Include any man-made structures, roads, buildings, fences, clearings, or infrastructure visible in the reference map — these are critical for geographic authenticity. ' +
+      'The scene must NOT include people, animals, or vehicles. ' +
+      'The image contains authentic outdoor photography with realistic textures, lighting, and atmospheric haze. ' +
+      'Render true-to-nature colors and lighting appropriate to the described conditions.',
   },
 };

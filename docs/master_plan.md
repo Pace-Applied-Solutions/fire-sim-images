@@ -884,6 +884,37 @@ Update this section after each issue or change.
       - No content/scroll jumps during live updates ✅
       - UX feels stable, responsive, and communicative ✅
 
+  - **Bicep IaC: Gemini config variables (infra deploy persistence)**
+    - **Problem addressed:** Infrastructure deployment (`az deployment group create`) was overwriting Function App settings because the Bicep template only included old Flux/Foundry variables (`IMAGE_MODEL_ENDPOINT`, `IMAGE_MODEL_DEPLOYMENT`). The Gemini-specific `IMAGE_MODEL`, `IMAGE_MODEL_KEY`, and `IMAGE_MODEL_URL` settings had to be re-applied manually after every deploy.
+    - **Solution:**
+      1. **New Bicep params:** Added `imageModel`, `imageModelUrl`, and `imageModelKey` (with `@secure()` decorator) to `main.bicep`
+      2. **Key Vault secret:** `imageModelKey` is stored as `ImageModel--Key` in Key Vault (conditional on non-empty), matching the existing `ContentSafety--Key` pattern
+      3. **App settings via Key Vault reference:** `IMAGE_MODEL_KEY` app setting uses `@Microsoft.KeyVault(SecretUri=...)` so the Function App resolves it at startup via managed identity
+      4. **Dev parameters:** Updated `dev.bicepparam` with `imageModel = 'gemini-3-pro-image-preview'` and `imageModelUrl = 'https://generativelanguage.googleapis.com/v1beta'`. API key passed at deploy time (not committed)
+    - **Files modified:**
+      - `infra/main.bicep` (new params, Key Vault secret resource, additional app settings)
+      - `infra/parameters/dev.bicepparam` (Gemini model + URL defaults)
+    - **Testing:** Bicep compiles successfully
+
+  - **Prompt Template v1.8.0: Fire Behaviour Principles Integration (Feb 16, 2026):**
+    - **Problem addressed:** Prompts lacked foundational fire science context. Image models generated realistic-looking fires but without understanding of head/flank/heel structure, wind effects on flame orientation, terrain-driven behavior variations, and fuel-dependent flame height. This led to visually credible but tactically unrealistic scenarios (e.g., fires behaving identically on steep upslope vs. downslope terrain).
+    - **Solution:** Added dedicated `behaviorPrinciples` section as the second section in all prompts (immediately after style context, before reference imagery)
+    - **Content:** Static fire behaviour reference covering:
+      - **Head/flank/heel anatomy:** Head fire (forward-leaning, max heat/spread), flanks (slower lateral spread, reduced intensity), heel/tail (backing fire, smoldering)
+      - **Wind effects:** Below 10 km/h (circular spread), 12-15 km/h threshold (ROS acceleration), 30+ km/h (elliptical shape with intense narrow head), spotting distances (2+ km forest, extreme conditions 30 km)
+      - **Terrain effects:** Upslope (towering flames, every 10° ~doubles ROS), downslope (50% slower, shorter flame, smoldering), ridge/valley effects (chimney, smoke trapping)
+      - **Fuel behavior:** Grassland (rapid, 3-5m flames), forest (sustained 10-20m+), fuel load determines height, moisture suppresses intensity
+      - **Smoke/intensity indicators:** Low intensity (wispy, vertical), high intensity (pyrocumulus, horizontal flame angle), crown fire (engulfing canopy 15m+)
+    - **Architecture:** `behaviorPrinciples: string` added to `PromptTemplate.sections` interface; `composePrompt()` updated to include section at index 1 in sections array; DEFAULT_PROMPT_TEMPLATE updated with comprehensive content
+    - **Template numbering:** All section comments renumbered (1: style, 2: behaviorPrinciples, 3: referenceImagery, 4: locality, ... 12: safety)
+    - **Files modified:**
+      - `packages/shared/src/prompts/promptTypes.ts` (added `behaviorPrinciples: string` to PromptTemplate.sections interface)
+      - `packages/shared/src/prompts/promptGenerator.ts` (updated `composePrompt()` to include behaviorPrinciples at section index 1)
+      - `packages/shared/src/prompts/promptTemplates.ts` (added behaviorPrinciples content to DEFAULT_PROMPT_TEMPLATE, updated version to 1.8.0, renumbered section comments)
+    - **Validation:** All 120 Vitest tests passing; generated v1.8.0 prompts verified to include fire behaviour section in correct position (line 3 of prompt output, before reference imagery section); all 5 key principles present (HEAD FIRE, FLANKS, HEEL/TAIL, WIND EFFECTS, TERRAIN EFFECTS, FUEL-DEPENDENT BEHAVIOR, SMOKE & INTENSITY)
+    - **Impact:** Every prompt now grounds the image generation model with fire science fundamentals, improving tactical realism of generated visuals without requiring explicit flame angle, spread rate, or intensity calculations per request (principles are consistently present for all scenarios)
+    - **Acceptance criteria met:** Fire behaviour principles integrated as system prompt section for all requests; all 120 tests passing; v1.8.0 template validated with sample generation; fire behaviour content is static and non-breaking to existing scenario inputs
+
 ## 14. Change Control Process
 
 Every change must:

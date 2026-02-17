@@ -32,8 +32,14 @@ export interface PromptTemplate {
   version: string;
   sections: {
     style: string;
-    scene: (data: PromptData) => string;
-    fire: (data: PromptData) => string;
+    behaviorPrinciples: string;
+    referenceImagery: (data: PromptData) => string;
+    locality: (data: PromptData) => string;
+    terrain: (data: PromptData) => string;
+    features: (data: PromptData) => string;
+    vegetation: (data: PromptData) => string;
+    fireGeometry: (data: PromptData) => string;
+    fireBehavior: (data: PromptData) => string;
     weather: (data: PromptData) => string;
     perspective: (viewpoint: ViewPoint) => string;
     safety: string;
@@ -44,6 +50,18 @@ export interface PromptTemplate {
  * Data used to fill prompt templates.
  */
 export interface PromptData {
+  /** Vegetation type (e.g., 'Dry Sclerophyll Forest') */
+  vegetationType: string;
+  /** Detailed vegetation characteristics */
+  vegetationDetails: {
+    canopyHeight: string;
+    canopyType: string;
+    understorey: string;
+    groundFuel: string;
+    fuelLoad: string;
+    flammability: string;
+  };
+  /** Deprecated: use vegetationDetails instead */
   vegetationDescriptor: string;
   terrainDescription: string;
   elevation: number;
@@ -69,14 +87,10 @@ export interface PromptData {
   fireExtentNorthSouthKm: number;
   /** Fire extent east to west in kilometres */
   fireExtentEastWestKm: number;
+  /** Fire shape descriptor (e.g., 'elongated', 'roughly circular') */
+  fireShape: string;
   /** Locality description (e.g., "near Bungendore, New South Wales") */
   locality?: string;
-  /** Fire shape description (e.g., "circular", "elongated", "irregular") */
-  fireShape: string;
-  /** Fire aspect ratio (longest dimension / shortest dimension) */
-  fireAspectRatio: number;
-  /** Primary fire spread axis orientation (e.g., "north-south", "east-west", "northeast-southwest") */
-  firePrimaryAxis?: string;
 }
 
 /**
