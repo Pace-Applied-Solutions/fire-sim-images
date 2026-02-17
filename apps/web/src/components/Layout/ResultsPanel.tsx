@@ -12,10 +12,24 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
 
   const { generationResult } = useAppStore();
 
+  // Track if panel has been opened for current generation to prevent re-opening
+  const hasOpenedRef = React.useRef(false);
+
+  // Reset flag when scenario state changes to idle or drawing
   useEffect(() => {
+    if (scenarioState === 'idle' || scenarioState === 'drawing') {
+      hasOpenedRef.current = false;
+    }
+  }, [scenarioState]);
+
+  useEffect(() => {
+    // Only open panel once per generation cycle to prevent refresh on every thinking update
+    if (hasOpenedRef.current) return;
+
     // Open panel when thinking text arrives, images are generated, or generation completes
     if (scenarioState === 'complete') {
       setResultsPanelOpen(true);
+      hasOpenedRef.current = true;
     } else if (scenarioState === 'generating') {
       // Only open when Gemini thinking stream has started OR images are available
       // This prevents opening before the model begins processing
@@ -24,9 +38,10 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
         (generationResult?.images && generationResult.images.length > 0)
       ) {
         setResultsPanelOpen(true);
+        hasOpenedRef.current = true;
       }
     }
-  }, [scenarioState, generationResult, setResultsPanelOpen]);
+  }, [scenarioState, generationResult?.thinkingText, generationResult?.images?.length, setResultsPanelOpen]);
 
   const handleHeaderClick = () => {
     if (window.innerWidth <= 768) {

@@ -13,15 +13,37 @@ import styles from './GeneratedImages.module.css';
 
 /**
  * Renders model thinking text in a chat-like scrollable panel.
+ * Only auto-scrolls if the user hasn't manually scrolled up.
  */
 const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({
   text,
   isStreaming,
 }) => {
   const endRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const userHasScrolledRef = useRef(false);
+  const lastTextLengthRef = useRef(0);
 
+  // Track when user manually scrolls
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const bodyEl = bodyRef.current;
+    if (!bodyEl) return;
+
+    const handleScroll = () => {
+      const isAtBottom = bodyEl.scrollHeight - bodyEl.scrollTop - bodyEl.clientHeight < 50;
+      userHasScrolledRef.current = !isAtBottom;
+    };
+
+    bodyEl.addEventListener('scroll', handleScroll);
+    return () => bodyEl.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Only auto-scroll when new content arrives AND user hasn't scrolled away
+  useEffect(() => {
+    if (text.length > lastTextLengthRef.current && !userHasScrolledRef.current) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    lastTextLengthRef.current = text.length;
   }, [text]);
 
   return (
@@ -31,7 +53,7 @@ const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({
         <span className={styles.thinkingLabel}>Model Reasoning</span>
         {isStreaming && <span className={styles.thinkingDot} />}
       </div>
-      <div className={styles.thinkingBody}>
+      <div className={styles.thinkingBody} ref={bodyRef}>
         <div className={styles.thinkingBubble}>{text}</div>
         <div ref={endRef} />
       </div>
