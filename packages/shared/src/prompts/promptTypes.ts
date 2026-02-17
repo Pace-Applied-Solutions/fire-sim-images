@@ -91,12 +91,6 @@ export interface PromptData {
   fireShape: string;
   /** Locality description (e.g., "near Bungendore, New South Wales") */
   locality?: string;
-  /** Fire shape description (e.g., "circular", "elongated", "irregular") */
-  fireShape: string;
-  /** Fire aspect ratio (longest dimension / shortest dimension) */
-  fireAspectRatio: number;
-  /** Primary fire spread axis orientation (e.g., "north-south", "east-west", "northeast-southwest") */
-  firePrimaryAxis?: string;
 }
 
 /**
