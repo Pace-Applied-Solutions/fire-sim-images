@@ -122,6 +122,7 @@ export const MapContainer = () => {
   const setVegetationLegendItems = useAppStore((s) => s.setVegetationLegendItems);
   const setHandleLocationSelect = useAppStore((s) => s.setHandleLocationSelect);
   const setHandleGeolocationRequest = useAppStore((s) => s.setHandleGeolocationRequest);
+  const isResultsPanelOpen = useAppStore((s) => s.isResultsPanelOpen);
   const { addToast } = useToastStore();
 
   const setMapCursor = useCallback((cursor: string | null) => {
@@ -1276,7 +1277,7 @@ export const MapContainer = () => {
     <div className={styles.container}>
       <div ref={mapContainerRef} className={styles.map} />
 
-      <div className={styles.drawControls}>
+      <div className={`${styles.drawControls} ${isResultsPanelOpen ? styles.resultsPanelOpen : ''}`}>
         <button
           className={styles.drawButton}
           onClick={handleStartDrawing}
@@ -1298,7 +1299,7 @@ export const MapContainer = () => {
       </div>
 
       {showToolbarHint && (
-        <div className={styles.toolbarHint}>
+        <div className={`${styles.toolbarHint} ${isResultsPanelOpen ? styles.resultsPanelOpen : ''}`}>
           <div className={styles.toolbarHintText}>
             <div className={styles.toolbarHintTitle}>
               {hasStartedDraw ? 'Click points on the map to draw a shape.' : 'Start drawing with ⬠'}
@@ -1410,7 +1411,7 @@ export const MapContainer = () => {
       )}
 
       {showVegetation && (
-        <div className={styles.vegetationLegend} role="region" aria-label="NVIS legend">
+        <div className={`${styles.vegetationLegend} ${isResultsPanelOpen ? styles.resultsPanelOpen : ''}`} role="region" aria-label="NVIS legend">
           <div className={styles.legendHeader}>
             <span>Visible vegetation</span>
             <button

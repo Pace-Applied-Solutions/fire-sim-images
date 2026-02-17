@@ -22,6 +22,19 @@
 	padding: var(--spacing-xs);
 	box-shadow: var(--shadow-lg);
 	z-index: 10;
+	transition: right var(--transition-base);
+}
+
+/* Shift draw controls left when results panel is open on desktop */
+.drawControls.resultsPanelOpen {
+	right: 376px; /* 360px panel + 16px margin */
+}
+
+@media (max-width: 1024px) {
+	/* On tablet and mobile, keep controls at edge since panel overlays */
+	.drawControls.resultsPanelOpen {
+		right: 16px;
+	}
 }
 
 .vegetationLegend {
@@ -36,14 +49,27 @@
 	max-width: 280px;
 	max-height: 300px;
 	overflow: hidden;
+	transition: right var(--transition-base);
+}
+
+/* Shift vegetation legend left when results panel is open on desktop */
+.vegetationLegend.resultsPanelOpen {
+	right: 376px; /* 360px panel + 16px margin */
+}
+
+@media (max-width: 1024px) {
+	/* On tablet and mobile, keep legend at edge since panel overlays */
+	.vegetationLegend.resultsPanelOpen {
+		right: 16px;
+	}
 }
 
 .legendHeader {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 6px 10px;
-	font-size: 0.7rem;
+	padding: 8px 12px;
+	font-size: 0.75rem;
 	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
@@ -57,8 +83,8 @@
 	border: 1px solid var(--color-border-default);
 	background: var(--color-bg-primary);
 	color: var(--color-text-secondary);
-	font-size: 0.6rem;
-	padding: 2px 6px;
+	font-size: 0.6875rem;
+	padding: 3px 8px;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	transition: all var(--transition-fast);
@@ -71,14 +97,15 @@
 }
 
 .legendBody {
-	padding: 8px 10px 10px;
+	padding: 10px 12px 12px;
 	max-height: 240px;
 	overflow: auto;
 }
 
 .legendStatus {
-	font-size: 0.75rem;
+	font-size: 0.8125rem;
 	color: var(--color-text-tertiary);
+	line-height: 1.4;
 }
 
 .legendList {
@@ -87,25 +114,25 @@
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 8px;
 }
 
 .legendItem {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	font-size: 0.75rem;
+	gap: 10px;
+	font-size: 0.8125rem;
 	color: var(--color-text-primary);
-	line-height: 1.3;
-	padding: 6px 8px;
+	line-height: 1.4;
+	padding: 8px 10px;
 	border-radius: var(--radius-md);
 	background: var(--color-bg-primary);
 	border: 1px solid var(--color-border-default);
 }
 
 .legendSwatch {
-	width: 14px;
-	height: 14px;
+	width: 16px;
+	height: 16px;
 	border-radius: 3px;
 	border: 1px solid rgba(0, 0, 0, 0.2);
 	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
@@ -114,6 +141,9 @@
 
 .legendLabel {
 	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .drawButton {
@@ -167,6 +197,19 @@
 	box-shadow: var(--shadow-md);
 	max-width: 260px;
 	z-index: 25;
+	transition: right var(--transition-base);
+}
+
+/* Shift hint panel left when results panel is open on desktop */
+.toolbarHint.resultsPanelOpen {
+	right: 432px; /* 360px panel + 16px gap + 56px for draw controls */
+}
+
+@media (max-width: 1024px) {
+	/* On tablet and mobile, keep hint at edge since panel overlays */
+	.toolbarHint.resultsPanelOpen {
+		right: 72px;
+	}
 }
 
 .toolbarHintText {
@@ -636,19 +679,25 @@
 
 @media (max-width: 480px) {
 	.viewpointButtons {
-		gap: 2px; /* Tighter spacing on very small screens */
+		gap: 4px; /* Maintain reasonable spacing on small screens */
 	}
 
+	/* Maintain minimum 44x44px touch targets for accessibility */
 	.viewpointBtn,
 	.viewpointToggle,
 	.viewpointCapture {
-		width: 28px;
-		height: 28px;
-		font-size: 0.75rem;
+		width: 44px;
+		height: 44px;
+		font-size: 0.875rem;
+		/* Use flex to center content in larger touch target */
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.drawButton {
-		width: 32px;
-		height: 32px;
+		width: 44px;
+		height: 44px;
+		font-size: 1.25rem;
 	}
 }
