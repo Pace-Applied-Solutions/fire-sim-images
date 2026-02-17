@@ -819,6 +819,34 @@ Update this section after each issue or change.
       - `apps/api/src/functions/nvisWmsProxy.ts` (retry on transient errors)
       - `apps/web/src/utils/mapCapture.ts` (error-resilient source loading)
     - **Testing:** All TypeScript builds passing (api, web)
+  - **Scenario URL Sharing and Refresh Safety:** Implemented URL parameter-based scenario sharing that makes the app refresh-safe and enables collaborative sharing
+    - **Problem:** Users could not share scenarios, bookmark states, or recover from accidental page refreshes. All scenario data was lost on reload.
+    - **Solution:**
+      1. **API client enhancement:** Added `getScenario(scenarioId)` method to fetch complete scenario metadata from blob storage
+      2. **URL synchronization hook:** Created `useScenarioUrl` hook that:
+         - Loads scenario from `?scenario=<id>` URL parameter on mount
+         - Restores full state: perimeter, geoContext, inputs, and generated images
+         - Updates URL when new scenario is generated (creates browser history entry)
+         - Handles errors gracefully (shows toast, removes invalid parameters)
+         - Prevents circular updates and duplicate loads
+      3. **State hydration:** Hook restores all scenario data into Zustand store, including:
+         - Fire perimeter (GeoJSON polygon)
+         - Scenario inputs (weather, fire behavior)
+         - Geographic context (vegetation, terrain)
+         - Generation results (images, status, metadata)
+    - **User benefits:**
+      - Share scenarios via URL with colleagues
+      - Bookmark scenarios for later reference
+      - Recover from accidental page refresh
+      - Navigate between scenarios using browser back/forward
+      - All scenario data persists across sessions
+    - **Files modified:**
+      - `apps/web/src/services/generationApi.ts` (added `getScenario` method)
+      - `apps/web/src/hooks/useScenarioUrl.ts` (new hook for URL synchronization)
+      - `apps/web/src/pages/ScenarioPage.tsx` (integrated hook)
+      - `apps/web/src/hooks/__tests__/useScenarioUrl.test.ts` (comprehensive unit tests)
+    - **Documentation:** Added `docs/current_state/scenario_url_sharing.md` with complete feature documentation
+    - **Testing:** Unit tests cover successful loads, error handling, and edge cases
 
 ## 14. Change Control Process
 
