@@ -897,6 +897,12 @@ Update this section after each issue or change.
     - **Testing:** All 29 tests pass. Manual testing confirms panel now opens for each generation.
     - **Impact:** Restores proper panel opening behavior while preserving the anti-refresh optimizations from PR #127.
 
+  - **Prompt Lab: Vegetation Overlay Labels (Feb 17, 2026):**
+    - **Intent:** Add visible labels to vegetation overlay screenshots in Prompt Lab so that AI prompts can better understand where and what kind of vegetation is present
+    - **Scope:** Implement contiguous block detection and labeling for vegetation overlay, with toggle control in Prompt Lab UI
+    - **Issue:** [GitHub Issue - Prompt Lab: Vegetation Overlay Labels]
+    - **Date:** February 17, 2026
+
   - **Results Panel: Single Scroll Reasoning UX (Feb 17, 2026):**
     - **Problem addressed:** The model reasoning UI was sticky and scrollable inside the results panel, creating a floating overlay and multiple nested scroll areas that made reading and interacting with results difficult.
     - **Solution:** Removed sticky positioning and internal scrolling from the reasoning panel so it flows inline with the results content and the results panel remains the only scroll container.

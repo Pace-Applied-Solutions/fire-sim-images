@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { useLabStore } from '../../store/labStore';
 import type { LabReferenceImage } from '../../store/labStore';
+import { renderVegetationLabels } from '../../utils/vegetationLabelRenderer';
 import styles from './LabMapCanvas.module.css';
 
 interface LabMapCanvasProps {
@@ -18,6 +19,7 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
   const [isCapturing, setIsCapturing] = useState(false);
   const addReferenceImage = useLabStore((s) => s.addReferenceImage);
   const captureVegetationScreenshot = useAppStore((s) => s.captureVegetationScreenshot);
+  const showVegetationLabels = useLabStore((s) => s.showVegetationLabels);
 
   /**
    * Capture a clean map screenshot (no UI chrome).
@@ -82,7 +84,7 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
 
   /**
    * Capture vegetation overlay screenshot.
-   * Uses the existing captureVegetationScreenshot function.
+   * Uses the existing captureVegetationScreenshot function and optionally adds labels.
    */
   const handleVegetationCapture = useCallback(async () => {
     if (!captureVegetationScreenshot) {
@@ -100,10 +102,13 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
         return;
       }
 
+      // Optionally add labels based on toggle setting
+      const labeledDataUrl = await renderVegetationLabels(dataUrl, showVegetationLabels);
+
       // Add to reference images
       const image: LabReferenceImage = {
         id: crypto.randomUUID(),
-        dataUrl,
+        dataUrl: labeledDataUrl,
         label: `Vegetation Overlay ${new Date().toLocaleTimeString()}`,
         type: 'vegetation_overlay',
         included: true,
@@ -115,7 +120,7 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
     } finally {
       setIsCapturing(false);
     }
-  }, [captureVegetationScreenshot, addReferenceImage]);
+  }, [captureVegetationScreenshot, addReferenceImage, showVegetationLabels]);
 
   return (
     <div className={styles.container}>

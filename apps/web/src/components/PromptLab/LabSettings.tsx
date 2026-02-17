@@ -12,9 +12,11 @@ export const LabSettings: React.FC = () => {
   const seed = useLabStore((s) => s.seed);
   const imageSize = useLabStore((s) => s.imageSize);
   const selectedViewpoint = useLabStore((s) => s.selectedViewpoint);
+  const showVegetationLabels = useLabStore((s) => s.showVegetationLabels);
   const setSeed = useLabStore((s) => s.setSeed);
   const setImageSize = useLabStore((s) => s.setImageSize);
   const setSelectedViewpoint = useLabStore((s) => s.setSelectedViewpoint);
+  const setShowVegetationLabels = useLabStore((s) => s.setShowVegetationLabels);
 
   const viewpoints: ViewPoint[] = [
     'aerial',
@@ -81,6 +83,18 @@ export const LabSettings: React.FC = () => {
             </option>
           ))}
         </select>
+      </div>
+
+      <div className={styles.settingRow}>
+        <label className={styles.label}>
+          <input
+            type="checkbox"
+            checked={showVegetationLabels}
+            onChange={(e) => setShowVegetationLabels(e.target.checked)}
+            className={styles.checkbox}
+          />
+          <span className={styles.checkboxLabel}>Show Vegetation Labels</span>
+        </label>
       </div>
     </div>
   );
