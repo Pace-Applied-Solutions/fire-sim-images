@@ -147,13 +147,16 @@ function generateWindDescription(windSpeed: number, windDirection: string): stri
 }
 
 /**
- * Calculates fire dimensions from perimeter bounding box.
- * Returns area in hectares and extent in kilometres (N-S and E-W).
+ * Calculates fire dimensions and geometry from perimeter.
+ * Returns area in hectares, extent in kilometres (N-S and E-W), shape, aspect ratio, and orientation.
  */
 function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
   areaHectares: number;
   extentNorthSouthKm: number;
   extentEastWestKm: number;
+  shape: string;
+  aspectRatio: number;
+  primaryAxis?: string;
 } {
   // Calculate area in square metres, convert to hectares
   const areaM2 = area(perimeter);
@@ -179,10 +182,47 @@ function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
   const extentNorthSouthKm = latDiff * kmPerDegreeLat;
   const extentEastWestKm = lngDiff * kmPerDegreeLng;
 
+  // Calculate aspect ratio (longest dimension / shortest dimension)
+  const longerExtent = Math.max(extentNorthSouthKm, extentEastWestKm);
+  const shorterExtent = Math.min(extentNorthSouthKm, extentEastWestKm);
+  const aspectRatio = shorterExtent > 0 ? longerExtent / shorterExtent : 1.0;
+
+  // Determine shape based on aspect ratio
+  let shape: string;
+  if (aspectRatio < 1.3) {
+    shape = 'roughly circular';
+  } else if (aspectRatio < 2.0) {
+    shape = 'moderately elongated';
+  } else if (aspectRatio < 3.5) {
+    shape = 'elongated';
+  } else {
+    shape = 'very elongated';
+  }
+
+  // Determine primary axis orientation (which direction is longest)
+  let primaryAxis: string | undefined;
+  if (aspectRatio >= 1.3) {
+    // Only specify axis if fire is meaningfully elongated
+    if (extentNorthSouthKm > extentEastWestKm) {
+      // Fire is taller than wide
+      if (aspectRatio >= 2.0) {
+        primaryAxis = 'north-south';
+      }
+    } else {
+      // Fire is wider than tall
+      if (aspectRatio >= 2.0) {
+        primaryAxis = 'east-west';
+      }
+    }
+  }
+
   return {
     areaHectares,
     extentNorthSouthKm,
     extentEastWestKm,
+    shape,
+    aspectRatio,
+    primaryAxis,
   };
 }
 
@@ -221,8 +261,9 @@ function preparePromptData(request: GenerationRequest): PromptData {
   const windDescription = generateWindDescription(inputs.windSpeed, inputs.windDirection);
   const timeOfDayLighting = TIME_OF_DAY_LIGHTING[inputs.timeOfDay];
 
-  // Calculate fire dimensions from perimeter
-  const { areaHectares, extentNorthSouthKm, extentEastWestKm } = calculateFireDimensions(perimeter);
+  // Calculate fire dimensions and geometry from perimeter
+  const { areaHectares, extentNorthSouthKm, extentEastWestKm, shape, aspectRatio, primaryAxis } =
+    calculateFireDimensions(perimeter);
 
   return {
     vegetationDescriptor,
@@ -245,6 +286,9 @@ function preparePromptData(request: GenerationRequest): PromptData {
     fireAreaHectares: areaHectares,
     fireExtentNorthSouthKm: extentNorthSouthKm,
     fireExtentEastWestKm: extentEastWestKm,
+    fireShape: shape,
+    fireAspectRatio: aspectRatio,
+    firePrimaryAxis: primaryAxis,
     locality: geoContext.locality,
   };
 }
