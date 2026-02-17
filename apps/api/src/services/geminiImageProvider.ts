@@ -117,11 +117,15 @@ export class GeminiImageProvider implements ImageGenerationProvider {
           'Tree canopy and bushland appear as darker green textured patches with visible individual tree crowns. ' +
           'Bare earth, fire breaks, and cleared land appear as pale brown or beige. ' +
           'Roads appear as thin grey or dark lines, and buildings appear as small rectangular light-coloured shapes with visible rooftops.\n\n' +
+          'SCALE AND EXTENT: This reference image shows the FULL extent of the fire area. ' +
+          'The entire visible landscape in this image represents the fire perimeter \u2014 from edge to edge, top to bottom. ' +
+          'When you generate the photorealistic image, the fire (active flames, smoke, and burned areas) must occupy this ENTIRE visible extent. ' +
+          'Do not treat this as showing just a small portion \u2014 this is the complete fire footprint.\n\n' +
           'Step 1: Study the terrain visualisation carefully \u2014 note the exact shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body.\n\n' +
           'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera from the same angle and field of view. ' +
           'Replace the map rendering style with photorealistic textures \u2014 real eucalyptus trees, real Australian bush vegetation, real grass, real soil, and a real sky with natural lighting and atmospheric haze. ' +
           'The spatial layout must be identical to the reference.\n\n' +
-          'Step 3: Overlay the following fire scenario onto this faithful landscape rendering:\n\n' +
+          'Step 3: Overlay the following fire scenario onto this faithful landscape rendering, ensuring the fire fills the entire extent shown:\n\n' +
           prompt;
 
         parts.push({

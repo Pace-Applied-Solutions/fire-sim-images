@@ -139,13 +139,13 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.5.0).
+ * Default prompt template (v1.6.0).
  * Structured template for generating photorealistic bushfire scenario prompts.
- * Updated to include locality context for better geographic understanding.
+ * Updated to include fire shape, aspect ratio, and orientation for improved geometry communication.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.5.0',
+  version: '1.6.0',
   sections: {
     // Step 1 — Establish the photographic style and intent (Gemini best practice:
     // provide context, use camera/lens language, describe purpose)
@@ -194,18 +194,27 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
           ? getFlameHeightQualifier(data.explicitFlameHeightM)
           : data.intensityDescription.descriptor;
 
-      // Format fire size information
+      // Format fire size and geometry information
       const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares`;
       const extentDesc = `spanning ${data.fireExtentNorthSouthKm.toFixed(2)} kilometres from north to south and ${data.fireExtentEastWestKm.toFixed(2)} kilometres from east to west`;
+
+      // Shape description with orientation when applicable
+      let shapeDesc = `The fire perimeter has a ${data.fireShape} shape`;
+      if (data.firePrimaryAxis) {
+        shapeDesc += `, oriented primarily ${data.firePrimaryAxis}`;
+      }
+      shapeDesc += `.`;
 
       return (
         `Then, add the fire. A ${data.fireStage} is burning through the vegetation. ` +
         `${qualifier}. ` +
         `${flameDesc} with ${data.smokeDescription}.${rosDesc} ` +
         `The head fire is spreading ${data.spreadDirection}, driven by ${data.windDescription}. ` +
-        `${areaDesc}, ${extentDesc}. ` +
+        `${areaDesc}, ${extentDesc}. ${shapeDesc} ` +
         `CRITICAL: The fire must fill the entire mapped area — this is not a small fire, but an incident of this specific scale. ` +
+        `Match the fire perimeter's shape and orientation precisely. ` +
         `The active fire edge, smoke, and burned areas should occupy the full extent of the landscape shown in the reference imagery. ` +
+        `If the fire is elongated in one direction, show that elongation clearly. ` +
         `Do NOT show any red polygon outline or boundary markers — the fire itself replaces any drawn perimeter lines.`
       );
     },
