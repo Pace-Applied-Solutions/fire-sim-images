@@ -196,14 +196,14 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       return (
         `Reference imagery context: You have access to a 3D interactive map (Google Maps style) displaying this specific location. ` +
         `The map shows both overhead (bird's-eye) and ground-level street view perspectives of the landscape. ` +
-        `The reference map indicates the fire extent and perimeter for this scenario. ` +
+        `A polygon overlay on the reference map shows the fire's shape and location—this is a reference tool for you to understand the fire extent, not a visual element to render in the output image. ` +
         `The fire in the generated image must: ` +
         `(1) cover ${areaText}, ` +
         `(2) span ${extentNsText} and ${extentEwText}, ` +
         `(3) form an ${data.fireShape} pattern. ` +
         `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference map, ` +
         `with the fire (flames, smoke, and burned areas) occupying the complete specified extent. ` +
-        `DO NOT include any map overlays, UI elements, or reference markers in the output — render only the natural landscape with fire.`
+        `Render only the natural landscape with fire—omit all map overlays, UI elements, and reference markers from the output.`
       );
     },
 

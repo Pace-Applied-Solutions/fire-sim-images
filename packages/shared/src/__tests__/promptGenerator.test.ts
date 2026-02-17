@@ -338,11 +338,11 @@ describe('Prompt Generator', () => {
         // Should NOT contain references to "red polygon" which confused the model
         expect(text.toLowerCase()).not.toContain('red polygon');
 
-        // Should NOT contain language about showing/not showing polygon outline
-        // (negative instructions can confuse AI models)
+        // Should NOT contain the confusing "polygon outline" phrase
         expect(text.toLowerCase()).not.toContain('polygon outline');
 
-        // Should emphasize natural fire boundaries instead
+        // May mention "polygon" once as a reference tool (acceptable)
+        // but should emphasize natural fire boundaries
         expect(text.toLowerCase()).toContain('flames');
         expect(text.toLowerCase()).toContain('smoke');
         expect(text.toLowerCase()).toContain('burned');
