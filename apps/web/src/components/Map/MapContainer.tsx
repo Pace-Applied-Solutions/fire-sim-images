@@ -8,7 +8,7 @@ import type { Feature, Polygon } from 'geojson';
 import type { FirePerimeter, ViewPoint } from '@fire-sim/shared';
 import { useAppStore } from '../../store/appStore';
 import { useToastStore } from '../../store/toastStore';
-import { captureViewpointScreenshots, captureVegetationScreenshot } from '../../utils/mapCapture';
+import { captureViewpointScreenshots, captureVegetationScreenshot, captureCurrentView, captureAerialOverview } from '../../utils/mapCapture';
 import {
   MAPBOX_TOKEN,
   DEFAULT_CENTER,
@@ -118,7 +118,10 @@ export const MapContainer = () => {
   const setAppPerimeter = useAppStore((s) => s.setPerimeter);
   const setState = useAppStore((s) => s.setState);
   const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
+  const setCaptureCurrentView = useAppStore((s) => s.setCaptureCurrentView);
+  const setCaptureAerialOverview = useAppStore((s) => s.setCaptureAerialOverview);
   const setCaptureVegetationScreenshot = useAppStore((s) => s.setCaptureVegetationScreenshot);
+  const setToggleVegetationOverlay = useAppStore((s) => s.setToggleVegetationOverlay);
   const setVegetationLegendItems = useAppStore((s) => s.setVegetationLegendItems);
   const setHandleLocationSelect = useAppStore((s) => s.setHandleLocationSelect);
   const setHandleGeolocationRequest = useAppStore((s) => s.setHandleGeolocationRequest);
@@ -132,10 +135,15 @@ export const MapContainer = () => {
   }, []);
 
   // Toggle NVIS national vegetation overlay visibility
+  // Read actual layer visibility to ensure state stays in sync
   const toggleVegetationOverlay = useCallback(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer('nvis-vegetation-layer')) return;
-    const next = !showVegetation;
+    
+    // Always read the actual layer visibility instead of relying on state
+    const currentVisibility = map.getLayoutProperty('nvis-vegetation-layer', 'visibility') === 'visible';
+    const next = !currentVisibility;
+    
     map.setLayoutProperty('nvis-vegetation-layer', 'visibility', next ? 'visible' : 'none');
     setShowVegetation(next);
     if (!next) {
@@ -143,7 +151,15 @@ export const MapContainer = () => {
       setVegLegendItems([]);
       setVegLegendError(null);
     }
-  }, [showVegetation]);
+  }, []);
+
+  // Register toggleVegetationOverlay in appStore so LabMapCanvas can use it
+  useEffect(() => {
+    setToggleVegetationOverlay(() => toggleVegetationOverlay);
+    return () => {
+      setToggleVegetationOverlay(null);
+    };
+  }, [toggleVegetationOverlay, setToggleVegetationOverlay]);
 
   /**
    * Handle click-to-identify on the vegetation overlay.
@@ -922,6 +938,8 @@ export const MapContainer = () => {
   useEffect(() => {
     if (!isMapLoaded || !metadata) {
       setCaptureMapScreenshots(null);
+      setCaptureCurrentView(null);
+      setCaptureAerialOverview(null);
       setCaptureVegetationScreenshot(null);
       return;
     }
@@ -940,6 +958,23 @@ export const MapContainer = () => {
       );
     };
 
+    const currentViewFn = async (): Promise<string> => {
+      const map = mapRef.current;
+      if (!map) return '';
+
+      return captureCurrentView(map);
+    };
+
+    const aerialFn = async (): Promise<string> => {
+      const map = mapRef.current;
+      if (!map) return '';
+
+      return captureAerialOverview(map, {
+        centroid: metadata.centroid,
+        bbox: metadata.bbox,
+      });
+    };
+
     const vegCaptureFn = async (): Promise<string | null> => {
       const map = mapRef.current;
       if (!map) return null;
@@ -951,13 +986,17 @@ export const MapContainer = () => {
     };
 
     setCaptureMapScreenshots(captureFn);
+    setCaptureCurrentView(currentViewFn);
+    setCaptureAerialOverview(aerialFn);
     setCaptureVegetationScreenshot(vegCaptureFn);
 
     return () => {
       setCaptureMapScreenshots(null);
+      setCaptureCurrentView(null);
+      setCaptureAerialOverview(null);
       setCaptureVegetationScreenshot(null);
     };
-  }, [isMapLoaded, metadata, setCaptureMapScreenshots, setCaptureVegetationScreenshot]);
+  }, [isMapLoaded, metadata, setCaptureMapScreenshots, setCaptureCurrentView, setCaptureAerialOverview, setCaptureVegetationScreenshot]);
 
   // Fly to viewpoint preset
   const flyToViewpoint = useCallback(

@@ -3,7 +3,6 @@
  * Converts structured scenario data into detailed, multi-perspective prompts for AI image generation.
  */
 
-import crypto from 'node:crypto';
 import area from '@turf/area';
 import bbox from '@turf/bbox';
 import type { GenerationRequest, ViewPoint } from '../types.js';
@@ -229,6 +228,7 @@ function preparePromptData(request: GenerationRequest): PromptData {
     VEGETATION_DESCRIPTORS[geoContext.vegetationType] || geoContext.vegetationType.toLowerCase();
 
   const terrainDescription = generateTerrainDescription(geoContext);
+  const terrainConfidence = geoContext.confidence;
   const nearbyFeatures = generateNearbyFeatures(geoContext);
   const intensityDescription = INTENSITY_VISUALS[inputs.intensity];
   const fireStage = FIRE_STAGE_DESCRIPTIONS[inputs.fireStage];
@@ -256,7 +256,9 @@ function preparePromptData(request: GenerationRequest): PromptData {
     vegetationType: effectiveVegType,
     vegetationDetails,
     vegetationDescriptor,
+    vegetationTypes: geoContext.vegetationTypes || [],
     terrainDescription,
+    terrainConfidence,
     elevation: geoContext.elevation.mean,
     nearbyFeatures,
     fireStage,
@@ -288,7 +290,7 @@ function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: Vi
   // for clarity and independent interpretation by the model
   const sections = [
     template.sections.style,
-    template.sections.behaviorPrinciples,
+    template.sections.behaviorPrinciples(data),
     template.sections.referenceImagery(data),
     template.sections.locality(data),
     template.sections.terrain(data),
@@ -319,7 +321,7 @@ export function generatePrompts(
   request: GenerationRequest,
   template: PromptTemplate = DEFAULT_PROMPT_TEMPLATE
 ): PromptSet {
-  const promptSetId = crypto.randomUUID();
+  const promptSetId = getRandomUuid();
   const data = preparePromptData(request);
   const prompts: GeneratedPrompt[] = [];
 
@@ -349,4 +351,52 @@ export function generatePrompts(
     prompts,
     createdAt: new Date().toISOString(),
   };
+}
+
+export function generatePromptSections(
+  request: GenerationRequest,
+  viewpoint: ViewPoint,
+  template: PromptTemplate = DEFAULT_PROMPT_TEMPLATE
+): Record<
+  | 'style'
+  | 'behaviorPrinciples'
+  | 'referenceImagery'
+  | 'locality'
+  | 'terrain'
+  | 'features'
+  | 'vegetation'
+  | 'fireGeometry'
+  | 'fireBehavior'
+  | 'weather'
+  | 'perspective'
+  | 'safety',
+  string
+> {
+  const data = preparePromptData(request);
+
+  return {
+    style: template.sections.style,
+    behaviorPrinciples: template.sections.behaviorPrinciples(data),
+    referenceImagery: template.sections.referenceImagery(data),
+    locality: template.sections.locality(data),
+    terrain: template.sections.terrain(data),
+    features: template.sections.features(data),
+    vegetation: template.sections.vegetation(data),
+    fireGeometry: template.sections.fireGeometry(data),
+    fireBehavior: template.sections.fireBehavior(data),
+    weather: template.sections.weather(data),
+    perspective: template.sections.perspective(viewpoint),
+    safety: template.sections.safety,
+  };
+}
+
+function getRandomUuid(): string {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  const timePart = Date.now().toString(16);
+  const randPart = Math.random().toString(16).slice(2, 10);
+  const extraPart = Math.random().toString(16).slice(2, 10);
+  return `${timePart}-${randPart}-${extraPart}`;
 }

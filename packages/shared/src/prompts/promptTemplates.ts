@@ -114,7 +114,7 @@ export const VIEWPOINT_PERSPECTIVES: Record<ViewPoint, string> = {
   helicopter_above:
     'Elevated aerial photograph from directly above the fire at 200 metres altitude, capturing the full extent of the fire perimeter and smoke plume',
   ground_north:
-    "You're standing on the ground to the north of the fire, looking south towards the approaching flame front. Ground-level photograph taken at eye level, approximately 500 metres from the fire edge",
+    'Ground-level photograph from the north side of the fire, looking toward the fire area',
   ground_south:
     "You're standing on the ground to the south of the fire, looking north across the burned area towards the active fire line. Ground-level photograph showing the burned area with fire visible in the distance",
   ground_east:
@@ -157,35 +157,32 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       'Every landform, ridge line, valley contour, and visible road or clearing must be faithfully preserved. ' +
       'Any man-made structures visible in satellite imagery must appear in the same position and scale.',
 
-    // Section 2: Fire behaviour principles (foundational reference for all scenarios)
-    behaviorPrinciples:
-      'FIRE BEHAVIOUR FUNDAMENTALS:\n\n' +
-      'Wildfires exhibit distinct structural and visual characteristics based on wind, terrain, and fuel. ' +
-      'Understand and depict these dynamics accurately in the generated image.\n\n' +
-      'HEAD FIRE (active, intense front): Flames lean forward into unburned fuel, driven by wind or upslope. ' +
-      'The tallest, fastest-spreading edge. Characterized by forward-angled flames and maximum heat release.\n\n' +
-      'FLANKS (sides): Slower lateral spread. Lower flames, less continuous fire. Reduced intensity compared to head.\n\n' +
-      'HEEL/TAIL (rear): Backing fire opposite the head. Often smoldering, low flames, slow progression or stagnant. ' +
-      'May self-extinguish if moving against wind or steep downslope.\n\n' +
-      'WIND EFFECTS:\n' +
-      '- Winds below 10 km/h: fire spreads nearly evenly in all directions (circular growth)\n' +
-      '- Winds 12-15 km/h: critical threshold where rate-of-spread (ROS) accelerates dramatically\n' +
-      '- Strong winds (30+ km/h): elliptical fire shape with narrow, intense head and elongated flanks\n' +
-      '- Flame behavior: flames angle forward and close to ground under high wind, driving rapid spread\n' +
-      '- Spotting: embers lofted downwind, creating spot fires ahead (forest fires can spot 2+ km away; extreme conditions up to 30 km)\n\n' +
-      'TERRAIN EFFECTS:\n' +
-      '- Upslope fires: flames race uphill with towering height (every 10° slope roughly doubles ROS)\n' +
-      '- Downslope fires: flames reduce intensity (50% slower than flat ground), shorter flame, more smoldering\n' +
-      '- Ridge/valley effects: canyons can create chimney effects; valleys trap smoke\n\n' +
-      'FUEL-DEPENDENT BEHAVIOR:\n' +
-      '- Grassland: rapid transient fires, moderate flames (3-5m), lower heat release\n' +
-      '- Forest (dry fuel): sustained intense flames (10-20m+), potential crown fire above 15m\n' +
-      '- Fuel load determines flame height: higher load equals taller flames and greater intensity\n' +
-      '- Moisture suppresses behavior; critically dry fuels enable extreme spread and intensity\n\n' +
-      'SMOKE & INTENSITY INDICATORS:\n' +
-      '- Low intensity: light wispy smoke, vertical flame orientation, minimal forward tilt\n' +
-      '- High intensity: towering pyrocumulus clouds, horizontal flame angle, massive smoke columns, dark overhead\n' +
-      '- Crown fire: flames engulf tree canopy (15m+), appear uniform and violent, extreme smoke production',
+    // Section 2: Fire behaviour principles (scenario-specific, intensity-driven)
+    behaviorPrinciples: (data) => {
+      const intensityLevel = data.intensityDescription.descriptor.toLowerCase();
+      
+      if (intensityLevel.includes('low')) {
+        return `Fire Behavior (Low Intensity): This fire exhibits low intensity characteristics—flames are modest in height, ` +
+          `spread is slow and controlled, and the fire structure is well-defined with distinct head, flanks, and heel. ` +
+          `Flames maintain a vertical orientation with minimal forward lean. ` +
+          `The fire front advances steadily but without aggressive spread. Smoke rises with less turbulence.`;
+      } else if (intensityLevel.includes('moderate')) {
+        return `Fire Behavior (Moderate Intensity): This fire exhibits moderate intensity—sustained flames with clear directional spread, ` +
+          `visible but manageable crown involvement, and steady flame height. ` +
+          `The head fire is defined with forward-leaning flames; flanks spread laterally at reduced intensity. ` +
+          `Smoke plumes rise with lateral drift driven by wind.`;
+      } else if (intensityLevel.includes('high')) {
+        return `Fire Behavior (High Intensity): This fire exhibits high intensity—tall flames with strong forward angle, ` +
+          `rapid spread along the fire front, extensive crown fire development, and dramatic smoke production. ` +
+          `The head fire dominates visually with intense flame activity; flanks spread with elevated flames. ` +
+          `Significant spotting activity and vigorous smoke columns darken the sky.`;
+      } else {
+        return `Fire Behavior (Extreme Intensity): This fire exhibits extreme, violent behavior—explosively tall flames, ` +
+          `explosive spread with minimal obstacles, near-total crown consumption, and extreme spotting. ` +
+          `The fire spreads with extreme speed in all directions relative to wind and slope. ` +
+          `Smoke rises as a massive, dark column visible from great distances.`;
+      }
+    },
 
     // Section 3: Reference imagery and fire extent specification
     referenceImagery: (data) => {
@@ -194,16 +191,21 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       const extentEwText = `${data.fireExtentEastWestKm.toFixed(2)} km east–west`;
 
       return (
-        `Reference imagery context: You have access to a 3D interactive map (Google Maps style) displaying this specific location. ` +
-        `The map shows both overhead (bird's-eye) and ground-level street view perspectives of the landscape. ` +
-        `A polygon overlay on the reference map shows the fire's shape and location—this is a reference tool for you to understand the fire extent, not a visual element to render in the output image. ` +
+        `Reference imagery context: You have been provided three reference images that together define the fire scenario. ` +
+        `IMAGE 1 (Perspective View): This shows the exact viewing angle and perspective that the generated output must match. ` +
+        `Convert this 3D terrain visualisation into a photorealistic photograph from the same angle and field of view. ` +
+        `This is the most important reference — the output image must look like a real photograph taken from this exact camera position. ` +
+        `IMAGE 2 (Aerial Overview): A top-down aerial view showing the full fire perimeter from directly above. ` +
+        `The perimeter boundary overlay shows the fire's exact extent — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
+        `IMAGE 3 (Vegetation Map): A vegetation classification overlay showing the spatial distribution of vegetation types across the fire area. ` +
+        `Use this to place the correct vegetation in corresponding areas of the generated image. ` +
         `The fire in the generated image must: ` +
         `(1) cover ${areaText}, ` +
         `(2) span ${extentNsText} and ${extentEwText}, ` +
-        `(3) form an ${data.fireShape} pattern. ` +
-        `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference map, ` +
-        `with the fire (flames, smoke, and burned areas) occupying the complete specified extent. ` +
-        `Render only the natural landscape with fire—omit all map overlays, UI elements, and reference markers from the output.`
+        `(3) follow the exact perimeter shape shown in the aerial overview — match the irregular boundaries precisely. ` +
+        `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference images, ` +
+        `with the fire (flames, smoke, and burned areas) occupying the complete specified extent and respecting the perimeter boundaries. ` +
+        `Render only the natural landscape with fire — omit all map overlays, UI elements, and reference markers from the output.`
       );
     },
 
@@ -215,18 +217,33 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       
       return (
         `Geographic context: ${localityText} ` +
-        `The elevation is approximately ${data.elevation} metres above sea level. ` +
-        `Preserve all topographic features exactly as they appear in the geographic reference — hills, gullies, ridgelines, flat plateaus, and valleys. ` +
         `The generated image must be recognizable as this specific location based on satellite imagery and the reference map provided.`
       );
     },
 
     // Section 5: Establish terrain characteristics
-    terrain: (data) =>
-      `Terrain: ${data.terrainDescription}. ` +
-      `The landscape is characterized by this specific slope profile, with corresponding exposure and water drainage patterns. ` +
-      `Match the slope visible in the reference 3D map exactly — every hill, valley, and ridge shown must be faithfully rendered. ` +
-      `Show the natural undulation and slopes of the specific region.`,
+    terrain: (data) => {
+      const mapInstruction =
+        `Study the contour lines in the reference map carefully: closer lines indicate steeper terrain, wider spacing indicates flatter areas. ` +
+        `Match the slope visible in the reference 3D map exactly — every hill, valley, and ridge shown must be faithfully rendered. ` +
+        `Preserve all topographic features exactly as they appear in the geographic reference — hills, gullies, ridgelines, flat plateaus, and valleys.`;
+
+      // Always include the core instruction as a base
+      const baseInstruction = `Terrain: ${mapInstruction}`;
+
+      // If we have a terrain description (from slope data), prepend it; otherwise just use base
+      if (data.terrainDescription && data.terrainDescription.trim().length > 0) {
+        return (
+          `Terrain: The landscape features ${data.terrainDescription}. ` +
+          `The landscape is characterized by this specific slope profile, with corresponding exposure and water drainage patterns. ` +
+          `${mapInstruction} ` +
+          `Show the natural undulation and slopes of the specific region.`
+        );
+      }
+
+      // Fallback: just the base instruction when no specific terrain data is available
+      return `${baseInstruction} Show the natural undulation and slopes as depicted in the map.`;
+    },
 
     // Section 6: Establish nearby features and landmarks
     features: (data) =>
@@ -238,14 +255,41 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     // Section 7: Establish vegetation structure and characteristics
     vegetation: (data) => {
       const details = data.vegetationDetails;
+      const parts: string[] = [];
+
+      // Add primary vegetation type
+      parts.push(`Vegetation type: ${data.vegetationType}.`);
+
+      // Add vegetation diversity if multiple types detected across perimeter
+      if (data.vegetationTypes && data.vegetationTypes.length > 1) {
+        parts.push(
+          `The fire burns through multiple vegetation zones: ${data.vegetationTypes.join(', ')}. ` +
+          `Depict the transition between these vegetation types as the fire spreads across the landscape.`
+        );
+      }
+
+      // Only include known values, omit 'unknown' entries
+      if (details.canopyHeight !== 'unknown') {
+        parts.push(`Canopy height: ${details.canopyHeight}.`);
+      }
+      if (details.canopyType !== 'unknown') {
+        parts.push(`Canopy composition: ${details.canopyType}.`);
+      }
+      if (details.understorey !== 'unknown') {
+        parts.push(`Understorey structure: ${details.understorey}.`);
+      }
+      if (details.groundFuel !== 'unknown') {
+        parts.push(`Ground fuel layer: ${details.groundFuel}.`);
+      }
+      if (details.fuelLoad !== 'unknown') {
+        parts.push(`Fuel load characteristics: ${details.fuelLoad}.`);
+      }
+      if (details.flammability !== 'unknown') {
+        parts.push(`Flammability profile: ${details.flammability}.`);
+      }
+
       return (
-        `Vegetation type: ${data.vegetationType}. ` +
-        `Canopy height: ${details.canopyHeight}. ` +
-        `Canopy composition: ${details.canopyType}. ` +
-        `Understorey structure: ${details.understorey}. ` +
-        `Ground fuel layer: ${details.groundFuel}. ` +
-        `Fuel load characteristics: ${details.fuelLoad}. ` +
-        `Flammability profile: ${details.flammability}. ` +
+        parts.join(' ') + ' ' +
         `Every vegetation component must match the specified type exactly as shown in the reference map — do not substitute or generalize.`
       );
     },
@@ -254,15 +298,16 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     fireGeometry: (data) => {
       const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares.`;
       const extentDesc = `It spans ${data.fireExtentNorthSouthKm.toFixed(2)} km from north to south and ${data.fireExtentEastWestKm.toFixed(2)} km from east to west.`;
-      const shapeDesc = `The fire perimeter forms an ${data.fireShape} shape.`;
 
       return (
-        `Fire extent and boundaries: ${areaDesc} ${extentDesc} ${shapeDesc} ` +
-        `CRITICAL: The fire must occupy the ENTIRE mapped area. ` +
-        `The fire's boundaries and extent must be conveyed ENTIRELY through natural features: ` +
+        `Fire extent and boundaries: ${areaDesc} ${extentDesc} ` +
+        `The fire perimeter must follow the exact shape and boundaries shown on the reference map polygon. ` +
+        `Allow natural features (ridgelines, valleys, rivers, vegetation type changes) to guide irregular perimeter edges — the fire boundary is NOT a perfect geometric shape. ` +
+        `CRITICAL: The fire must occupy the ENTIRE mapped area following the polygon boundaries precisely, including any indentations, protrusions, or irregular edges. ` +
+        `The fire's extent must be conveyed ENTIRELY through natural features: ` +
         `active flames define the leading edge, burned and blackened vegetation marks consumed areas, ` +
         `and smoke plumes indicate the fire's full spatial extent. ` +
-        `All active fire edge, burned areas, and smoke must extend across the complete north–south and east–west extent specified. ` +
+        `All active fire edge, burned areas, and smoke must extend to the complete north–south and east–west extent specified. ` +
         `ABSOLUTELY NO UI overlays, outlines, shapes, polygons, markers, lines, or reference indicators from the map may appear in the generated image. ` +
         `The output must be a pure photorealistic landscape photograph showing only natural terrain, vegetation, fire, and smoke — with zero artificial overlays or visual aids.`
       );
@@ -303,7 +348,9 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
 
     // Section 11: Set camera position and framing
     perspective: (viewpoint) =>
-      `Camera position: ${VIEWPOINT_PERSPECTIVES[viewpoint]}.`,
+      `Camera position: Generate the image from the exact same perspective, viewing angle, and field of view as shown in the first reference image (the perspective view). ` +
+      `${VIEWPOINT_PERSPECTIVES[viewpoint]}. ` +
+      `The output photograph must replicate this viewpoint precisely — same camera height, distance from fire, and look direction.`,
 
     // Section 12: Safety constraints and scene composition
     safety:

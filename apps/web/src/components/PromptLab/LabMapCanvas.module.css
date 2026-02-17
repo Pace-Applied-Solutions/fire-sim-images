@@ -1,0 +1,54 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.captureButtons {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.captureButton {
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.captureButton:hover:not(:disabled) {
+  background-color: white;
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.captureButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.captureAllButton {
+  background-color: var(--color-primary, #3b82f6);
+  color: white;
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.captureAllButton:hover:not(:disabled) {
+  background-color: var(--color-primary-dark, #2563eb);
+  border-color: var(--color-primary-dark, #2563eb);
+}

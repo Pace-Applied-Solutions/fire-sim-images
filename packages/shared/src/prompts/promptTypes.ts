@@ -32,7 +32,7 @@ export interface PromptTemplate {
   version: string;
   sections: {
     style: string;
-    behaviorPrinciples: string;
+    behaviorPrinciples: (data: PromptData) => string;
     referenceImagery: (data: PromptData) => string;
     locality: (data: PromptData) => string;
     terrain: (data: PromptData) => string;
@@ -63,7 +63,10 @@ export interface PromptData {
   };
   /** Deprecated: use vegetationDetails instead */
   vegetationDescriptor: string;
+  /** Array of vegetation types detected across the fire footprint (from NVIS sampling) */
+  vegetationTypes: string[];
   terrainDescription: string;
+  terrainConfidence: 'low' | 'medium' | 'high';
   elevation: number;
   nearbyFeatures: string;
   fireStage: string;

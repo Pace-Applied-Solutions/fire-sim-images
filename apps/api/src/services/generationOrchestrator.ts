@@ -325,6 +325,7 @@ export class GenerationOrchestrator {
           const result = await this.imageGenerator.generateImage(anchorPrompt.promptText, {
             seed: request.seed,
             mapScreenshot: anchorMapScreenshot,
+            aerialOverviewScreenshot: request.aerialOverviewScreenshot,
             vegetationMapScreenshot: request.vegetationMapScreenshot,
             vegetationLegendItems: request.vegetationLegendItems,
             vegetationPromptText: vegetationPromptText || undefined,
@@ -450,6 +451,7 @@ export class GenerationOrchestrator {
         request.seed,
         anchorImageData,
         request.mapScreenshots,
+        request.aerialOverviewScreenshot,
         request.vegetationMapScreenshot,
         request.vegetationLegendItems,
         vegetationPromptText || undefined
@@ -751,6 +753,7 @@ export class GenerationOrchestrator {
     seed?: number,
     anchorImage?: Buffer,
     mapScreenshots?: Record<ViewPoint, string>,
+    aerialOverviewScreenshot?: string,
     vegetationMapScreenshot?: string,
     vegetationLegendItems?: Array<{ name: string; color: string }>,
     vegetationPromptText?: string
@@ -787,6 +790,7 @@ export class GenerationOrchestrator {
           referenceImage: !mapScreenshot ? anchorImage : undefined,
           referenceStrength: 0.5, // 50% adherence to reference
           mapScreenshot,
+          aerialOverviewScreenshot,
           vegetationMapScreenshot,
           vegetationLegendItems,
           vegetationPromptText,

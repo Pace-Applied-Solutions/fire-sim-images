@@ -2,6 +2,7 @@ import functions from '@azure/functions';
 import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import crypto from 'node:crypto';
 import type { GeoContext } from '@fire-sim/shared';
+import { queryNvisVegetationContext } from '../services/nvisVegetationService.js';
 
 const { app } = functions;
 
@@ -212,9 +213,33 @@ export async function geodata(
         'low'
       );
 
+    // Query NVIS to get vegetation types across the fire perimeter
+    let vegetationTypes: string[] | undefined;
+    try {
+      const nvisContext = await queryNvisVegetationContext(
+        [centroid.lng, centroid.lat],
+        [0, 0, 0, 0], // bbox unused for NVIS
+        500 // radius in metres
+      );
+      if (nvisContext?.uniqueFormations && nvisContext.uniqueFormations.length > 0) {
+        vegetationTypes = nvisContext.uniqueFormations;
+        context.log('geodata.nvis_query_success', {
+          polygonHash,
+          vegetationCount: vegetationTypes.length,
+          formations: vegetationTypes,
+        });
+      }
+    } catch (nvisError) {
+      context.warn('geodata.nvis_query_failed', {
+        error: (nvisError as Error).message,
+      });
+      // Continue with fallback - NVIS query failure is not critical
+    }
+
     const response: GeoContext = {
       ...selected,
       aspect: selected.aspect,
+      vegetationTypes,
     };
 
     cache.set(polygonHash, response);
@@ -222,6 +247,7 @@ export async function geodata(
       polygonHash,
       dataSource: response.dataSource,
       confidence: response.confidence,
+      vegetationTypesCount: vegetationTypes?.length,
     });
 
     return {
