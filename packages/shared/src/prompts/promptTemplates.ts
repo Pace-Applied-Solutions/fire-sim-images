@@ -139,13 +139,14 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.8.0).
+ * Default prompt template (v1.9.0).
  * Structured template with atomic sections for generating photorealistic bushfire scenario prompts.
- * Version 1.8.0: Added fire behaviour principles section as foundational reference for all image generation.
+ * Version 1.9.0: Clarified polygon outline exclusion - removed all references to visual polygon markers,
+ *                emphasized natural fire boundaries only (flames, smoke, burned areas).
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.8.0',
+  version: '1.9.0',
   sections: {
     // Section 1: Establish photorealistic style and purpose
     style:
@@ -186,22 +187,23 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       '- High intensity: towering pyrocumulus clouds, horizontal flame angle, massive smoke columns, dark overhead\n' +
       '- Crown fire: flames engulf tree canopy (15m+), appear uniform and violent, extreme smoke production',
 
-    // Section 3: Reference imagery and fire perimeter polygon
+    // Section 3: Reference imagery and fire extent specification
     referenceImagery: (data) => {
       const areaText = `${data.fireAreaHectares.toFixed(1)} hectares`;
       const extentNsText = `${data.fireExtentNorthSouthKm.toFixed(2)} km north–south`;
       const extentEwText = `${data.fireExtentEastWestKm.toFixed(2)} km east–west`;
-      
+
       return (
         `Reference imagery context: You have access to a 3D interactive map (Google Maps style) displaying this specific location. ` +
         `The map shows both overhead (bird's-eye) and ground-level street view perspectives of the landscape. ` +
-        `A **red polygon outline is overlaid on the 3D map**, marking the fire perimeter and extent. ` +
-        `This red polygon indicates that the fire: ` +
-        `(1) covers ${areaText}, ` +
-        `(2) spans ${extentNsText} and ${extentEwText}, ` +
-        `(3) forms an ${data.fireShape} pattern. ` +
+        `A polygon overlay on the reference map shows the fire's shape and location—this is a reference tool for you to understand the fire extent, not a visual element to render in the output image. ` +
+        `The fire in the generated image must: ` +
+        `(1) cover ${areaText}, ` +
+        `(2) span ${extentNsText} and ${extentEwText}, ` +
+        `(3) form an ${data.fireShape} pattern. ` +
         `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference map, ` +
-        `with the fire occupying the complete area defined by the red polygon outline.`
+        `with the fire (flames, smoke, and burned areas) occupying the complete specified extent. ` +
+        `Render only the natural landscape with fire—omit all map overlays, UI elements, and reference markers from the output.`
       );
     },
 
@@ -230,7 +232,7 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     features: (data) =>
       `Nearby features: ${data.nearbyFeatures} ` +
       `These landmarks are a critical part of geographic recognition and are visible in the reference map. ` +
-      `They must appear in the correct positions relative to the fire and the red polygon extent. ` +
+      `They must appear in the correct positions relative to the fire extent. ` +
       `Include any visible roads, water features, clearings, or distinctive landforms shown in the reference imagery.`,
 
     // Section 7: Establish vegetation structure and characteristics
@@ -253,13 +255,16 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       const areaDesc = `The fire covers approximately ${data.fireAreaHectares.toFixed(1)} hectares.`;
       const extentDesc = `It spans ${data.fireExtentNorthSouthKm.toFixed(2)} km from north to south and ${data.fireExtentEastWestKm.toFixed(2)} km from east to west.`;
       const shapeDesc = `The fire perimeter forms an ${data.fireShape} shape.`;
-      
+
       return (
-        `Fire extent from reference map: ${areaDesc} ${extentDesc} ${shapeDesc} ` +
-        `The **red polygon outline visible in the reference 3D map** defines the fire's extent boundaries. ` +
-        `CRITICAL: The fire must occupy the ENTIRE mapped area shown by this red polygon. ` +
-        `Do NOT show the polygon outline itself in the generated image — the fire (flames, smoke, burned areas) must replace and fill the polygon boundaries. ` +
-        `All active fire edge, burned areas, and smoke must extend across the complete north–south and east–west extent as marked by the polygon.`
+        `Fire extent and boundaries: ${areaDesc} ${extentDesc} ${shapeDesc} ` +
+        `CRITICAL: The fire must occupy the ENTIRE mapped area. ` +
+        `The fire's boundaries and extent must be conveyed ENTIRELY through natural features: ` +
+        `active flames define the leading edge, burned and blackened vegetation marks consumed areas, ` +
+        `and smoke plumes indicate the fire's full spatial extent. ` +
+        `All active fire edge, burned areas, and smoke must extend across the complete north–south and east–west extent specified. ` +
+        `ABSOLUTELY NO UI overlays, outlines, shapes, polygons, markers, lines, or reference indicators from the map may appear in the generated image. ` +
+        `The output must be a pure photorealistic landscape photograph showing only natural terrain, vegetation, fire, and smoke — with zero artificial overlays or visual aids.`
       );
     },
 
