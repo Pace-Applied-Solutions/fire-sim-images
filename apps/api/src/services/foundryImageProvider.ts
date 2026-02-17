@@ -63,7 +63,7 @@ export class FoundryImageProvider implements ImageGenerationProvider {
       if (base64Data.length > 0) {
         base64Image = base64Data;
         // Prefix the prompt to tell the model to use the reference as a terrain base
-        effectivePrompt = `Transform this satellite/terrain map view into a photorealistic photograph showing the following fire scenario, keeping the exact same terrain, topography, vegetation layout, and camera angle: ${prompt}`;
+        effectivePrompt = `Transform this satellite/terrain map view into a photorealistic photograph as if captured by a real camera with a 28mm lens, showing the following fire scenario, keeping the exact same terrain, topography, vegetation layout, and camera angle: ${prompt} Do not show any of the UI from the map screenshot, including minimap, buttons, or red polygon lines. Adherence to reality exactly like the screenshot map terrain is critical.`;
       }
     }
 

@@ -62,11 +62,12 @@ export class AzureImageProvider implements ImageGenerationProvider {
           'Bare earth, fire breaks, and cleared land appear as pale brown or beige. ' +
           'Roads appear as thin grey or dark lines, and buildings appear as small rectangular light-coloured shapes with visible rooftops. ' +
           'Step 1: Study the terrain visualisation carefully — note the exact shape and position of every hill, ridge, valley, gully, road, clearing, tree canopy outline, bare earth patch, structure, and water body. ' +
-          'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera from the same angle and field of view. ' +
+          'Step 2: Recreate this exact landscape as a photorealistic photograph, as if captured by a real camera with a 28mm lens from the same angle and field of view. ' +
           'Replace the map rendering style with photorealistic textures — real eucalyptus trees, real Australian bush vegetation, real grass, real soil, and a real sky with natural lighting and atmospheric haze. ' +
           'The spatial layout must be identical to the reference. ' +
           'Step 3: Overlay the following fire scenario onto this faithful landscape rendering: ' +
-          prompt;
+          prompt +
+          ' Do not show any of the UI from the map screenshot, including minimap, buttons, or red polygon lines. Adherence to reality exactly like the screenshot map terrain is critical.';
       }
     }
 
