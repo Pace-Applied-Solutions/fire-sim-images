@@ -126,11 +126,6 @@ async function handleSSEGeneration(
       (img) => img.type === 'vegetation_overlay'
     )?.dataUrl;
 
-    // Prepare other reference images (uploaded or generated outputs)
-    const otherImages = body.referenceImages.filter(
-      (img) => img.type !== 'map_screenshot' && img.type !== 'vegetation_overlay'
-    );
-
     // Start generation with thinking text callback
     let lastThinkingText = '';
     const result = await provider.generateImage(body.prompt, {

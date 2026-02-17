@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLabStore } from '../../store/labStore';
-import type { LabReferenceImage, PromptSectionKey } from '../../store/labStore';
+import type { PromptSectionKey } from '../../store/labStore';
 import { labApi } from '../../services/labApi';
 import styles from './GenerateButton.module.css';
 
