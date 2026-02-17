@@ -333,6 +333,8 @@ export class GenerationOrchestrator {
             onThinkingUpdate: (thinkingText: string) => {
               progress.thinkingText = thinkingText;
               progress.updatedAt = new Date().toISOString();
+              // Persist thinking text updates with debouncing to avoid flooding blob storage
+              this.persistProgress(scenarioId, progress);
             },
           });
           const imageGenDuration = imageGenTimer.stop();
@@ -405,6 +407,10 @@ export class GenerationOrchestrator {
           if (result.thinkingText) {
             progress.thinkingText = result.thinkingText;
           }
+          
+          progress.updatedAt = new Date().toISOString();
+          // Persist anchor image progress immediately so polling picks it up
+          this.persistProgress(scenarioId, progress);
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           // Capture thinking text from the error if available
@@ -519,6 +525,11 @@ export class GenerationOrchestrator {
             // status endpoint returns it to the frontend while remaining
             // views are still generating.
             progress.images.push(generatedImage);
+            progress.updatedAt = new Date().toISOString();
+            
+            // Persist progress after each image completes so polling can see
+            // incremental updates even across Function App instance restarts
+            this.persistProgress(scenarioId, progress);
 
             logger.info('Image generated and uploaded', {
               viewpoint,

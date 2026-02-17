@@ -229,9 +229,13 @@ module functionApp './modules/functionApp.bicep' = {
       IMAGE_MODEL_DEPLOYMENT: imageModelDeployment
       IMAGE_MODEL: imageModel
       IMAGE_MODEL_URL: imageModelUrl
-      // Key Vault reference for the API key — the Function App's managed identity
-      // reads the secret at runtime. This avoids storing the key in plain text.
-      IMAGE_MODEL_KEY: !empty(imageModelKey) ? '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/ImageModel--Key/)' : ''
+      // ALWAYS reference the Key Vault secret. The imageModelKeySecret resource
+      // only creates/updates the secret when a new key is provided, but an
+      // existing secret from a prior deploy persists in Key Vault.
+      // Previously, the !empty(imageModelKey) guard set this to '' on redeploys
+      // that didn't pass the key param, which wiped the API key and caused the
+      // Function App to fall back to the mock StableDiffusion provider.
+      IMAGE_MODEL_KEY: '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/ImageModel--Key/)'
     }
   }
 }

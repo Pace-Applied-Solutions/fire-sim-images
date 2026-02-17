@@ -893,6 +893,33 @@ Update this section after each issue or change.
     - **Testing:** All 29 tests pass. Manual testing confirms panel now opens for each generation.
     - **Impact:** Restores proper panel opening behavior while preserving the anti-refresh optimizations from PR #127.
 
+  - **Infrastructure Wipe of IMAGE_MODEL_KEY Breaking Image Generation (Feb 17, 2026):**
+    - **Problem addressed:** After an infrastructure deployment, image generation broke completely. The results panel opened but showed no thinking text and no images. Gallery showed black spaces above entries. Console logs referenced "Stable Diffusion" instead of "Gemini", indicating the mock provider was being used instead of the real Gemini API.
+    - **Root cause:** Infrastructure deployment (`az deployment group create`) set `IMAGE_MODEL_KEY` to empty string because:
+      1. The Bicep template had: `IMAGE_MODEL_KEY: !empty(imageModelKey) ? '@Microsoft.KeyVault(...)' : ''`
+      2. The `imageModelKey` parameter (marked `@secure()`) was not passed during deployment (not committed to source control)
+      3. The conditional set the app setting to `''` instead of preserving the existing value
+      4. `getImageModelConfig()` saw `IMAGE_MODEL` and `IMAGE_MODEL_URL` but empty `IMAGE_MODEL_KEY` → returned `null`
+      5. `ImageGeneratorService` fell back to `StableDiffusionProvider` mock → generated 1x1 black placeholder PNGs with no thinking text
+    - **Solution (immediate):**
+      1. Set `IMAGE_MODEL_KEY` directly on Function App via `az functionapp config appsettings set`
+      2. Restarted Function App to restore Gemini provider
+    - **Solution (permanent):**
+      1. Granted user `richard@thorek.net` Key Vault access policy (get, list, set, delete secrets) on `firesim-dev-kv`
+      2. Created `ImageModel--Key` secret in Key Vault with Gemini API key
+      3. Updated Function App to use Key Vault reference: `@Microsoft.KeyVault(SecretUri=https://firesim-dev-kv.vault.azure.net/secrets/ImageModel--Key/)`
+      4. Modified `infra/main.bicep` to **always** reference Key Vault secret unconditionally (removed `!empty(imageModelKey)` guard that caused the wipe)
+      5. The Key Vault secret now persists across deployments; Bicep always references it even when `imageModelKey` param is not passed
+    - **Files modified:**
+      - `infra/main.bicep` (changed `IMAGE_MODEL_KEY` to always use Key Vault reference)
+    - **Azure resources modified:**
+      - Added Key Vault access policy for `richard@thorek.net` (object ID `e5eea006-7000-4d1b-b934-78bc66c2b474`)
+      - Created `ImageModel--Key` secret in `firesim-dev-kv` Key Vault
+      - Updated `firesim-dev-api` Function App setting to Key Vault reference
+    - **Testing:** Bicep compiles successfully. Function App restarted with Key Vault reference active.
+    - **Impact:** Prevents future infrastructure deployments from wiping the Gemini API key. The secret is now managed in Key Vault and referenced by all deployments, surviving even when the `imageModelKey` param is not passed.
+    - **Lessons learned:** When using `siteConfig.appSettings` in Bicep, settings are **replaced**, not merged. Conditional app settings that default to empty string will wipe existing values. Always use Key Vault references for secrets and ensure the reference is unconditional if the secret should persist across deployments.
+
   - **Bicep IaC: Gemini config variables (infra deploy persistence)**
     - **Problem addressed:** Infrastructure deployment (`az deployment group create`) was overwriting Function App settings because the Bicep template only included old Flux/Foundry variables (`IMAGE_MODEL_ENDPOINT`, `IMAGE_MODEL_DEPLOYMENT`). The Gemini-specific `IMAGE_MODEL`, `IMAGE_MODEL_KEY`, and `IMAGE_MODEL_URL` settings had to be re-applied manually after every deploy.
     - **Solution:**
@@ -904,6 +931,21 @@ Update this section after each issue or change.
       - `infra/main.bicep` (new params, Key Vault secret resource, additional app settings)
       - `infra/parameters/dev.bicepparam` (Gemini model + URL defaults)
     - **Testing:** Bicep compiles successfully
+    - **Bug fix (Feb 17, 2026):** The original `!empty(imageModelKey)` conditional on `IMAGE_MODEL_KEY` set the app setting to `''` (empty string) on redeployments where the key param was not passed. This caused the Function App to fall back to the mock `StableDiffusionProvider`, producing 1x1 black placeholder PNGs instead of real Gemini images. No thinking text was returned, and gallery entries showed black thumbnails. **Fix:** Changed to always use the Key Vault reference (`@Microsoft.KeyVault(SecretUri=...)`) unconditionally. The Key Vault secret persists from the initial deploy; subsequent deploys just reference it. Also restored the live API key via `az functionapp config appsettings set`. Bicep compiles successfully.
+
+  - **Thinking Text and Progress Not Streaming to UI During Generation (Feb 17, 2026):**
+    - **Problem addressed:** After fixing the IMAGE_MODEL_KEY issue, generation completed successfully (images appeared in gallery), but the results panel showed only the placeholder "Model is thinking... this can take 30-90 seconds" message. No actual thinking text streamed to the UI, and no incremental image results appeared during generation. Console logs showed `thinkingText: (none)` for all polling updates.
+    - **Root cause:** The `GenerationOrchestrator` updated `progress.thinkingText` and `progress.images` in the in-memory `progressStore` Map, but **did not persist these updates to blob storage**. The status endpoint reads from memory first (fast path), then falls back to blob storage. When Function App instances scale or restart between polling requests, the in-memory state is lost, and the blob fallback returns stale data without thinking text or incremental images. Three specific gaps:
+      1. `onThinkingUpdate` callback (line 334) set `progress.thinkingText` but didn't call `persistProgress()`
+      2. Anchor image completion (line 404) updated progress but didn't persist
+      3. Derived image completion (line 522) updated `progress.images` but didn't persist
+    - **Solution:** Added `persistProgress()` calls at all three update points:
+      1. In `onThinkingUpdate` callback: persist with debouncing to avoid flooding blob storage during rapid thinking updates
+      2. After anchor image completes: persist immediately so polling sees the first result
+      3. After each derived image completes: persist with debouncing for incremental updates
+    - **Files modified:**
+      - `apps/api/src/services/generationOrchestrator.ts` (added 3 persistProgress calls)
+    - **Impact:** Thinking text and incremental image results now stream reliably to the UI even when Function App scales across multiple instances or restarts during generation. The 1-second debounce on persist prevents excessive blob writes while ensuring updates are visible within 1-2 seconds.
 
   - **Prompt Template v1.8.0: Fire Behaviour Principles Integration (Feb 16, 2026):**
     - **Problem addressed:** Prompts lacked foundational fire science context. Image models generated realistic-looking fires but without understanding of head/flank/heel structure, wind effects on flame orientation, terrain-driven behavior variations, and fuel-dependent flame height. This led to visually credible but tactically unrealistic scenarios (e.g., fires behaving identically on steep upslope vs. downslope terrain).
