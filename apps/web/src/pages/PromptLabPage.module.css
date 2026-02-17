@@ -56,6 +56,43 @@
   color: var(--color-text-secondary);
 }
 
+.scenarioConfigSection {
+  background-color: var(--color-surface-elevated);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sectionToggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sectionToggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.chevronUp,
+.chevronDown {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  transition: transform 0.2s;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.scenarioConfigContent {
+  padding: 0 1rem 1rem 1rem;
+}
+
 .referenceSection,
 .generatedSection {
   background-color: var(--color-surface-elevated);
