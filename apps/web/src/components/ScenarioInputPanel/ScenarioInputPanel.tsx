@@ -288,7 +288,7 @@ export const ScenarioInputPanel: React.FC = () => {
   // Update flame height and ROS when auto-detected vegetation type first arrives
   // This runs ONLY when geoContext.vegetationType changes (new perimeter drawn)
   // Manual overrides are handled by handleVegetationChange, not this effect
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Intentionally using partial dependencies - only trigger on vegetation type change
   useEffect(() => {
     if (geoContext?.vegetationType && !geoContext?.isVegetationManuallySet) {
       const effectiveVegType = getEffectiveVegetationType(geoContext);
