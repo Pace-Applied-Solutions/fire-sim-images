@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLabStore } from '../../store/labStore';
 import type { LabGeneratedImage, LabReferenceImage } from '../../store/labStore';
+import { ImageZoomModal } from './ImageZoomModal';
 import styles from './GeneratedImagesCollector.module.css';
 
 /**
@@ -13,6 +14,7 @@ export const GeneratedImagesCollector: React.FC = () => {
   const generatedImages = useLabStore((s) => s.generatedImages);
   const removeGeneratedImage = useLabStore((s) => s.removeGeneratedImage);
   const addReferenceImage = useLabStore((s) => s.addReferenceImage);
+  const [zoomedImageId, setZoomedImageId] = useState<string | null>(null);
 
   const handleUseAsReference = (image: LabGeneratedImage) => {
     const refImage: LabReferenceImage = {
@@ -47,9 +49,26 @@ export const GeneratedImagesCollector: React.FC = () => {
     <div className={styles.collector}>
       {generatedImages.map((image) => (
         <div key={image.id} className={styles.imageCard}>
-          <div className={styles.imageWrapper}>
+          <div className={styles.imageWrapper} onClick={() => setZoomedImageId(image.id)}>
             <img src={image.dataUrl} alt="Generated" className={styles.thumbnail} />
             <div className={styles.overlay}>
+              <div className={styles.zoomHint}>Click to zoom</div>
+            </div>
+          </div>
+          <div className={styles.imageInfo}>
+            <div className={styles.timestamp}>
+              {new Date(image.generatedAt).toLocaleTimeString()}
+            </div>
+            <div className={styles.metadata}>
+              <span className={styles.metaItem}>{image.generationTimeMs}ms</span>
+              <span className={styles.metaItem}>{image.model}</span>
+            </div>
+            {image.thinkingText && (
+              <div className={styles.thinking} title={image.thinkingText}>
+                {truncateText(image.thinkingText, 50)}
+              </div>
+            )}
+            <div className={styles.actions}>
               <button
                 className={styles.actionButton}
                 onClick={() => handleUseAsReference(image)}
@@ -73,22 +92,15 @@ export const GeneratedImagesCollector: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className={styles.imageInfo}>
-            <div className={styles.timestamp}>
-              {new Date(image.generatedAt).toLocaleTimeString()}
-            </div>
-            <div className={styles.metadata}>
-              <span className={styles.metaItem}>{image.generationTimeMs}ms</span>
-              <span className={styles.metaItem}>{image.model}</span>
-            </div>
-            {image.thinkingText && (
-              <div className={styles.thinking} title={image.thinkingText}>
-                {truncateText(image.thinkingText, 50)}
-              </div>
-            )}
-          </div>
         </div>
       ))}
+      {zoomedImageId && (
+        <ImageZoomModal
+          imageUrl={generatedImages.find((img) => img.id === zoomedImageId)?.dataUrl || ''}
+          label={`Generated ${new Date(generatedImages.find((img) => img.id === zoomedImageId)?.generatedAt || '').toLocaleTimeString()}`}
+          onClose={() => setZoomedImageId(null)}
+        />
+      )}
     </div>
   );
 };

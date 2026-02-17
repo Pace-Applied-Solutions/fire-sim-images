@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useLabStore } from '../../store/labStore';
 import type { LabReferenceImage } from '../../store/labStore';
+import { ImageZoomModal } from './ImageZoomModal';
 import styles from './ReferenceImageTray.module.css';
 
 /**
@@ -17,6 +18,7 @@ export const ReferenceImageTray: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [zoomedImageId, setZoomedImageId] = useState<string | null>(null);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -65,12 +67,16 @@ export const ReferenceImageTray: React.FC = () => {
     >
       {referenceImages.map((image) => (
         <div key={image.id} className={styles.imageCard}>
-          <div className={styles.imageWrapper}>
+          <div className={styles.imageWrapper} onClick={() => setZoomedImageId(image.id)}>
             <img src={image.dataUrl} alt={image.label} className={styles.thumbnail} />
             <div className={styles.overlay}>
+              <div className={styles.zoomHint}>Click to zoom</div>
               <button
                 className={styles.deleteButton}
-                onClick={() => removeReferenceImage(image.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeReferenceImage(image.id);
+                }}
                 title="Remove image"
               >
                 ×
@@ -105,6 +111,14 @@ export const ReferenceImageTray: React.FC = () => {
         onChange={(e) => handleFileSelect(e.target.files)}
         className={styles.hiddenInput}
       />
+
+      {zoomedImageId && (
+        <ImageZoomModal
+          imageUrl={referenceImages.find((img) => img.id === zoomedImageId)?.dataUrl || ''}
+          label={referenceImages.find((img) => img.id === zoomedImageId)?.label}
+          onClose={() => setZoomedImageId(null)}
+        />
+      )}
     </div>
   );
 };

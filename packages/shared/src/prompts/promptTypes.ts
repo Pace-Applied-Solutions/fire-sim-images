@@ -32,7 +32,7 @@ export interface PromptTemplate {
   version: string;
   sections: {
     style: string;
-    behaviorPrinciples: string;
+    behaviorPrinciples: (data: PromptData) => string;
     referenceImagery: (data: PromptData) => string;
     locality: (data: PromptData) => string;
     terrain: (data: PromptData) => string;

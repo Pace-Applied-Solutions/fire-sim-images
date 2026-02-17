@@ -290,7 +290,7 @@ function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: Vi
   // for clarity and independent interpretation by the model
   const sections = [
     template.sections.style,
-    template.sections.behaviorPrinciples,
+    template.sections.behaviorPrinciples(data),
     template.sections.referenceImagery(data),
     template.sections.locality(data),
     template.sections.terrain(data),
@@ -376,7 +376,7 @@ export function generatePromptSections(
 
   return {
     style: template.sections.style,
-    behaviorPrinciples: template.sections.behaviorPrinciples,
+    behaviorPrinciples: template.sections.behaviorPrinciples(data),
     referenceImagery: template.sections.referenceImagery(data),
     locality: template.sections.locality(data),
     terrain: template.sections.terrain(data),

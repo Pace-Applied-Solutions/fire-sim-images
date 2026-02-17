@@ -35,10 +35,11 @@
 .promptEditorContainer {
   background-color: var(--color-surface-elevated);
   border-radius: 8px;
-  flex: 0 0 auto;
+  flex: 1;
   overflow: visible;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .mapSection {

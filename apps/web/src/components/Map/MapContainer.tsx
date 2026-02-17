@@ -119,6 +119,7 @@ export const MapContainer = () => {
   const setState = useAppStore((s) => s.setState);
   const setCaptureMapScreenshots = useAppStore((s) => s.setCaptureMapScreenshots);
   const setCaptureVegetationScreenshot = useAppStore((s) => s.setCaptureVegetationScreenshot);
+  const setToggleVegetationOverlay = useAppStore((s) => s.setToggleVegetationOverlay);
   const setVegetationLegendItems = useAppStore((s) => s.setVegetationLegendItems);
   const setHandleLocationSelect = useAppStore((s) => s.setHandleLocationSelect);
   const setHandleGeolocationRequest = useAppStore((s) => s.setHandleGeolocationRequest);
@@ -132,10 +133,15 @@ export const MapContainer = () => {
   }, []);
 
   // Toggle NVIS national vegetation overlay visibility
+  // Read actual layer visibility to ensure state stays in sync
   const toggleVegetationOverlay = useCallback(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer('nvis-vegetation-layer')) return;
-    const next = !showVegetation;
+    
+    // Always read the actual layer visibility instead of relying on state
+    const currentVisibility = map.getLayoutProperty('nvis-vegetation-layer', 'visibility') === 'visible';
+    const next = !currentVisibility;
+    
     map.setLayoutProperty('nvis-vegetation-layer', 'visibility', next ? 'visible' : 'none');
     setShowVegetation(next);
     if (!next) {
@@ -143,7 +149,15 @@ export const MapContainer = () => {
       setVegLegendItems([]);
       setVegLegendError(null);
     }
-  }, [showVegetation]);
+  }, []);
+
+  // Register toggleVegetationOverlay in appStore so LabMapCanvas can use it
+  useEffect(() => {
+    setToggleVegetationOverlay(() => toggleVegetationOverlay);
+    return () => {
+      setToggleVegetationOverlay(null);
+    };
+  }, [toggleVegetationOverlay, setToggleVegetationOverlay]);
 
   /**
    * Handle click-to-identify on the vegetation overlay.

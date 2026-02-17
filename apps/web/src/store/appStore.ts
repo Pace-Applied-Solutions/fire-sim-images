@@ -77,6 +77,11 @@ interface AppState {
   // Vegetation overlay screenshot capture (registered by MapContainer)
   captureVegetationScreenshot: CaptureVegetationScreenshotFn | null;
   setCaptureVegetationScreenshot: (fn: CaptureVegetationScreenshotFn | null) => void;
+
+  // Vegetation overlay visibility toggle (registered by MapContainer)
+  toggleVegetationOverlay: (() => void) | null;
+  setToggleVegetationOverlay: (fn: (() => void) | null) => void;
+
   vegetationLegendItems: VegetationLegendItem[] | null;
   setVegetationLegendItems: (items: VegetationLegendItem[] | null) => void;
 
@@ -137,6 +142,11 @@ export const useAppStore = create<AppState>((set) => ({
   // Vegetation overlay screenshot capture
   captureVegetationScreenshot: null,
   setCaptureVegetationScreenshot: (fn) => set({ captureVegetationScreenshot: fn }),
+
+  // Vegetation overlay visibility toggle
+  toggleVegetationOverlay: null,
+  setToggleVegetationOverlay: (fn) => set({ toggleVegetationOverlay: fn }),
+
   vegetationLegendItems: null,
   setVegetationLegendItems: (items) => set({ vegetationLegendItems: items }),
 

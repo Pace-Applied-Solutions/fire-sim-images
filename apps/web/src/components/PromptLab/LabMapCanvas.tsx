@@ -19,6 +19,7 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
   const [isCapturing, setIsCapturing] = useState(false);
   const addReferenceImage = useLabStore((s) => s.addReferenceImage);
   const captureVegetationScreenshot = useAppStore((s) => s.captureVegetationScreenshot);
+  const toggleVegetationOverlay = useAppStore((s) => s.toggleVegetationOverlay);
   const showVegetationLabels = useLabStore((s) => s.showVegetationLabels);
 
   /**
@@ -85,6 +86,7 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
   /**
    * Capture vegetation overlay screenshot.
    * Uses the existing captureVegetationScreenshot function and optionally adds labels.
+   * Ensures vegetation layer is properly toggled off after capture.
    */
   const handleVegetationCapture = useCallback(async () => {
     if (!captureVegetationScreenshot) {
@@ -115,6 +117,23 @@ export const LabMapCanvas: React.FC<LabMapCanvasProps> = ({ children }) => {
         capturedAt: new Date().toISOString(),
       };
       addReferenceImage(image);
+
+      // Ensure vegetation layer is turned off after capture
+      // Call toggle function if layer is still visible
+      // The toggle will read actual layer visibility and toggle it
+      if (toggleVegetationOverlay) {
+        setTimeout(() => {
+          const mapCanvas = document.querySelector('.mapboxgl-canvas') as HTMLCanvasElement;
+          if (mapCanvas && (mapCanvas as any).__mapboxgl_map?.getLayer?.('nvis-vegetation-layer')) {
+            const mapInstance = (mapCanvas as any).__mapboxgl_map;
+            const currentVisibility = mapInstance.getLayoutProperty('nvis-vegetation-layer', 'visibility') === 'visible';
+            // Only toggle if layer is still visible (safety check)
+            if (currentVisibility) {
+              toggleVegetationOverlay();
+            }
+          }
+        }, 500);
+      }
     } catch (err) {
       console.error('Failed to capture vegetation screenshot:', err);
     } finally {
