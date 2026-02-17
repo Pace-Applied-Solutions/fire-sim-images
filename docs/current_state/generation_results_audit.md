@@ -18,7 +18,7 @@
 ### 1) Status/results can regress or disappear when polling hits a new Functions instance
 - **What happens:** During generation the frontend poller overwrites `generationResult` on every status response. If a poll lands on a fresh Functions instance before progress is persisted, the status response contains no images and the UI clears already-rendered results.
 - **Root cause:** `GenerationOrchestrator` keeps progress in an in-memory `progressStore` per instance and defers persistence with a 1s debounce (`persistProgress` in `apps/api/src/services/generationOrchestrator.ts`). Updates after anchor/derived images call `persistProgress(...)` without `immediate` and without `await`, so a scale-out or host recycle inside that debounce window returns a status payload without images (or 404). The client then replaces `generationResult` with an empty array via `setGenerationResult` in the polling callback.
-- **Impact:** Intermittent “images briefly appear then vanish” when Azure Functions routes polling to another instance or recycles during generation; user loses confidence in results.
+- **Impact:** Intermittent “images briefly appear then vanish” when Azure Functions routes polling to another instance or recycles during generation; user loses confidence in results. Recent regressions also stem from the client overwriting existing images with empty arrays even when instance churn isn’t involved (fixed by preserving existing images when a poll lacks results).
 
 ### 2) Results panel uses two vertical scroll containers (jumpy UX)
 - **What happens:** The right-hand panel shows multiple vertical scrollbars; the inner content jumps or hides behind the outer scroller, especially while thinking text grows.
