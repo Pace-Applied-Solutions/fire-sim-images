@@ -444,3 +444,98 @@ export function getNvisDescriptor(mvsName: string): string {
 
   return `${mvsName} (vegetation type with uncharacterised fire behaviour)`;
 }
+
+/**
+ * Membership tier limits and pricing (all prices in AUD).
+ * Defines quotas and features for each subscription tier.
+ */
+import type { TierLimits, MembershipTier } from './types';
+
+export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
+  free: {
+    tier: 'free',
+    name: 'Free',
+    monthlyPriceAUD: null,
+    quotas: {
+      scenariosPerMonth: null,
+      imagesPerMonth: null,
+      videosPerMonth: null,
+      lifetimeScenarios: 5, // Lifetime limit, not monthly
+    },
+    features: {
+      videoGeneration: false,
+      galleryRetentionDays: 30,
+      prioritySupport: false,
+      apiAccess: false,
+      promptLab: false,
+      customPerspectives: false,
+      whiteLabel: false,
+    },
+  },
+  starter: {
+    tier: 'starter',
+    name: 'Starter',
+    monthlyPriceAUD: 29,
+    quotas: {
+      scenariosPerMonth: 25,
+      imagesPerMonth: 125, // 25 scenarios × 5 images/scenario
+      videosPerMonth: 10,
+    },
+    features: {
+      videoGeneration: true,
+      galleryRetentionDays: 90,
+      prioritySupport: true,
+      apiAccess: false,
+      promptLab: false,
+      customPerspectives: false,
+      whiteLabel: false,
+    },
+  },
+  professional: {
+    tier: 'professional',
+    name: 'Professional',
+    monthlyPriceAUD: 99,
+    quotas: {
+      scenariosPerMonth: 100,
+      imagesPerMonth: 500, // 100 scenarios × 5 images/scenario
+      videosPerMonth: 50,
+    },
+    features: {
+      videoGeneration: true,
+      galleryRetentionDays: 365,
+      prioritySupport: true,
+      apiAccess: true,
+      promptLab: true,
+      customPerspectives: true,
+      whiteLabel: true,
+    },
+  },
+  enterprise: {
+    tier: 'enterprise',
+    name: 'Enterprise',
+    monthlyPriceAUD: null, // Custom pricing
+    quotas: {
+      scenariosPerMonth: null, // Custom limits
+      imagesPerMonth: null,
+      videosPerMonth: null,
+    },
+    features: {
+      videoGeneration: true,
+      galleryRetentionDays: null, // Unlimited
+      prioritySupport: true,
+      apiAccess: true,
+      promptLab: true,
+      customPerspectives: true,
+      whiteLabel: true,
+    },
+  },
+};
+
+/**
+ * Overage pack pricing and configuration.
+ */
+export const OVERAGE_PACK = {
+  priceAUD: 25,
+  scenariosIncluded: 10,
+  validityMonths: 12,
+} as const;

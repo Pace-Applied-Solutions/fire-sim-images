@@ -259,6 +259,95 @@ export interface QuotaStatus {
 }
 
 /**
+ * Membership tier levels for subscription-based access.
+ * Maps to Stripe products and defines quota limits and feature access.
+ */
+export type MembershipTier = 'free' | 'starter' | 'professional' | 'enterprise';
+
+/**
+ * Subscription status from Stripe.
+ */
+export type SubscriptionStatus =
+  | 'active' // Subscription is active and in good standing
+  | 'trialing' // User is in trial period
+  | 'past_due' // Payment failed but within grace period
+  | 'canceled' // Subscription has been canceled
+  | 'unpaid' // Payment failed and grace period expired
+  | 'incomplete' // Initial payment not completed
+  | 'incomplete_expired'; // Initial payment timed out
+
+/**
+ * Overage pack credits for additional scenarios beyond monthly quota.
+ * Each pack provides 10 scenarios valid for 12 months.
+ */
+export interface OveragePack {
+  packId: string; // Stripe payment intent ID or checkout session ID
+  purchaseDate: string; // ISO 8601 timestamp
+  expirationDate: string; // ISO 8601 timestamp (12 months from purchase)
+  totalCredits: number; // Always 10 for standard pack
+  usedCredits: number; // Number of credits consumed
+  remainingCredits: number; // totalCredits - usedCredits
+  isExpired: boolean; // True if current date > expirationDate
+}
+
+/**
+ * Usage statistics for current billing period.
+ * Tracks consumption against tier quotas.
+ */
+export interface UsageStats {
+  scenariosGenerated: number; // Scenarios in current period (or lifetime for Free tier)
+  imagesGenerated: number; // Images in current period
+  videosGenerated: number; // Videos in current period
+  lastUpdated: string; // ISO 8601 timestamp
+  lifetimeScenarios?: number; // Total scenarios ever created (for Free tier tracking)
+}
+
+/**
+ * Complete user profile including tier, subscription, and usage information.
+ * Combines Entra ID user data with Stripe subscription data.
+ */
+export interface UserProfile {
+  userId: string; // Entra ID user object ID
+  email: string;
+  displayName?: string;
+  tier: MembershipTier;
+  stripeCustomerId: string | null; // Stripe customer ID (null for Free tier users without payment)
+  subscriptionStatus: SubscriptionStatus | null; // null for Free tier
+  subscriptionId: string | null; // Stripe subscription ID
+  currentPeriodStart: string | null; // ISO 8601 timestamp
+  currentPeriodEnd: string | null; // ISO 8601 timestamp
+  usage: UsageStats;
+  overagePacks: OveragePack[];
+  createdAt: string; // ISO 8601 timestamp
+  updatedAt: string; // ISO 8601 timestamp
+}
+
+/**
+ * Tier quota limits and pricing information.
+ * Defines what's included in each membership tier.
+ */
+export interface TierLimits {
+  tier: MembershipTier;
+  name: string;
+  monthlyPriceAUD: number | null; // null for Free tier
+  quotas: {
+    scenariosPerMonth: number | null; // null for Free tier (uses lifetime limit)
+    imagesPerMonth: number | null;
+    videosPerMonth: number | null;
+    lifetimeScenarios?: number; // Only for Free tier
+  };
+  features: {
+    videoGeneration: boolean;
+    galleryRetentionDays: number | null; // null = unlimited
+    prioritySupport: boolean;
+    apiAccess: boolean;
+    promptLab: boolean;
+    customPerspectives: boolean;
+    whiteLabel: boolean;
+  };
+}
+
+/**
  * Content safety check result.
  */
 export interface ContentSafetyResult {

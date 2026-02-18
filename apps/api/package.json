@@ -23,9 +23,11 @@
     "@azure/storage-blob": "^12.31.0",
     "@fire-sim/shared": "*",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/stripe": "^8.0.416",
     "applicationinsights": "^3.13.0",
     "jsonwebtoken": "^9.0.3",
     "protobufjs": "^8.0.0",
+    "stripe": "^20.3.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
