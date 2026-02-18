@@ -94,6 +94,18 @@ export interface PromptData {
   fireShape: string;
   /** Locality description (e.g., "near Bungendore, New South Wales") */
   locality?: string;
+  /** Maps-enhanced terrain narrative (from Google Maps grounding) */
+  mapsTerrainNarrative?: string;
+  /** Local features from Maps grounding */
+  mapsLocalFeatures?: string[];
+  /** Land cover from Maps grounding */
+  mapsLandCover?: string[];
+  /** Vegetation context from Maps grounding */
+  mapsVegetationContext?: string;
+  /** Climate context from Maps grounding */
+  mapsClimateContext?: string;
+  /** Whether Maps grounding was used for this prompt */
+  mapsGroundingUsed?: boolean;
 }
 
 /**

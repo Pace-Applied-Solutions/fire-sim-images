@@ -6,7 +6,7 @@
 import area from '@turf/area';
 import bbox from '@turf/bbox';
 import type { GenerationRequest, ViewPoint } from '../types.js';
-import { VEGETATION_DESCRIPTORS, VEGETATION_DETAILS } from '../constants.js';
+import { VEGETATION_DESCRIPTORS, VEGETATION_DETAILS, getEffectiveVegetationType } from '../constants.js';
 import type { PromptData, PromptSet, GeneratedPrompt, PromptTemplate } from './promptTypes.js';
 import {
   DEFAULT_PROMPT_TEMPLATE,
@@ -201,9 +201,22 @@ function calculateFireDimensions(perimeter: GenerationRequest['perimeter']): {
 }
 
 /**
+ * Maps-enhanced context for prompt data.
+ * This interface is used to pass Maps grounding results into prompt generation.
+ */
+export interface MapsEnhancedContext {
+  terrainNarrative?: string;
+  localFeatures?: string[];
+  landCover?: string[];
+  vegetationContext?: string;
+  climateContext?: string;
+  mapsGroundingUsed?: boolean;
+}
+
+/**
  * Prepares all data needed for prompt template filling.
  */
-function preparePromptData(request: GenerationRequest): PromptData {
+function preparePromptData(request: GenerationRequest, mapsContext?: MapsEnhancedContext): PromptData {
   const { inputs, geoContext, perimeter } = request;
 
   if (!geoContext.vegetationType) {
@@ -236,8 +249,8 @@ function preparePromptData(request: GenerationRequest): PromptData {
   const windDescription = generateWindDescription(inputs.windSpeed, inputs.windDirection);
   const timeOfDayLighting = TIME_OF_DAY_LIGHTING[inputs.timeOfDay];
 
-  // Get vegetation type directly (already validated to exist)
-  const effectiveVegType = geoContext.vegetationType;
+  // Get effective vegetation type (respects manual override)
+  const effectiveVegType = getEffectiveVegetationType(geoContext);
 
   // Calculate fire dimensions from perimeter
   const { areaHectares, extentNorthSouthKm, extentEastWestKm, shape } = calculateFireDimensions(perimeter);
@@ -279,6 +292,13 @@ function preparePromptData(request: GenerationRequest): PromptData {
     fireExtentEastWestKm: extentEastWestKm,
     fireShape: shape,
     locality: geoContext.locality,
+    // Maps-enhanced context (if available)
+    mapsTerrainNarrative: mapsContext?.terrainNarrative,
+    mapsLocalFeatures: mapsContext?.localFeatures,
+    mapsLandCover: mapsContext?.landCover,
+    mapsVegetationContext: mapsContext?.vegetationContext,
+    mapsClimateContext: mapsContext?.climateContext,
+    mapsGroundingUsed: mapsContext?.mapsGroundingUsed,
   };
 }
 
@@ -314,15 +334,17 @@ function composePrompt(template: PromptTemplate, data: PromptData, viewpoint: Vi
  *
  * @param request - Generation request with perimeter, inputs, geo context, and requested views
  * @param template - Optional custom template (defaults to DEFAULT_PROMPT_TEMPLATE)
+ * @param mapsContext - Optional Maps-enhanced context from multi-agent pipeline
  * @returns PromptSet with all generated prompts and metadata
  * @throws Error if prompt contains blocked terms
  */
 export function generatePrompts(
   request: GenerationRequest,
-  template: PromptTemplate = DEFAULT_PROMPT_TEMPLATE
+  template: PromptTemplate = DEFAULT_PROMPT_TEMPLATE,
+  mapsContext?: MapsEnhancedContext
 ): PromptSet {
   const promptSetId = getRandomUuid();
-  const data = preparePromptData(request);
+  const data = preparePromptData(request, mapsContext);
   const prompts: GeneratedPrompt[] = [];
 
   for (const viewpoint of request.requestedViews) {
@@ -356,7 +378,8 @@ export function generatePrompts(
 export function generatePromptSections(
   request: GenerationRequest,
   viewpoint: ViewPoint,
-  template: PromptTemplate = DEFAULT_PROMPT_TEMPLATE
+  template: PromptTemplate = DEFAULT_PROMPT_TEMPLATE,
+  mapsContext?: MapsEnhancedContext
 ): Record<
   | 'style'
   | 'behaviorPrinciples'
@@ -372,7 +395,7 @@ export function generatePromptSections(
   | 'safety',
   string
 > {
-  const data = preparePromptData(request);
+  const data = preparePromptData(request, mapsContext);
 
   return {
     style: template.sections.style,

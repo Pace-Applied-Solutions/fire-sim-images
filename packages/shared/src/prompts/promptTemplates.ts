@@ -215,10 +215,21 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
         ? `This specific location is ${data.locality}, Australia.` 
         : 'This location is in New South Wales, Australia.';
       
-      return (
-        `Geographic context: ${localityText} ` +
-        `The generated image must be recognizable as this specific location based on satellite imagery and the reference map provided.`
-      );
+      // Base locality description
+      let description = `Geographic context: ${localityText} ` +
+        `The generated image must be recognizable as this specific location based on satellite imagery and the reference map provided.`;
+      
+      // Enhance with Maps grounding context if available
+      if (data.mapsGroundingUsed && data.mapsTerrainNarrative) {
+        description += ` ${data.mapsTerrainNarrative}`;
+      }
+      
+      // Add climate context if available
+      if (data.mapsClimateContext) {
+        description += ` Regional context: ${data.mapsClimateContext}`;
+      }
+      
+      return description;
     },
 
     // Section 5: Establish terrain characteristics
@@ -231,7 +242,18 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       // Always include the core instruction as a base
       const baseInstruction = `Terrain: ${mapInstruction}`;
 
-      // If we have a terrain description (from slope data), prepend it; otherwise just use base
+      // Prefer Maps-enhanced terrain narrative if available
+      if (data.mapsGroundingUsed && data.mapsTerrainNarrative && data.mapsLocalFeatures && data.mapsLocalFeatures.length > 0) {
+        const featuresText = data.mapsLocalFeatures.join(', ');
+        return (
+          `Terrain: ${data.mapsTerrainNarrative} ` +
+          `Local features include: ${featuresText}. ` +
+          `${mapInstruction} ` +
+          `Show the natural undulation and slopes of the specific region.`
+        );
+      }
+
+      // Fall back to basic terrain description if no Maps data
       if (data.terrainDescription && data.terrainDescription.trim().length > 0) {
         return (
           `Terrain: The landscape features ${data.terrainDescription}. ` +
@@ -260,12 +282,22 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
       // Add primary vegetation type
       parts.push(`Vegetation type: ${data.vegetationType}.`);
 
+      // Add Maps vegetation context if available
+      if (data.mapsGroundingUsed && data.mapsVegetationContext) {
+        parts.push(data.mapsVegetationContext);
+      }
+
       // Add vegetation diversity if multiple types detected across perimeter
       if (data.vegetationTypes && data.vegetationTypes.length > 1) {
         parts.push(
           `The fire burns through multiple vegetation zones: ${data.vegetationTypes.join(', ')}. ` +
           `Depict the transition between these vegetation types as the fire spreads across the landscape.`
         );
+      }
+
+      // Add Maps land cover if available
+      if (data.mapsGroundingUsed && data.mapsLandCover && data.mapsLandCover.length > 0) {
+        parts.push(`Land cover: ${data.mapsLandCover.join(', ')}.`);
       }
 
       // Only include known values, omit 'unknown' entries

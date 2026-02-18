@@ -3,6 +3,7 @@ import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/fu
 import crypto from 'node:crypto';
 import type { GeoContext } from '@fire-sim/shared';
 import { queryNvisVegetationContext } from '../services/nvisVegetationService.js';
+import { LocalityAgent } from '../services/localityAgent.js';
 
 const { app } = functions;
 
@@ -205,49 +206,123 @@ export async function geodata(
 
     const centroid = centroidFromPolygon(coordinates);
     const profile = resolveProfile(centroid);
-    const selected =
-      profile ??
-      fallbackContext(
-        coordinates,
-        'Fallback: NSW bush fire prone land heuristic + Mapbox terrain proxy',
-        'low'
-      );
 
-    // Query NVIS to get vegetation types across the fire perimeter
-    let vegetationTypes: string[] | undefined;
+    // Step 1: Query NVIS to get vegetation types across the fire perimeter
+    let nvisContext: Awaited<ReturnType<typeof queryNvisVegetationContext>> | null = null;
+    context.log('geodata.nvis_query_start', {
+      polygonHash,
+      centroid: { lng: centroid.lng, lat: centroid.lat },
+    });
     try {
-      const nvisContext = await queryNvisVegetationContext(
+      nvisContext = await queryNvisVegetationContext(
         [centroid.lng, centroid.lat],
         [0, 0, 0, 0], // bbox unused for NVIS
         500 // radius in metres
       );
+      context.log('geodata.nvis_query_complete', {
+        polygonHash,
+        success: !!nvisContext,
+        centerFormation: nvisContext?.centerFormation,
+        uniqueFormationsCount: nvisContext?.uniqueFormations?.length,
+      });
       if (nvisContext?.uniqueFormations && nvisContext.uniqueFormations.length > 0) {
-        vegetationTypes = nvisContext.uniqueFormations;
         context.log('geodata.nvis_query_success', {
           polygonHash,
-          vegetationCount: vegetationTypes.length,
-          formations: vegetationTypes,
+          vegetationCount: nvisContext.uniqueFormations.length,
+          formations: nvisContext.uniqueFormations,
+        });
+      } else {
+        context.warn('geodata.nvis_query_returned_null_or_empty', {
+          polygonHash,
+          nvisContext,
         });
       }
     } catch (nvisError) {
-      context.warn('geodata.nvis_query_failed', {
+      context.error('geodata.nvis_query_failed', {
+        polygonHash,
         error: (nvisError as Error).message,
+        stack: (nvisError as Error).stack,
       });
       // Continue with fallback - NVIS query failure is not critical
     }
 
-    const response: GeoContext = {
-      ...selected,
-      aspect: selected.aspect,
-      vegetationTypes,
-    };
+    // Build base context: use NVIS data when available, otherwise fall back to profile or generic context
+    let baseResponse: GeoContext;
+
+    if (nvisContext?.centerFormation) {
+      // NVIS query succeeded - use NVIS vegetation data
+      const baseContext =
+        profile ??
+        fallbackContext(
+          coordinates,
+          'Fallback: NSW bush fire prone land heuristic + Mapbox terrain proxy',
+          'low'
+        );
+
+      baseResponse = {
+        ...baseContext,
+        vegetationType: nvisContext.centerFormation,
+        vegetationSubtype: nvisContext.centerClassName,
+        vegetationTypes: nvisContext.uniqueFormations,
+        dataSource: nvisContext.dataSource,
+        confidence: 'high',
+      };
+    } else {
+      // NVIS query failed - use profile or fallback
+      const selected =
+        profile ??
+        fallbackContext(
+          coordinates,
+          'Fallback: NSW bush fire prone land heuristic + Mapbox terrain proxy',
+          'low'
+        );
+      baseResponse = selected;
+    }
+
+    // Step 2: Enrich with Locality Agent (Maps grounding for terrain narrative)
+    let response = baseResponse;
+    try {
+      const localityAgent = await LocalityAgent.create(context);
+      const localityEnrichment = await localityAgent.enrichLocality(
+        baseResponse,
+        [centroid.lng, centroid.lat],
+        context
+      );
+      
+      if (localityEnrichment.mapsGroundingUsed) {
+        // Store enriched terrain narrative in nearbyFeatures for now
+        // (until we add a dedicated terrainNarrative field to GeoContext)
+        response = {
+          ...baseResponse,
+          locality: `${baseResponse.locality || 'Unknown location'}`,
+          nearbyFeatures: [
+            ...(baseResponse.nearbyFeatures || []),
+            `Terrain: ${localityEnrichment.terrainNarrative}`,
+            ...localityEnrichment.localFeatures,
+          ],
+        };
+        
+        context.log('geodata.locality_enrichment_success', {
+          polygonHash,
+          mapsGroundingUsed: true,
+          terrainNarrativeLength: localityEnrichment.terrainNarrative.length,
+          localFeatures: localityEnrichment.localFeatures.length,
+        });
+      }
+    } catch (localityError) {
+      context.warn('geodata.locality_enrichment_failed', {
+        error: (localityError as Error).message,
+      });
+      // Non-fatal - continue with base response
+    }
 
     cache.set(polygonHash, response);
     context.log('geodata.cached', {
       polygonHash,
       dataSource: response.dataSource,
       confidence: response.confidence,
-      vegetationTypesCount: vegetationTypes?.length,
+      vegetationType: response.vegetationType,
+      vegetationTypesCount: response.vegetationTypes?.length,
     });
 
     return {
