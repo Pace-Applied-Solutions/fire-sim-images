@@ -194,7 +194,9 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 1. **Stripe Products and Pricing**
    - Create Stripe Products for each membership tier (Free, Starter, Professional, Enterprise)
-   - Use Stripe Prices with metered billing mode
+   - Create Stripe Product for overage packs (one-time purchase, $25 for 10 scenarios)
+   - Use Stripe Prices with metered billing mode for subscriptions
+   - Use one-time payment mode for overage packs
    - Define Stripe Meters for tracking consumption (scenarios generated, images created, videos produced)
 
 2. **Usage Tracking with Stripe Meters**
@@ -215,12 +217,15 @@ Stripe will handle all payment processing, subscription management, and usage tr
      - `invoice.payment_succeeded`
      - `invoice.payment_failed`
      - `customer.subscription.trial_will_end`
+     - `checkout.session.completed` (for overage pack purchases)
    - Validate webhook signatures for security
    - Store webhook events in Azure Table Storage for audit trail
    - Update user tier status in Entra ID custom attributes
+   - Add overage pack credits to user account on successful purchase
 
 4. **Payment Flow**
    - Use Stripe Checkout for subscription sign-up
+   - Use Stripe Checkout for overage pack one-time purchases
    - Use Stripe Customer Portal for self-service tier management
    - Redirect users to Stripe-hosted pages for payment (reduces PCI compliance burden)
    - Store Stripe Customer ID in Entra ID user profile
@@ -231,9 +236,9 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 | Tier | Monthly Base | Included Usage | Overage Pricing | Target User |
 |------|--------------|----------------|-----------------|-------------|
-| **Free** | $0 | 5 scenarios/month<br>15 images/month<br>0 videos | Not available (hard limit) | Trial users, small fire brigades |
-| **Starter** | $29 | 25 scenarios/month<br>100 images/month<br>10 videos/month | $2/scenario<br>$0.50/image<br>$3/video | Individual trainers, small teams |
-| **Professional** | $99 | 100 scenarios/month<br>500 images/month<br>50 videos/month | $1.50/scenario<br>$0.30/image<br>$2/video | Regional training centers, medium agencies |
+| **Free** | $0 | 5 scenarios (lifetime)<br>25 images (5 × 5 images/scenario)<br>0 videos | Overage packs: $25 for 10 scenarios | Trial users, small fire brigades |
+| **Starter** | $29 | 25 scenarios/month<br>125 images/month (25 × 5 images/scenario)<br>10 videos/month | Overage packs: $25 for 10 scenarios | Individual trainers, small teams |
+| **Professional** | $99 | 100 scenarios/month<br>500 images/month (100 × 5 images/scenario)<br>50 videos/month | Overage packs: $25 for 10 scenarios | Regional training centers, medium agencies |
 | **Enterprise** | Custom | Custom limits | Custom pricing | State/national agencies, large organizations |
 
 **Tier Features:**
@@ -277,12 +282,19 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 **Consumption Tracking:**
 
-- Track usage per user per billing period
-- Reset counters at subscription renewal date
+- Track usage per user per billing period (monthly for paid tiers, lifetime for Free tier)
+- Reset counters at subscription renewal date for paid tiers
 - Display real-time usage in user dashboard
 - Send email alerts at 75%, 90%, and 100% of included usage
-- For Free tier: Hard limit (generation requests rejected after quota exhausted)
-- For paid tiers: Overage billing automatically applied
+- **Free tier**: Lifetime limit of 5 scenarios (not renewable monthly); can purchase overage packs
+- **Paid tiers**: Monthly quotas; can purchase overage packs at any time
+- **Overage packs**: Pre-purchase 10 scenarios for $25 (valid for 12 months from purchase)
+
+**Overage Pack Pricing Rationale:**
+- Image API cost: ~$0.25 per image × 5 images/scenario = ~$1.25 per scenario
+- Overage pack price: $25 ÷ 10 scenarios = $2.50 per scenario
+- Margin: 100% above API cost ($2.50 vs $1.25)
+- Hosting costs are negligible and covered by base subscription fees
 
 ### 8a.4 Edge Cases and Recovery Flows
 
@@ -306,6 +318,18 @@ Stripe will handle all payment processing, subscription management, and usage tr
 - No refund for unused portion of current period (Stripe standard)
 - If current usage exceeds new tier limits, disable new generations until next period
 - Retain all historical gallery items (don't delete)
+- Unused overage packs remain valid for 12 months from purchase
+
+**Overage Pack Purchases:**
+- Available to all users (Free and paid tiers)
+- Purchase via Stripe Checkout: $25 for 10 scenarios
+- Credits added immediately to user account
+- Valid for 12 months from purchase date
+- Can purchase multiple packs; credits stack
+- Email confirmation with pack details and expiration
+- Display remaining pack credits in user dashboard
+- Pack credits used before monthly quota (for paid tiers)
+- Expiration warning email 30 days before pack expires
 
 **Failed Payments:**
 - Stripe retries automatically based on Smart Retries configuration
@@ -429,17 +453,21 @@ Stripe will handle all payment processing, subscription management, and usage tr
    - `GET /api/user/profile` - Get current user profile, tier, and usage stats
    - `GET /api/user/usage` - Get detailed usage breakdown for current period
    - `GET /api/user/subscription` - Get subscription status and billing info
+   - `GET /api/user/overage-packs` - Get active overage pack credits and expiration dates
+   - `POST /api/user/overage-packs/purchase` - Initiate overage pack purchase (returns Stripe Checkout URL)
 
 4. **Tier Enforcement**
-   - Check tier quota before allowing generation
-   - Return 402 Payment Required if Free tier quota exceeded
-   - Return 200 OK with overage flag for paid tiers
-   - Include usage headers in all API responses
+   - Check quota before allowing generation (monthly quota + overage pack credits)
+   - For Free tier: Check lifetime usage + available pack credits
+   - For paid tiers: Check current period usage + available pack credits
+   - Return 402 Payment Required if all quotas exhausted
+   - Include usage headers in all API responses (quota, used, pack_credits_remaining)
 
 5. **Webhook Handler**
    - `POST /api/webhooks/stripe` - Receive Stripe webhook events
    - Verify signature
    - Process event and update user tier in Entra ID
+   - Handle overage pack purchases: `checkout.session.completed` for one-time payments
    - Return 200 OK to acknowledge receipt
 
 **Session Handling:**
@@ -465,13 +493,25 @@ Stripe will handle all payment processing, subscription management, and usage tr
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
     usage: UsageStats;
+    overagePacks: OveragePack[];
   }
 
   interface UsageStats {
-    scenariosGenerated: number;
+    scenariosGenerated: number; // Lifetime for Free tier, current period for paid tiers
     imagesGenerated: number;
     videosGenerated: number;
     lastUpdated: Date;
+    lifetimeScenarios?: number; // For Free tier tracking
+  }
+
+  interface OveragePack {
+    packId: string; // Stripe payment intent ID or similar
+    purchaseDate: Date;
+    expirationDate: Date; // 12 months from purchase
+    totalCredits: number; // Always 10 for standard pack
+    usedCredits: number;
+    remainingCredits: number;
+    isExpired: boolean;
   }
 
   type MembershipTier = 'free' | 'starter' | 'professional' | 'enterprise';
@@ -527,20 +567,46 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 **Quota Exceeded Journey (Free Tier):**
 
-1. User attempts to generate scenario after exceeding Free tier quota
+1. User attempts to generate scenario after exceeding 5-scenario lifetime limit
 2. API returns 402 Payment Required with quota details
-3. UI shows upgrade modal with tier comparison
-4. User can upgrade to paid tier or wait until next billing period
-5. If user upgrades, immediately unlock generation capability
+3. UI shows modal with two options:
+   - **Option A**: Purchase overage pack ($25 for 10 scenarios)
+   - **Option B**: Upgrade to paid tier (Starter/Professional)
+4. If user purchases overage pack:
+   - Redirect to Stripe Checkout
+   - Credits added immediately upon payment
+   - User can generate scenarios using pack credits
+5. If user upgrades to paid tier:
+   - Redirect to Stripe Checkout with tier selection
+   - Monthly subscription starts immediately
+   - User gains monthly quota plus tier features
+
+**Overage Pack Purchase Journey:**
+
+1. User clicks "Buy More Scenarios" in dashboard or after quota warning
+2. Show overage pack details modal:
+   - 10 scenarios for $25
+   - Valid for 12 months
+   - Can stack multiple packs
+3. User confirms purchase
+4. Redirect to Stripe Checkout (one-time payment)
+5. Payment processed
+6. Webhook updates user account with pack credits
+7. Email confirmation sent with pack details and expiration
+8. User redirected back to application
+9. Dashboard shows updated credits available
+10. User can immediately generate scenarios using pack credits
 
 **Quota Warning Journey (Paid Tier):**
 
-1. User reaches 75% of included quota
+1. User reaches 75% of included monthly quota
 2. Email sent with usage stats and remaining quota
 3. In-app notification shown in dashboard
 4. Same process at 90% and 100%
-5. At 100%, overage billing starts automatically (no interruption)
-6. Monthly invoice includes base fee + overage charges
+5. At 100%, user can:
+   - Continue using service by purchasing overage pack ($25 for 10 scenarios)
+   - Wait until monthly quota resets
+6. Overage pack purchase available anytime via dashboard
 
 **Failed Payment Journey:**
 
