@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { generatePrompts } from '../prompts/promptGenerator.js';
+import { generatePrompts, type MapsEnhancedContext } from '../prompts/promptGenerator.js';
 import {
   INTENSITY_VISUALS,
   TIME_OF_DAY_LIGHTING,
@@ -376,3 +376,141 @@ describe('Prompt Generator', () => {
     });
   });
 });
+
+describe('Maps-Enhanced Prompts', () => {
+  const mockRequest: GenerationRequest = {
+    perimeter: {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [149.4, -35.2],
+            [149.5, -35.2],
+            [149.5, -35.3],
+            [149.4, -35.3],
+            [149.4, -35.2],
+          ],
+        ],
+      },
+      properties: {
+        drawn: true,
+        timestamp: '2026-02-18T00:00:00Z',
+      },
+    },
+    inputs: {
+      fireDangerRating: 'extreme',
+      windSpeed: 50,
+      windDirection: 'NW',
+      temperature: 40,
+      humidity: 10,
+      timeOfDay: 'afternoon',
+      intensity: 'veryHigh',
+      fireStage: 'established',
+    },
+    geoContext: {
+      vegetationType: 'Dry Sclerophyll Forest',
+      elevation: { min: 600, max: 700, mean: 650 },
+      slope: { min: 5, max: 25, mean: 15 },
+      aspect: 'NW',
+      nearbyFeatures: ['road'],
+      dataSource: 'NSW SEED',
+      confidence: 'high',
+      locality: 'Bungendore, New South Wales',
+    },
+    requestedViews: ['aerial'],
+  };
+
+  describe('generatePrompts with Maps context', () => {
+    it('should include Maps terrain narrative when provided', () => {
+      const mapsContext = {
+        terrainNarrative: 'Steep valleys and rolling hills characterize this landscape',
+        localFeatures: ['Queanbeyan River valley', 'Lake George basin'],
+        landCover: ['Dry sclerophyll forest', 'Grassy woodland'],
+        mapsGroundingUsed: true,
+      };
+
+      const result = generatePrompts(mockRequest, undefined, mapsContext);
+
+      expect(result.prompts[0].promptText).toContain('Steep valleys and rolling hills');
+    });
+
+    it('should include Maps local features in terrain section', () => {
+      const mapsContext = {
+        terrainNarrative: 'Rugged landscape',
+        localFeatures: ['Major escarpment', 'Valley floor'],
+        landCover: ['Forest'],
+        mapsGroundingUsed: true,
+      };
+
+      const result = generatePrompts(mockRequest, undefined, mapsContext);
+
+      expect(result.prompts[0].promptText).toContain('Major escarpment');
+      expect(result.prompts[0].promptText).toContain('Valley floor');
+    });
+
+    it('should include vegetation context from Maps', () => {
+      const mapsContext = {
+        terrainNarrative: 'Test terrain',
+        localFeatures: [],
+        landCover: [],
+        vegetationContext: 'Dominated by Yellow Box and Red Stringybark eucalypts',
+        mapsGroundingUsed: true,
+      };
+
+      const result = generatePrompts(mockRequest, undefined, mapsContext);
+
+      expect(result.prompts[0].promptText).toContain('Yellow Box and Red Stringybark');
+    });
+
+    it('should include climate context from Maps', () => {
+      const mapsContext = {
+        terrainNarrative: 'Test terrain',
+        localFeatures: [],
+        landCover: [],
+        climateContext: 'Cool temperate climate with hot dry summers',
+        mapsGroundingUsed: true,
+      };
+
+      const result = generatePrompts(mockRequest, undefined, mapsContext);
+
+      expect(result.prompts[0].promptText).toContain('Cool temperate climate');
+    });
+
+    it('should include land cover in vegetation section', () => {
+      const mapsContext = {
+        terrainNarrative: 'Test terrain',
+        localFeatures: [],
+        landCover: ['Native grassland', 'Woodland patches'],
+        mapsGroundingUsed: true,
+      };
+
+      const result = generatePrompts(mockRequest, undefined, mapsContext);
+
+      expect(result.prompts[0].promptText).toContain('Native grassland');
+      expect(result.prompts[0].promptText).toContain('Woodland patches');
+    });
+
+    it('should fall back to basic terrain when Maps context not provided', () => {
+      const result = generatePrompts(mockRequest);
+
+      // Should still generate valid prompts without Maps context
+      expect(result.prompts).toHaveLength(1);
+      expect(result.prompts[0].promptText).toContain('Dry Sclerophyll Forest');
+    });
+
+    it('should work with partial Maps context', () => {
+      const mapsContext = {
+        terrainNarrative: 'Enhanced terrain description',
+        localFeatures: [],
+        landCover: [],
+        mapsGroundingUsed: true,
+      };
+
+      const result = generatePrompts(mockRequest, undefined, mapsContext);
+
+      expect(result.prompts[0].promptText).toContain('Enhanced terrain description');
+    });
+  });
+});
+
