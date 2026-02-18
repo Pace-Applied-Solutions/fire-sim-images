@@ -291,10 +291,12 @@ Stripe will handle all payment processing, subscription management, and usage tr
 - **Overage packs**: Pre-purchase 10 scenarios for $25 (valid for 12 months from purchase)
 
 **Overage Pack Pricing Rationale:**
-- Image API cost: ~$0.25 per image × 5 images/scenario = ~$1.25 per scenario
+- Image API cost (Gemini 3 Pro): ~$0.134 per image (1024×1024 standard resolution)
+- Cost per scenario: $0.134 × 5 images/scenario = ~$0.67 per scenario
 - Overage pack price: $25 ÷ 10 scenarios = $2.50 per scenario
-- Margin: 100% above API cost ($2.50 vs $1.25)
-- Hosting costs are negligible and covered by base subscription fees
+- Margin: ~273% above API cost ($2.50 vs $0.67), or $1.83 profit per scenario
+- Hosting and infrastructure costs are negligible and covered by base subscription fees
+- Pricing provides sustainable margins while remaining competitive for users
 
 ### 8a.4 Edge Cases and Recovery Flows
 
