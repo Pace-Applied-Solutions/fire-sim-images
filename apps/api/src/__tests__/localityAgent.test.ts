@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LocalityAgent, type LocalityEnrichment } from '../services/localityAgent.js';
+import { LocalityAgent } from '../services/localityAgent.js';
 import {
   MapsGroundingService,
   type MapsGroundingResult,

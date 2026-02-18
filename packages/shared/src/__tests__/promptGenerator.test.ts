@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { generatePrompts, type MapsEnhancedContext } from '../prompts/promptGenerator.js';
+import { generatePrompts } from '../prompts/promptGenerator.js';
 import {
   INTENSITY_VISUALS,
   TIME_OF_DAY_LIGHTING,
