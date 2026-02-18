@@ -153,6 +153,35 @@ function waitForMapReady(map: MapboxMap, maxWaitMs = 8000): Promise<void> {
 }
 
 /**
+ * Wait for any in-flight camera movement to complete before capturing.
+ */
+function waitForMovementEnd(map: MapboxMap, maxWaitMs = 4000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!map.isMoving()) {
+      resolve();
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, maxWaitMs);
+
+    const onMoveEnd = () => {
+      cleanup();
+      resolve();
+    };
+
+    map.once('moveend', onMoveEnd);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      map.off('moveend', onMoveEnd);
+    }
+  });
+}
+
+/**
  * Wait for a specific raster source to have loaded its tiles.
  * Useful for WMS layers like NVIS which can take longer than vector tiles.
  * Also resolves on source errors to avoid hanging when the WMS server is down.
@@ -252,6 +281,7 @@ function captureCanvas(map: MapboxMap): string {
  * Used to capture the user's manually positioned perspective view.
  */
 export async function captureCurrentView(map: MapboxMap): Promise<string> {
+  await waitForMovementEnd(map, 5000);
   await waitForMapReady(map, 5000);
   return captureCanvas(map);
 }
@@ -293,6 +323,7 @@ export async function captureAerialOverview(
     }
   );
 
+  await waitForMovementEnd(map, 4000);
   await waitForMapReady(map, 8000);
   const dataUrl = captureCanvas(map);
 
@@ -426,12 +457,13 @@ export async function captureVegetationScreenshot(
   );
 
   // Wait specifically for the NVIS WMS source tiles to load (can be slow)
-  const nvisSourceId = 'nvis-vegetation-source';
+  const nvisSourceId = 'nvis-vegetation';
   if (map.getSource(nvisSourceId)) {
     await waitForSourceLoaded(map, nvisSourceId, 12000);
   }
 
   // Then wait for the full map (including the raster layer render) to be idle
+  await waitForMovementEnd(map, 5000);
   await waitForMapReady(map, 10000);
 
   // Capture
