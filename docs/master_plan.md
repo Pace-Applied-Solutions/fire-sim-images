@@ -194,7 +194,7 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 1. **Stripe Products and Pricing**
    - Create Stripe Products for each membership tier (Free, Starter, Professional, Enterprise)
-   - Create Stripe Product for overage packs (one-time purchase, $25 for 10 scenarios)
+   - Create Stripe Product for overage packs (one-time purchase, $25 AUD for 10 scenarios)
    - Use Stripe Prices with metered billing mode for subscriptions
    - Use one-time payment mode for overage packs
    - Define Stripe Meters for tracking consumption (scenarios generated, images created, videos produced)
@@ -236,10 +236,12 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 | Tier | Monthly Base | Included Usage | Overage Pricing | Target User |
 |------|--------------|----------------|-----------------|-------------|
-| **Free** | $0 | 5 scenarios (lifetime)<br>25 images (5 × 5 images/scenario)<br>0 videos | Overage packs: $25 for 10 scenarios | Trial users, small fire brigades |
-| **Starter** | $29 | 25 scenarios/month<br>125 images/month (25 × 5 images/scenario)<br>10 videos/month | Overage packs: $25 for 10 scenarios | Individual trainers, small teams |
-| **Professional** | $99 | 100 scenarios/month<br>500 images/month (100 × 5 images/scenario)<br>50 videos/month | Overage packs: $25 for 10 scenarios | Regional training centers, medium agencies |
+| **Free** | $0 | 5 scenarios (lifetime)<br>25 images (5 × 5 images/scenario)<br>0 videos | Overage packs: $25 AUD for 10 scenarios | Trial users, small fire brigades |
+| **Starter** | $29 AUD | 25 scenarios/month<br>125 images/month (25 × 5 images/scenario)<br>10 videos/month | Overage packs: $25 AUD for 10 scenarios | Individual trainers, small teams |
+| **Professional** | $99 AUD | 100 scenarios/month<br>500 images/month (100 × 5 images/scenario)<br>50 videos/month | Overage packs: $25 AUD for 10 scenarios | Regional training centers, medium agencies |
 | **Enterprise** | Custom | Custom limits | Custom pricing | State/national agencies, large organizations |
+
+**Note**: All prices are in AUD (Australian Dollars).
 
 **Tier Features:**
 
@@ -288,15 +290,18 @@ Stripe will handle all payment processing, subscription management, and usage tr
 - Send email alerts at 75%, 90%, and 100% of included usage
 - **Free tier**: Lifetime limit of 5 scenarios (not renewable monthly); can purchase overage packs
 - **Paid tiers**: Monthly quotas; can purchase overage packs at any time
-- **Overage packs**: Pre-purchase 10 scenarios for $25 (valid for 12 months from purchase)
+- **Overage packs**: Pre-purchase 10 scenarios for $25 AUD (valid for 12 months from purchase)
 
 **Overage Pack Pricing Rationale:**
-- Image API cost (Gemini 3 Pro): ~$0.134 per image (1024×1024 standard resolution)
-- Cost per scenario: $0.134 × 5 images/scenario = ~$0.67 per scenario
-- Overage pack price: $25 ÷ 10 scenarios = $2.50 per scenario
-- Margin: ~273% above API cost ($2.50 vs $0.67), or $1.83 profit per scenario
+- Image API cost (Gemini 3 Pro): ~USD $0.134 per image (1024×1024 standard resolution)
+- Currency conversion: USD $0.134 = ~AUD $0.19 per image
+- Image API cost (AUD, with currency fluctuation buffer): $0.20 AUD per image
+- Cost per scenario: $0.20 × 5 images/scenario = $1.00 AUD per scenario
+- Overage pack price: $25 AUD ÷ 10 scenarios = $2.50 AUD per scenario
+- Margin: 150% above API cost ($2.50 vs $1.00), or $1.50 AUD profit per scenario
 - Hosting and infrastructure costs are negligible and covered by base subscription fees
 - Pricing provides sustainable margins while remaining competitive for users
+- **Note**: All pricing in AUD (Australian Dollars)
 
 ### 8a.4 Edge Cases and Recovery Flows
 
@@ -324,7 +329,7 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 **Overage Pack Purchases:**
 - Available to all users (Free and paid tiers)
-- Purchase via Stripe Checkout: $25 for 10 scenarios
+- Purchase via Stripe Checkout: $25 AUD for 10 scenarios
 - Credits added immediately to user account
 - Valid for 12 months from purchase date
 - Can purchase multiple packs; credits stack
@@ -572,7 +577,7 @@ Stripe will handle all payment processing, subscription management, and usage tr
 1. User attempts to generate scenario after exceeding 5-scenario lifetime limit
 2. API returns 402 Payment Required with quota details
 3. UI shows modal with two options:
-   - **Option A**: Purchase overage pack ($25 for 10 scenarios)
+   - **Option A**: Purchase overage pack ($25 AUD for 10 scenarios)
    - **Option B**: Upgrade to paid tier (Starter/Professional)
 4. If user purchases overage pack:
    - Redirect to Stripe Checkout
@@ -587,7 +592,7 @@ Stripe will handle all payment processing, subscription management, and usage tr
 
 1. User clicks "Buy More Scenarios" in dashboard or after quota warning
 2. Show overage pack details modal:
-   - 10 scenarios for $25
+   - 10 scenarios for $25 AUD
    - Valid for 12 months
    - Can stack multiple packs
 3. User confirms purchase
@@ -606,7 +611,7 @@ Stripe will handle all payment processing, subscription management, and usage tr
 3. In-app notification shown in dashboard
 4. Same process at 90% and 100%
 5. At 100%, user can:
-   - Continue using service by purchasing overage pack ($25 for 10 scenarios)
+   - Continue using service by purchasing overage pack ($25 AUD for 10 scenarios)
    - Wait until monthly quota resets
 6. Overage pack purchase available anytime via dashboard
 
