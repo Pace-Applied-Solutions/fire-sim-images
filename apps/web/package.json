@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@azure/msal-browser": "^4.28.2",
+    "@azure/msal-react": "^5.0.4",
     "@fire-sim/shared": "*",
     "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@microsoft/applicationinsights-web": "^3.3.11",
