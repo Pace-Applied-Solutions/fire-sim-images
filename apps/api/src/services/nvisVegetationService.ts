@@ -82,8 +82,8 @@ async function identifyAtPoint(
     SERVICE: 'WMS',
     VERSION: '1.3.0',
     REQUEST: 'GetFeatureInfo',
-    LAYERS: '0',
-    QUERY_LAYERS: '0',
+    LAYERS: 'NVIS_ext_mvs',
+    QUERY_LAYERS: 'NVIS_ext_mvs',
     INFO_FORMAT: 'application/geo+json',
     CRS: 'EPSG:4326',
     BBOX: bboxStr,
@@ -94,6 +94,7 @@ async function identifyAtPoint(
   });
 
   const url = `${NVIS_WMS_MVS_URL}?${params}`;
+  console.log('[NVIS] Querying point:', { lng, lat, url });
 
   try {
     const controller = new AbortController();
@@ -102,9 +103,15 @@ async function identifyAtPoint(
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
 
-    if (!response.ok) return null;
+    console.log('[NVIS] Response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      console.warn('[NVIS] Bad response:', response.status, response.statusText);
+      return null;
+    }
 
     const data = (await response.json()) as Record<string, unknown>;
+    console.log('[NVIS] Response data:', JSON.stringify(data, null, 2));
 
     // ESRI WMS GetFeatureInfo JSON: features array or results array
     const features = (data?.features ?? data?.results) as
@@ -113,8 +120,13 @@ async function identifyAtPoint(
           attributes?: Record<string, string>;
         }>
       | undefined;
+    
+    console.log('[NVIS] Features found:', features?.length ?? 0);
+    
     if (features && features.length > 0) {
       const props = features[0].properties ?? features[0].attributes ?? {};
+      console.log('[NVIS] Feature properties:', props);
+      
       const mvsName =
         props['Raster.MVS_NAME'] ??
         props['MVS_NAME'] ??
@@ -125,14 +137,18 @@ async function identifyAtPoint(
         'Unknown';
       const mvgName = props['Raster.MVG_NAME'] ?? props['MVG_NAME'] ?? props['MVG'] ?? mvsName;
 
+      console.log('[NVIS] Extracted vegetation:', { formationName: mvsName, className: mvgName });
+
       return {
         formationName: String(mvsName),
         className: String(mvgName),
       };
     }
 
+    console.warn('[NVIS] No features in response');
     return null;
-  } catch {
+  } catch (error) {
+    console.error('[NVIS] Query error:', error instanceof Error ? error.message : error);
     return null;
   }
 }
@@ -153,7 +169,10 @@ export async function queryNvisVegetationContext(
   _bbox: [number, number, number, number],
   radiusM = 500
 ): Promise<VegetationContext | null> {
+  console.log('[NVIS] Starting vegetation context query:', { centroid, radiusM });
+  
   const samplePoints = buildSamplePoints(centroid, radiusM);
+  console.log('[NVIS] Sample points built:', samplePoints.length);
 
   const results = await Promise.all(
     samplePoints.map(async ({ direction, point }) => ({
@@ -162,10 +181,15 @@ export async function queryNvisVegetationContext(
     }))
   );
 
+  console.log('[NVIS] Query results:', results.map(r => ({ dir: r.direction, hasResult: !!r.result })));
+
   const centerResult = results.find((r) => r.direction === 'center')?.result;
   if (!centerResult) {
+    console.warn('[NVIS] Center query failed - returning null');
     return null;
   }
+
+  console.log('[NVIS] Center result:', centerResult);
 
   const surrounding: VegetationContext['surrounding'] = {};
   for (const { direction, result } of results) {
@@ -178,6 +202,13 @@ export async function queryNvisVegetationContext(
     .map((r) => r.result?.formationName)
     .filter((f): f is string => f != null && f !== 'Unknown');
   const uniqueFormations = [...new Set(allFormations)];
+
+  console.log('[NVIS] Final context:', {
+    centerFormation: centerResult.formationName,
+    centerClassName: centerResult.className,
+    uniqueFormationsCount: uniqueFormations.length,
+    uniqueFormations,
+  });
 
   return {
     centerFormation: centerResult.formationName,

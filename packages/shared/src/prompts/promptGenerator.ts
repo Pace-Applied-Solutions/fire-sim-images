@@ -6,7 +6,7 @@
 import area from '@turf/area';
 import bbox from '@turf/bbox';
 import type { GenerationRequest, ViewPoint } from '../types.js';
-import { VEGETATION_DESCRIPTORS, VEGETATION_DETAILS } from '../constants.js';
+import { VEGETATION_DESCRIPTORS, VEGETATION_DETAILS, getEffectiveVegetationType } from '../constants.js';
 import type { PromptData, PromptSet, GeneratedPrompt, PromptTemplate } from './promptTypes.js';
 import {
   DEFAULT_PROMPT_TEMPLATE,
@@ -249,8 +249,8 @@ function preparePromptData(request: GenerationRequest, mapsContext?: MapsEnhance
   const windDescription = generateWindDescription(inputs.windSpeed, inputs.windDirection);
   const timeOfDayLighting = TIME_OF_DAY_LIGHTING[inputs.timeOfDay];
 
-  // Get vegetation type directly (already validated to exist)
-  const effectiveVegType = geoContext.vegetationType;
+  // Get effective vegetation type (respects manual override)
+  const effectiveVegType = getEffectiveVegetationType(geoContext);
 
   // Calculate fire dimensions from perimeter
   const { areaHectares, extentNorthSouthKm, extentEastWestKm, shape } = calculateFireDimensions(perimeter);

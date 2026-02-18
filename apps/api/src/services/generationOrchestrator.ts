@@ -244,6 +244,7 @@ export class GenerationOrchestrator {
 
     try {
       // Step 1: Generate prompts for all viewpoints
+      // (Locality enrichment now happens at geodata endpoint when polygon is drawn)
       logger.info('Generating prompts');
       const promptTimer = startTimer('prompt.generation', { scenarioId });
       const promptSet = generatePrompts(request);
@@ -253,7 +254,7 @@ export class GenerationOrchestrator {
         promptCount: promptSet.prompts.length,
       });
 
-      // Step 1b: Query NVIS vegetation context at the fire perimeter
+      // Step 2: Query NVIS vegetation context at the fire perimeter
       let vegetationContext: VegetationContext | null = null;
       let vegetationPromptText = '';
       try {
@@ -290,7 +291,7 @@ export class GenerationOrchestrator {
         });
       }
 
-      // Step 2: Determine anchor viewpoint (prefer ground-level, fallback to first available)
+      // Step 3: Determine anchor viewpoint (prefer ground-level, fallback to first available)
       const maxImages = 10;
       const viewpointsToGenerate = request.requestedViews.slice(0, maxImages);
       const anchorViewpoint =
@@ -306,7 +307,7 @@ export class GenerationOrchestrator {
         seed: request.seed,
       });
 
-      // Step 3: Generate anchor image first
+      // Step 4: Generate anchor image first
       let anchorImage: GeneratedImage | undefined;
       let anchorImageData: Buffer | undefined;
       const anchorPrompt = promptSet.prompts.find((p) => p.viewpoint === anchorViewpoint);
