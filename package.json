@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "node scripts/fix-mapbox-types.js",
     "dev": "npm run dev:full",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run build --workspace=packages/shared && npm run dev --workspace=apps/api",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
+    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.55.0",
     "concurrently": "^9.2.1",

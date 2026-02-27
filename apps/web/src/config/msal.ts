@@ -15,11 +15,9 @@ const msalConfig: Configuration = {
     authority: import.meta.env.VITE_ENTRA_AUTHORITY || '',
     redirectUri: window.location.origin,
     postLogoutRedirectUri: window.location.origin,
-    navigateToLoginRequestUrl: true,
   },
   cache: {
     cacheLocation: 'localStorage', // Use localStorage for persistence across tabs
-    storeAuthStateInCookie: false, // Set to true if you have issues on IE11 or Edge
   },
   system: {
     loggerOptions: {

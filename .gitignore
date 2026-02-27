@@ -20,6 +20,7 @@ build/
 !eslint.config.js
 !vite.config.js
 !vitest.config.js
+!scripts/*.js
 
 # Environment files
 .env
