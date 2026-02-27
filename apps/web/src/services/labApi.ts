@@ -113,7 +113,7 @@ export class LabApiClient {
    */
   private async generateWithSSE(
     url: string,
-    request: LabGenerationRequest,
+    request: LabGenerationRequest | LabModifyRequest,
     callbacks?: LabGenerationCallbacks
   ): Promise<LabGenerationResult> {
     const response = await fetch(url, {
@@ -196,7 +196,7 @@ export class LabApiClient {
    */
   private async generateWithJSON(
     url: string,
-    request: LabGenerationRequest,
+    request: LabGenerationRequest | LabModifyRequest,
     callbacks?: LabGenerationCallbacks
   ): Promise<LabGenerationResult> {
     callbacks?.onProgress?.('Generating image...');
