@@ -51,6 +51,10 @@ export interface LabGeneratedImage {
   generatedAt: string;
   generationTimeMs: number;
   model: string;
+  /** ID of the image this was derived from via modification (undefined for original generations) */
+  parentId?: string;
+  /** The natural language edit request that produced this image (undefined for original generations) */
+  editRequest?: string;
 }
 
 interface LabStore {
@@ -83,6 +87,14 @@ interface LabStore {
   setGenerating: (generating: boolean) => void;
   setGenerationProgress: (progress: string) => void;
   setThinkingText: (text: string) => void;
+
+  // ── Image modification ──
+  modifyingImageId: string | null;
+  isModifying: boolean;
+  modifyProgress: string;
+  setModifyingImageId: (id: string | null) => void;
+  setModifying: (modifying: boolean) => void;
+  setModifyProgress: (progress: string) => void;
 
   // ── Generated images (session collector) ──
   generatedImages: LabGeneratedImage[];
@@ -310,6 +322,14 @@ export const useLabStore = create<LabStore>((set) => ({
   setGenerating: (generating) => set({ isGenerating: generating }),
   setGenerationProgress: (progress) => set({ generationProgress: progress }),
   setThinkingText: (text) => set({ thinkingText: text }),
+
+  // ── Image modification ──
+  modifyingImageId: null,
+  isModifying: false,
+  modifyProgress: '',
+  setModifyingImageId: (id) => set({ modifyingImageId: id }),
+  setModifying: (modifying) => set({ isModifying: modifying }),
+  setModifyProgress: (progress) => set({ modifyProgress: progress }),
 
   // ── Generated images ──
   generatedImages: [],

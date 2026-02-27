@@ -344,6 +344,164 @@
   border-color: var(--color-accent-primary);
 }
 
+/* ── Modify button ────────────────────────────────────────── */
+
+.modifyButton {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.modifyButton:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent-primary);
+}
+
+/* ── Inline modify panel ─────────────────────────────────── */
+
+.modifyPanel {
+  padding: 0.75rem 1rem;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modifyLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modifyInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 52px;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.modifyInput:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+}
+
+.modifyInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modifyActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.modifyProgress {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.modifySubmit {
+  padding: 0.375rem 0.75rem;
+  background: var(--color-accent-primary);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.modifySubmit:hover:not(:disabled) {
+  background: var(--color-accent-primary-hover);
+}
+
+.modifySubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modifyClose {
+  padding: 0.375rem 0.75rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modifyClose:hover:not(:disabled) {
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+
+.modifyClose:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modifyDownload {
+  padding: 0.375rem 0.75rem;
+  background: var(--color-accent-primary);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.modifyDownload:hover {
+  background: var(--color-accent-primary-hover);
+}
+
+.modifyReset {
+  padding: 0.375rem 0.75rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modifyReset:hover {
+  border-color: var(--color-accent-primary);
+}
+
+.modifyPreview {
+  width: 100%;
+  border-radius: 0.25rem;
+  display: block;
+}
+
 /* Update header to support flex layout */
 .header {
   display: flex;

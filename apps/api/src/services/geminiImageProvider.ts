@@ -330,6 +330,163 @@ export class GeminiImageProvider implements ImageGenerationProvider {
     };
   }
 
+  /**
+   * Modify a previously generated image using a multi-turn Gemini conversation.
+   *
+   * Builds a three-turn `contents` array:
+   *   1. User turn  — original reference images + original prompt
+   *   2. Model turn — the previously generated image (session context)
+   *   3. User turn  — natural language edit request
+   *
+   * This preserves full scenario context so the model understands what has
+   * already been created before applying the requested change.
+   */
+  async modifyImage(
+    originalPrompt: string,
+    imageDataUrl: string,
+    editRequest: string,
+    options?: {
+      size?: string;
+      systemInstruction?: string;
+      referenceImages?: Array<{
+        dataUrl: string;
+        type: 'map_screenshot' | 'aerial_overview' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
+      }>;
+      onThinkingUpdate?: (thinkingText: string) => void;
+    }
+  ): Promise<ImageGenResult> {
+    const startTime = Date.now();
+    const size = options?.size ?? '1024x1024';
+    const [width, height] = size.split('x').map(Number);
+    const aspectRatio = sizeToAspectRatio(size);
+    const isProModel = isGemini3Pro(this.config.model);
+
+    const baseUrl = this.config.url || DEFAULT_GEMINI_BASE_URL;
+    const url = `${baseUrl}/models/${this.config.model}:streamGenerateContent?alt=sse&key=${this.config.key}`;
+
+    /** Strip data-URL prefix and return raw base64 */
+    const toBase64 = (img: string | Buffer): string => {
+      if (Buffer.isBuffer(img)) return img.toString('base64');
+      if (typeof img === 'string') return img.replace(/^data:image\/\w+;base64,/, '');
+      return '';
+    };
+
+    // ── Turn 1: original user request (reference images + original prompt) ──
+    const turn1Parts: Array<Record<string, unknown>> = [];
+
+    if (options?.referenceImages) {
+      for (const refImg of options.referenceImages) {
+        const base64Data = toBase64(refImg.dataUrl);
+        if (base64Data.length > 0) {
+          turn1Parts.push({ inline_data: { mime_type: 'image/png', data: base64Data } });
+        }
+      }
+    }
+    turn1Parts.push({ text: originalPrompt });
+
+    // ── Turn 2: model response (previously generated image) ──────────────
+    const prevImageBase64 = toBase64(imageDataUrl);
+    const turn2Parts: Array<Record<string, unknown>> = [
+      { inline_data: { mime_type: 'image/png', data: prevImageBase64 } },
+      { text: MODIFY_MODEL_TURN_TEXT },
+    ];
+
+    // ── Turn 3: new user edit request ────────────────────────────────────
+    const turn3Parts: Array<Record<string, unknown>> = [{ text: editRequest }];
+
+    const contents = [
+      { role: 'user', parts: turn1Parts },
+      { role: 'model', parts: turn2Parts },
+      { role: 'user', parts: turn3Parts },
+    ];
+
+    // Generation config
+    const imageConfig: Record<string, string> = { aspectRatio };
+    if (isProModel) imageConfig.imageSize = '2K';
+
+    const generationConfig: Record<string, unknown> = {
+      responseModalities: ['TEXT', 'IMAGE'],
+      imageConfig,
+    };
+    if (isProModel) {
+      generationConfig.thinkingConfig = { includeThoughts: true };
+    }
+
+    const body: Record<string, unknown> = { contents, generationConfig };
+
+    // System instruction
+    const sysText =
+      options?.systemInstruction ||
+      (isProModel
+        ? 'You are a photorealistic bushfire scenario renderer for Australian fire service training. ' +
+          'Modify the provided image according to the edit request while preserving all unchanged elements.'
+        : undefined);
+    if (sysText && isProModel) {
+      body.systemInstruction = { parts: [{ text: sysText }] };
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Image model API error ${response.status}: ${text.substring(0, 500)}`);
+    }
+
+    const { parts: allParts, thinkingText } = await this.readSSEStream(
+      response,
+      INACTIVITY_TIMEOUT_MS,
+      options?.onThinkingUpdate
+    );
+
+    const payload: Record<string, unknown> = {
+      candidates: [{ content: { parts: allParts } }],
+    };
+
+    const extracted = this.extractResponse(payload);
+
+    if (!extracted.imageBase64) {
+      const thinkingPreview = thinkingText ? `\n\nModel thinking:\n${thinkingText}` : '';
+      throw Object.assign(
+        new Error(
+          `Image modification returned no image data — the model may still be processing.${thinkingPreview}`
+        ),
+        { thinkingText: thinkingText || extracted.text }
+      );
+    }
+
+    const imageData = Buffer.from(extracted.imageBase64, 'base64');
+    const generationTime = Date.now() - startTime;
+    const promptHash = crypto
+      .createHash('sha256')
+      .update(editRequest)
+      .digest('hex')
+      .substring(0, 16);
+
+    if (imageData.length < 100) {
+      throw new Error(
+        `Modified image is suspiciously small (${imageData.length} bytes). This may indicate an API error.`
+      );
+    }
+
+    return {
+      imageData,
+      format: 'png',
+      thinkingText: thinkingText || extracted.text,
+      modelTextResponse: extracted.text,
+      metadata: {
+        model: this.modelId,
+        promptHash,
+        generationTime,
+        width,
+        height,
+      },
+    };
+  }
+
   // ─── SSE stream reader ────────────────────────────────────────
 
   /**
@@ -499,8 +656,10 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 }
 
 /**
- * Returns true if the config looks like it should use the Gemini provider.
+ * Default text returned in the model turn when building a multi-turn modify request.
+ * Kept minimal so the model focuses on the edit request rather than this placeholder.
  */
+const MODIFY_MODEL_TURN_TEXT = 'Generated bushfire image as requested.';
 export function isGeminiConfig(config: ImageModelConfig): boolean {
   if (config.model?.toLowerCase().startsWith('gemini-')) {
     return true;

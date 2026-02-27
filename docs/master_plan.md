@@ -1754,6 +1754,31 @@ Update this section after each issue or change.
       - `docs/current_state/image_lightbox_popup.md`: New documentation file describing all image popup locations, components, keyboard shortcuts, and responsiveness.
     - **Acceptance criteria met:** All image locations open in-page popups; ESC/click-outside/close-button all close popups; keyboard focus managed on open; 15 new tests passing; documented in current_state.
 
+- **[2026-02-27] Add modify image function with session context** (PR: add-modify-image-function)
+    - **Intent:** Allow users to refine a generated image with a natural language edit request while preserving full session context from the original generation (scenario prompt, reference images, previously generated image).
+    - **Scope:** Prompt Lab + Scenario workspace; backend `POST /api/lab/modify`; no new external dependencies.
+    - **Backend changes:**
+      - **`apps/api/src/functions/labModify.ts`** (new): Azure Function `POST /api/lab/modify`. Accepts `originalPrompt`, `imageDataUrl`, `editRequest`, optional `systemInstruction`, `referenceImages`, and `size`. Delegates to `provider.modifyImage()`. Returns the same SSE event format as `lab/generate` (`thinking`, `result`, `done`/`error`).
+      - **`apps/api/src/services/geminiImageProvider.ts`**: Added `modifyImage()` method. Builds a 3-turn Gemini `contents` array — (1) original user request with reference images + prompt, (2) model response with the previously generated image, (3) new user edit request — preserving full session context for the modification.
+      - **`apps/api/src/index.ts`**: Registered `labModify` function.
+    - **Frontend changes:**
+      - **`apps/web/src/services/labApi.ts`**: Added `LabModifyRequest` interface and `modifyImage()` method to `LabApiClient`. Uses the same SSE-first-then-JSON fallback as `generateImage()`.
+      - **`apps/web/src/store/labStore.ts`**: Added `modifyingImageId`, `isModifying`, `modifyProgress` state and setters. Added `parentId` and `editRequest` fields to `LabGeneratedImage` to track modification lineage.
+      - **`apps/web/src/components/PromptLab/GeneratedImagesCollector.tsx`**: Added ✏ Modify button per card. Clicking opens an inline panel with a textarea for the natural language edit request. Ctrl+Enter submits. Modified images are added to the session with `parentId` pointing to the source. A "Modified" badge is shown on derived images.
+      - **`apps/web/src/components/PromptLab/GeneratedImagesCollector.module.css`**: Added styles for modify panel, label, textarea, action row, progress indicator, submit button, and "Modified" badge.
+      - **`apps/web/src/components/GeneratedImages/GeneratedImages.tsx`**: Added `ModifyPanel` sub-component and ✏ Modify button for each image card (anchor + non-anchor). `ModifyPanel` fetches the SAS URL image client-side (via `FileReader`), sends to `lab/modify`, and shows a preview with Download / Modify Again / Close controls.
+      - **`apps/web/src/components/GeneratedImages/GeneratedImages.module.css`**: Added styles for `.modifyButton`, `.modifyPanel`, `.modifyInput`, `.modifyActions`, `.modifyProgress`, `.modifySubmit`, `.modifyClose`, `.modifyDownload`, `.modifyReset`, `.modifyPreview`.
+    - **Session context approach:** The Gemini multi-turn `contents` array gives the model complete prior context — it sees the reference images, the original prompt, the image it generated, and then the edit request. This is the recommended approach for image editing with Gemini (equivalent to a chat session re-prompt).
+    - **Accessibility:** Edit textarea has `id`/`label` pairing; Modify toggle button uses `aria-expanded`; modify panel region has `aria-label`; keyboard shortcut (Ctrl+Enter) for submission.
+    - **Documentation:** Updated `docs/master_plan.md`; created `docs/current_state/modify_image_feature.md`.
+    - **Files modified:**
+      - New: `apps/api/src/functions/labModify.ts`
+      - Modified: `apps/api/src/services/geminiImageProvider.ts`, `apps/api/src/index.ts`
+      - Modified: `apps/web/src/services/labApi.ts`, `apps/web/src/store/labStore.ts`
+      - Modified: `apps/web/src/components/PromptLab/GeneratedImagesCollector.tsx`, `GeneratedImagesCollector.module.css`
+      - Modified: `apps/web/src/components/GeneratedImages/GeneratedImages.tsx`, `GeneratedImages.module.css`
+      - New: `docs/current_state/modify_image_feature.md`
+
 ## 14. Change Control Process
 
 Every change must:

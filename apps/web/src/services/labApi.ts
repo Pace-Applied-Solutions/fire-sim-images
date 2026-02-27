@@ -5,6 +5,24 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+export interface LabModifyRequest {
+  /** The exact prompt used in the original generation */
+  originalPrompt: string;
+  /** Previously generated image as a base64 data URL */
+  imageDataUrl: string;
+  /** Natural language modification request, e.g. "make the sky red" */
+  editRequest: string;
+  /** Optional system instruction (use the same one as the original generation) */
+  systemInstruction?: string;
+  /** Optional original reference images for spatial context */
+  referenceImages?: Array<{
+    dataUrl: string;
+    type: 'map_screenshot' | 'aerial_overview' | 'vegetation_overlay' | 'uploaded' | 'generated_output';
+  }>;
+  /** Image size */
+  size?: '1024x1024' | '1792x1024' | '1024x1792';
+}
+
 export interface LabGenerationRequest {
   /** Full compiled prompt text */
   prompt: string;
@@ -53,6 +71,24 @@ export interface LabGenerationCallbacks {
  */
 export class LabApiClient {
   /**
+   * Modify a previously generated image using natural language.
+   * Uses a multi-turn Gemini conversation to preserve original session context.
+   */
+  async modifyImage(
+    request: LabModifyRequest,
+    callbacks?: LabGenerationCallbacks
+  ): Promise<LabGenerationResult> {
+    const url = `${API_BASE_URL}/lab/modify`;
+
+    try {
+      return await this.generateWithSSE(url, request, callbacks);
+    } catch (error) {
+      console.warn('[LabApi] SSE modify failed, falling back to JSON:', error);
+      return await this.generateWithJSON(url, request, callbacks);
+    }
+  }
+
+  /**
    * Generate a single image with SSE streaming support.
    * Returns a promise that resolves when generation completes.
    */
@@ -77,7 +113,7 @@ export class LabApiClient {
    */
   private async generateWithSSE(
     url: string,
-    request: LabGenerationRequest,
+    request: LabGenerationRequest | LabModifyRequest,
     callbacks?: LabGenerationCallbacks
   ): Promise<LabGenerationResult> {
     const response = await fetch(url, {
@@ -160,7 +196,7 @@ export class LabApiClient {
    */
   private async generateWithJSON(
     url: string,
-    request: LabGenerationRequest,
+    request: LabGenerationRequest | LabModifyRequest,
     callbacks?: LabGenerationCallbacks
   ): Promise<LabGenerationResult> {
     callbacks?.onProgress?.('Generating image...');
