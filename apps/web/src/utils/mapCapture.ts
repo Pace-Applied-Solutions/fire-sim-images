@@ -277,13 +277,104 @@ function captureCanvas(map: MapboxMap): string {
 }
 
 /**
+ * Temporarily hides only the MapboxDraw stroke (line) and vertex (circle) layers
+ * while leaving polygon fill layers visible.
+ *
+ * Used for the aerial overview capture: the orange fill remains visible so the
+ * AI model can see the exact shape and location of the fire zone, but the
+ * artificial red/black outline strokes and vertex dots are removed so they
+ * cannot bleed through to the generated image.
+ *
+ * @returns A restore function that shows the hidden layers again.
+ */
+function hideDrawOutlinesAndVertices(map: MapboxMap): () => void {
+  const hiddenLayers: string[] = [];
+  try {
+    const layers = map.getStyle()?.layers ?? [];
+    for (const layer of layers) {
+      if (!layer.id.startsWith('gl-draw-')) continue;
+      // Skip fill-type layers — we keep the polygon fill visible so the AI can see
+      // the fire zone shape. Only hide line (stroke) and circle (vertex) layers.
+      if (layer.type === 'fill') continue;
+      const visibility = map.getLayoutProperty(layer.id, 'visibility');
+      if (visibility !== 'none') {
+        map.setLayoutProperty(layer.id, 'visibility', 'none');
+        hiddenLayers.push(layer.id);
+      }
+    }
+  } catch (err) {
+    console.warn('[mapCapture] Failed to hide draw outlines/vertices:', err);
+  }
+  return () => {
+    for (const layerId of hiddenLayers) {
+      try {
+        map.setLayoutProperty(layerId, 'visibility', 'visible');
+      } catch (err) {
+        console.warn(`[mapCapture] Failed to restore draw layer "${layerId}":`, err);
+      }
+    }
+  };
+}
+
+/**
+ * Temporarily hides all MapboxDraw layers (polygon fills, outlines, vertices)
+ * so that screenshots sent to the AI model show a clean landscape without the
+ * fire perimeter overlay. The overlay would otherwise be reproduced as a red
+ * outline in the generated image rather than replaced by realistic fire.
+ *
+ * @returns A restore function that shows the hidden layers again.
+ */
+function hideDrawLayers(map: MapboxMap): () => void {
+  const hiddenLayers: string[] = [];
+  try {
+    const layers = map.getStyle()?.layers ?? [];
+    for (const layer of layers) {
+      if (layer.id.startsWith('gl-draw-')) {
+        const visibility = map.getLayoutProperty(layer.id, 'visibility');
+        // Only hide layers that are currently visible (default is 'visible' when not set)
+        if (visibility !== 'none') {
+          map.setLayoutProperty(layer.id, 'visibility', 'none');
+          hiddenLayers.push(layer.id);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[mapCapture] Failed to hide draw layers:', err);
+  }
+  return () => {
+    for (const layerId of hiddenLayers) {
+      try {
+        map.setLayoutProperty(layerId, 'visibility', 'visible');
+      } catch (err) {
+        console.warn(`[mapCapture] Failed to restore draw layer "${layerId}":`, err);
+      }
+    }
+  };
+}
+
+/**
+ * Waits for the next animation frame so that map style changes (such as
+ * hiding/showing layers) take effect before a canvas capture.
+ */
+function waitForFrame(): Promise<void> {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+/**
  * Capture the current map view as-is (no camera repositioning).
  * Used to capture the user's manually positioned perspective view.
+ * Draw layers are hidden before capture so the AI receives a clean landscape
+ * image without the red fire perimeter overlay.
  */
 export async function captureCurrentView(map: MapboxMap): Promise<string> {
   await waitForMovementEnd(map, 5000);
   await waitForMapReady(map, 5000);
-  return captureCanvas(map);
+  const restoreDrawLayers = hideDrawLayers(map);
+  // Allow one render frame for the layer change to take effect before capture
+  await waitForFrame();
+  const dataUrl = captureCanvas(map);
+  restoreDrawLayers();
+  return dataUrl;
 }
 
 /**
@@ -325,7 +416,13 @@ export async function captureAerialOverview(
 
   await waitForMovementEnd(map, 4000);
   await waitForMapReady(map, 8000);
+  // Hide only stroke and vertex layers — the polygon fill remains visible so the
+  // AI can see the exact shape and location of the fire zone without artificial outlines.
+  const restoreDrawLayers = hideDrawOutlinesAndVertices(map);
+  // Allow one render frame for the layer change to take effect before capture
+  await waitForFrame();
   const dataUrl = captureCanvas(map);
+  restoreDrawLayers();
 
   // Restore camera with smooth transition
   map.easeTo({
@@ -377,8 +474,13 @@ export async function captureViewpointScreenshots(
     const duration = i === 0 ? 400 : 800;
     await transitionAndCapture(map, camera, duration);
 
+    // Hide draw layers so the AI receives a clean landscape without red polygon overlay
+    const restoreDrawLayers = hideDrawLayers(map);
+    // Allow one render frame for the layer change to take effect before capture
+    await waitForFrame();
     // Capture the screenshot
     const dataUrl = captureCanvas(map);
+    restoreDrawLayers();
     screenshots[viewpoint] = dataUrl;
   }
 
@@ -466,8 +568,15 @@ export async function captureVegetationScreenshot(
   await waitForMovementEnd(map, 5000);
   await waitForMapReady(map, 10000);
 
+  // Hide draw layers so the vegetation map is clean without polygon overlays
+  const restoreDrawLayers = hideDrawLayers(map);
+  // Allow one render frame for the layer change to take effect before capture
+  await waitForFrame();
+
   // Capture
   const dataUrl = map.getCanvas().toDataURL('image/png');
+
+  restoreDrawLayers();
 
   // Restore vegetation layer opacity and visibility
   map.setPaintProperty('nvis-vegetation-layer', 'raster-opacity', savedOpacity as number);

@@ -31,17 +31,13 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({ children }) => {
       setResultsPanelOpen(true);
       hasOpenedRef.current = true;
     } else if (scenarioState === 'generating') {
-      // Only open when Gemini thinking stream has started OR images are available
-      // This prevents opening before the model begins processing
-      if (
-        generationResult?.thinkingText ||
-        (generationResult?.images && generationResult.images.length > 0)
-      ) {
+      // Open as soon as a generation result exists so the thinking panel is visible immediately
+      if (generationResult) {
         setResultsPanelOpen(true);
         hasOpenedRef.current = true;
       }
     }
-  }, [scenarioState, generationResult?.thinkingText, generationResult?.images?.length, setResultsPanelOpen]);
+  }, [scenarioState, generationResult, setResultsPanelOpen]);
 
   const handleHeaderClick = () => {
     if (window.innerWidth <= 768) {
