@@ -37,7 +37,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ imageUrl, label,
   return (
     <div className={styles.overlay} onClick={handleOverlayClick}>
       <div className={styles.modal}>
-        <button className={styles.closeButton} onClick={onClose} aria-label="Close">
+        <button className={styles.closeButton} onClick={onClose} aria-label="Close" autoFocus>
           ✕
         </button>
         <img src={imageUrl} alt={label || 'Zoomed image'} className={styles.image} />

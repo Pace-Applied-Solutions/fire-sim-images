@@ -140,7 +140,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({ images, initialInd
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.container} onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
-        <button className={styles.closeButton} onClick={onClose} title="Close (Esc)">
+        <button className={styles.closeButton} onClick={onClose} title="Close (Esc)" autoFocus aria-label="Close">
           ✕
         </button>
 

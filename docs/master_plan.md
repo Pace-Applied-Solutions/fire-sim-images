@@ -1742,6 +1742,18 @@ Update this section after each issue or change.
       - `apps/web/src/components/Layout/ResultsPanel.tsx`: Results panel now opens as soon as `generationResult` is set (i.e., when generation begins and the initial in-progress result is available), rather than waiting for `thinkingText` to arrive.
     - **Acceptance criteria met:** Sidebar no longer auto-scrolls during generation; ThinkingPanel auto-scrolls internally only; Results panel opens automatically when generation starts.
 
+- **[2026-02-27] Add in-page popup image preview for all displayed images** (PR: copilot/add-popup-image-preview)
+    - **Intent:** Replace any missing in-page popup behavior with modal lightbox for all image locations; ensure keyboard accessibility on all popups.
+    - **Root cause / gap:** The anchor image in the **completed state** of `GeneratedImages.tsx` lacked an `onClick` handler and keyboard controls to open the `ImageLightbox`. All other image locations (non-anchor generated images, Prompt Lab generated images, Prompt Lab reference images) already had popup behavior.
+    - **Changes made:**
+      - `apps/web/src/components/GeneratedImages/GeneratedImages.tsx`: Added `onClick`, `role="button"`, `tabIndex`, `onKeyDown`, and hover overlay to the anchor image card in the completed state, matching the pattern used for non-anchor images and the in-progress anchor.
+      - `apps/web/src/components/GeneratedImages/ImageLightbox.tsx`: Added `autoFocus` and `aria-label="Close"` to the close button so keyboard focus lands on the lightbox immediately when it opens.
+      - `apps/web/src/components/PromptLab/ImageZoomModal.tsx`: Added `autoFocus` to the close button for consistent keyboard entry point.
+      - `apps/web/src/components/GeneratedImages/__tests__/ImageLightbox.test.tsx`: 9 new tests covering render, close, overlay click, ESC key, keyboard navigation, nav button visibility, and image counter.
+      - `apps/web/src/components/PromptLab/__tests__/ImageZoomModal.test.tsx`: 6 new tests covering render, label, close, overlay click, ESC key, and click non-propagation.
+      - `docs/current_state/image_lightbox_popup.md`: New documentation file describing all image popup locations, components, keyboard shortcuts, and responsiveness.
+    - **Acceptance criteria met:** All image locations open in-page popups; ESC/click-outside/close-button all close popups; keyboard focus managed on open; 15 new tests passing; documented in current_state.
+
 - **[2026-02-27] Add modify image function with session context** (PR: add-modify-image-function)
     - **Intent:** Allow users to refine a generated image with a natural language edit request while preserving full session context from the original generation (scenario prompt, reference images, previously generated image).
     - **Scope:** Prompt Lab + Scenario workspace; backend `POST /api/lab/modify`; no new external dependencies.

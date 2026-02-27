@@ -503,13 +503,27 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
       <div className={styles.grid}>
         {result.anchorImage && (
           <div className={`${styles.imageCard} ${styles.anchorCard}`}>
-            <div className={styles.imageWrapper}>
+            <div
+              className={styles.imageWrapper}
+              onClick={() => openLightbox(result.images.findIndex(img => img.viewPoint === result.anchorImage!.viewPoint))}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openLightbox(result.images.findIndex(img => img.viewPoint === result.anchorImage!.viewPoint));
+                }
+              }}
+            >
               <img
                 src={result.anchorImage.url}
                 alt={`${result.anchorImage.viewPoint} view (anchor)`}
                 className={styles.image}
                 loading="lazy"
               />
+              <div className={styles.imageOverlay}>
+                <span className={styles.viewIcon}>🔍</span>
+              </div>
               <div className={styles.anchorBadge}>⚓ Anchor</div>
             </div>
             <div className={styles.imageInfo}>
