@@ -139,16 +139,16 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.10.0).
+ * Default prompt template (v1.11.0).
  * Structured template with atomic sections for generating photorealistic bushfire scenario prompts.
- * Version 1.10.0: Removed reference to "perimeter boundary overlay" in referenceImagery — the fire
- *                 perimeter draw layers are now hidden before screenshot capture, so the AI receives
- *                 clean landscape images. The aerial overview is described as showing the fire footprint
- *                 directly rather than a polygon overlay marking the boundary.
+ * Version 1.11.0: Reinstated polygon fill in aerial overview capture — the orange fill layer is kept
+ *                 visible to communicate the exact fire zone shape to the AI, while stroke/vertex
+ *                 draw layers are hidden. Updated referenceImagery to describe the orange highlight
+ *                 as the fire zone marker the AI must match precisely.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.10.0',
+  version: '1.11.0',
   sections: {
     // Section 1: Establish photorealistic style and purpose
     style:
@@ -197,17 +197,20 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
         `IMAGE 1 (Perspective View): This shows the exact viewing angle and perspective that the generated output must match. ` +
         `Convert this 3D terrain visualisation into a photorealistic photograph from the same angle and field of view. ` +
         `This is the most important reference — the output image must look like a real photograph taken from this exact camera position. ` +
-        `IMAGE 2 (Aerial Overview): A top-down aerial view showing the fire area from directly above. ` +
-        `The landscape visible in this view IS the fire footprint — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
+        `IMAGE 2 (Aerial Overview): A top-down aerial view showing the fire zone from directly above. ` +
+        `The semi-transparent orange/amber highlighted area marks the EXACT shape and location of the fire — this is the user-drawn fire perimeter. ` +
+        `The fire in your generated image must match this highlighted shape precisely: ` +
+        `if the highlighted area is triangular, the fire must be triangular; if L-shaped, the fire must be L-shaped. ` +
+        `The terrain outside the highlighted area is unaffected landscape that must remain natural in the output. ` +
         `IMAGE 3 (Vegetation Map): A vegetation classification overlay showing the spatial distribution of vegetation types across the fire area. ` +
         `Use this to place the correct vegetation in corresponding areas of the generated image. ` +
         `The fire in the generated image must: ` +
         `(1) cover ${areaText}, ` +
         `(2) span ${extentNsText} and ${extentEwText}, ` +
-        `(3) follow the exact perimeter shape shown in the aerial overview — match the irregular boundaries precisely. ` +
+        `(3) match the exact highlighted shape shown in the aerial overview, including all irregular edges, indentations, and protrusions. ` +
         `The generated image must match EXACTLY the topography, vegetation, and man-made features visible in the reference images, ` +
-        `with the fire (flames, smoke, and burned areas) occupying the complete specified extent and respecting the perimeter boundaries. ` +
-        `Render only the natural landscape with fire — omit all map overlays, UI elements, and reference markers from the output.`
+        `with the fire (flames, smoke, and burned areas) occupying the complete highlighted area and no further. ` +
+        `Render only the natural landscape with fire — omit all artificial overlays, UI elements, and reference markers from the output.`
       );
     },
 
@@ -335,9 +338,11 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
 
       return (
         `Fire extent and boundaries: ${areaDesc} ${extentDesc} ` +
-        `The fire perimeter must follow the exact shape and boundaries shown in the aerial overview image. ` +
-        `Allow natural features (ridgelines, valleys, rivers, vegetation type changes) to guide irregular perimeter edges — the fire boundary is NOT a perfect geometric shape. ` +
-        `CRITICAL: The fire must occupy the ENTIRE mapped area following the polygon boundaries precisely, including any indentations, protrusions, or irregular edges. ` +
+        `The fire perimeter must follow the EXACT shape highlighted in the aerial overview image — ` +
+        `this is the user-drawn fire boundary and must be reproduced faithfully. ` +
+        `The fire must fill the highlighted area completely — it must not be smaller or larger than the drawn shape. ` +
+        `Allow natural features (ridgelines, valleys, rivers, vegetation type changes) to modulate the fire's edge texture, ` +
+        `but the overall shape must match the drawn perimeter precisely, including all indentations, protrusions, and irregular edges. ` +
         `The fire's extent must be conveyed ENTIRELY through natural features: ` +
         `active flames define the leading edge, burned and blackened vegetation marks consumed areas, ` +
         `and smoke plumes indicate the fire's full spatial extent. ` +

@@ -144,12 +144,14 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
         effectivePrompt +=
           `IMAGE ${perspectiveImage ? '2' : '1'} \u2014 AERIAL OVERVIEW:\n` +
-          'This flat, top-down aerial view shows the fire area from directly above. ' +
-          'The landscape captured in this image IS the fire footprint \u2014 the fire must fill this entire area with ' +
-          'realistic flames, smoke, and burned vegetation as seen from the perspective in Image 1. ' +
-          'Use this overview to understand the fire\'s spatial extent, shape, and its relationship to surrounding ' +
-          'terrain features (roads, clearings, ridges, waterways) that appear beyond the fire boundary. ' +
-          'The fire in your generated image must cover the same spatial footprint shown here.\n\n';
+          'This flat, top-down aerial view shows the exact fire zone from directly above. ' +
+          'The semi-transparent orange/amber highlighted area marks the PRECISE shape and location of the fire — ' +
+          'this is where the user has drawn the fire perimeter. ' +
+          'The fire in your generated image MUST fill this exact highlighted area completely, matching its exact shape — ' +
+          'if the highlighted area is triangular, the fire must be triangular; if elongated, the fire must be elongated. ' +
+          'The surrounding landscape outside the highlighted area shows the terrain, roads, clearings, and other features ' +
+          'that must appear as unaffected natural landscape in your generated image. ' +
+          'The fire must not extend beyond the highlighted boundary, and must not be smaller than it.\n\n';
       }
     }
 
