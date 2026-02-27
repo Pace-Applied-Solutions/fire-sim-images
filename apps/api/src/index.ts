@@ -25,6 +25,7 @@ import './functions/deleteScenario.js';
 import './functions/submitFeedback.js';
 import './functions/nvisWmsProxy.js';
 import './functions/labGenerate.js';
+import './functions/labModify.js';
 
 // Export the app object for Azure Functions runtime discovery
 // This is required for the v4 programming model to work correctly

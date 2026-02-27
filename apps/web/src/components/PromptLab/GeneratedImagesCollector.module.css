@@ -156,3 +156,106 @@
   gap: 0.25rem;
   margin-top: 0.25rem;
 }
+
+/* ── Modification badge ───────────────────────────────────── */
+
+.modifiedBadge {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #a8d8a8;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* ── Active action button ─────────────────────────────────── */
+
+.actionButtonActive {
+  background-color: var(--color-primary) !important;
+}
+
+/* ── Inline modification panel ────────────────────────────── */
+
+.modifyPanel {
+  padding: 0.75rem;
+  background-color: var(--color-surface-elevated);
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 4px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modifyLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.modifyInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 52px;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.modifyInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.modifyInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modifyActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.modifyProgress {
+  flex: 1;
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.modifySubmit {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.modifySubmit:hover:not(:disabled) {
+  background-color: var(--color-primary-hover, var(--color-primary));
+}
+
+.modifySubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

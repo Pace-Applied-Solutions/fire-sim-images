@@ -5,6 +5,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
 import type { GenerationResult, ScenarioInputs, GeoContext, FirePerimeter } from '@fire-sim/shared';
+import { labApi } from '../../services/labApi';
 import { ImageLightbox } from './ImageLightbox';
 import { ScenarioSummaryCard } from './ScenarioSummaryCard';
 import { ScreenshotCompare } from '../ScreenshotCompare';
@@ -74,6 +75,141 @@ interface GeneratedImagesProps {
   onRegenerateImage?: (viewpoint: string) => void;
 }
 
+/**
+ * Inline panel for natural language image modification.
+ * Fetches the image from its SAS URL, converts to base64, then calls the modify API.
+ */
+const ModifyPanel: React.FC<{
+  imageUrl: string;
+  imagePrompt: string;
+  imageId: string;
+  onClose: () => void;
+}> = ({ imageUrl, imagePrompt, imageId, onClose }) => {
+  const [editRequest, setEditRequest] = useState('');
+  const [isModifying, setIsModifying] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [modifiedDataUrl, setModifiedDataUrl] = useState<string | null>(null);
+
+  const handleModify = async () => {
+    const trimmed = editRequest.trim();
+    if (!trimmed) return;
+
+    setIsModifying(true);
+    setModifiedDataUrl(null);
+    setProgress('Fetching image…');
+
+    try {
+      // Fetch the image from the SAS URL and convert to base64 data URL
+      const response = await fetch(imageUrl);
+      if (!response.ok)
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      const blob = await response.blob();
+      const imageDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read image'));
+        reader.readAsDataURL(blob);
+      });
+
+      setProgress('Applying modification…');
+
+      const result = await labApi.modifyImage(
+        {
+          originalPrompt: imagePrompt,
+          imageDataUrl,
+          editRequest: trimmed,
+        },
+        { onProgress: (msg) => setProgress(msg) }
+      );
+
+      setModifiedDataUrl(result.dataUrl);
+      setProgress('');
+    } catch (err) {
+      console.error('[ModifyPanel] Modification failed:', err);
+      setProgress('');
+      alert(`Modification failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsModifying(false);
+    }
+  };
+
+  const handleDownloadModified = () => {
+    if (!modifiedDataUrl) return;
+    const link = document.createElement('a');
+    link.href = modifiedDataUrl;
+    link.download = `modified-${imageId}.png`;
+    link.click();
+  };
+
+  return (
+    <div className={styles.modifyPanel} role="region" aria-label="Modify image">
+      {modifiedDataUrl ? (
+        <>
+          <img
+            src={modifiedDataUrl}
+            alt="Modified result"
+            className={styles.modifyPreview}
+          />
+          <div className={styles.modifyActions}>
+            <button className={styles.modifyDownload} onClick={handleDownloadModified}>
+              ↓ Download
+            </button>
+            <button
+              className={styles.modifyReset}
+              onClick={() => {
+                setModifiedDataUrl(null);
+                setEditRequest('');
+              }}
+            >
+              Modify Again
+            </button>
+            <button className={styles.modifyClose} onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <label className={styles.modifyLabel} htmlFor={`modify-input-${imageId}`}>
+            Describe your change:
+          </label>
+          <textarea
+            id={`modify-input-${imageId}`}
+            className={styles.modifyInput}
+            value={editRequest}
+            onChange={(e) => setEditRequest(e.target.value)}
+            placeholder='e.g. "make the sky red and add more smoke"'
+            rows={2}
+            disabled={isModifying}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                void handleModify();
+              }
+            }}
+          />
+          <div className={styles.modifyActions}>
+            {isModifying && progress && (
+              <span className={styles.modifyProgress}>{progress}</span>
+            )}
+            <button
+              className={styles.modifySubmit}
+              onClick={() => void handleModify()}
+              disabled={isModifying || !editRequest.trim()}
+              title="Apply modification (Ctrl+Enter)"
+            >
+              {isModifying ? '⏳ Modifying…' : '✏ Apply'}
+            </button>
+            <button className={styles.modifyClose} onClick={onClose} disabled={isModifying}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
   result,
   perimeter,
@@ -91,6 +227,7 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
     prompt: string;
     viewpoint: string;
   } | null>(null);
+  const [modifyPanelViewpoint, setModifyPanelViewpoint] = useState<string | null>(null);
 
   const hasScreenshots = mapScreenshots && Object.keys(mapScreenshots).length > 0;
 
@@ -403,7 +540,29 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
               >
                 View Prompt
               </button>
+              <button
+                className={styles.modifyButton}
+                onClick={() =>
+                  setModifyPanelViewpoint(
+                    modifyPanelViewpoint === result.anchorImage!.viewPoint
+                      ? null
+                      : result.anchorImage!.viewPoint
+                  )
+                }
+                title="Modify this image"
+                aria-expanded={modifyPanelViewpoint === result.anchorImage!.viewPoint}
+              >
+                ✏ Modify
+              </button>
             </div>
+            {modifyPanelViewpoint === result.anchorImage!.viewPoint && (
+              <ModifyPanel
+                imageUrl={result.anchorImage!.url}
+                imagePrompt={result.anchorImage!.metadata.prompt}
+                imageId={result.anchorImage!.viewPoint}
+                onClose={() => setModifyPanelViewpoint(null)}
+              />
+            )}
           </div>
         )}
         {result.images
@@ -451,6 +610,18 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
                 >
                   View Prompt
                 </button>
+                <button
+                  className={styles.modifyButton}
+                  onClick={() =>
+                    setModifyPanelViewpoint(
+                      modifyPanelViewpoint === image.viewPoint ? null : image.viewPoint
+                    )
+                  }
+                  title="Modify this image"
+                  aria-expanded={modifyPanelViewpoint === image.viewPoint}
+                >
+                  ✏ Modify
+                </button>
                 {onRegenerateImage && (
                   <button
                     className={styles.regenerateButton}
@@ -461,6 +632,14 @@ export const GeneratedImages: React.FC<GeneratedImagesProps> = ({
                   </button>
                 )}
               </div>
+              {modifyPanelViewpoint === image.viewPoint && (
+                <ModifyPanel
+                  imageUrl={image.url}
+                  imagePrompt={image.metadata.prompt}
+                  imageId={image.viewPoint}
+                  onClose={() => setModifyPanelViewpoint(null)}
+                />
+              )}
             </div>
           ))}
       </div>
