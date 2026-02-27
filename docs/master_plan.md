@@ -1733,6 +1733,15 @@ Update this section after each issue or change.
     - **Impact:** Prompts now include rich geographic context from Google Maps; terrain narratives go beyond slope lookups; vegetation and climate context specific to locality; improved realism and accuracy for fire simulation training scenarios
     - **Acceptance criteria met:** Maps grounding successfully enriches 3+ test scenarios; context parser/locality agent implemented and documented; all enhancements in tests; API key handled via Azure Key Vault; master_plan.md updated with progress
 
+- **[2026-02-27] Fix jittery auto scroll in sidebar during generation** (PR: fix-jittery-auto-scroll-sidebar)
+    - **Intent:** Eliminate jittery auto-scroll of the results panel during AI image generation; confine all auto-scrolling to the ThinkingPanel only.
+    - **Root cause:** `ThinkingPanel` used `scrollIntoView()` to auto-scroll new thinking text into view, but the `.thinkingBody` element had `overflow: visible`, so `scrollIntoView` propagated to the nearest scrollable ancestor (the `ResultsPanel` `.content` div), causing the entire results sidebar to jump to the bottom on every thinking text update.
+    - **Changes made:**
+      - `apps/web/src/components/GeneratedImages/GeneratedImages.module.css`: Added `max-height: 300px` and `overflow-y: auto` to `.thinkingBody`, making it a self-contained scroll container.
+      - `apps/web/src/components/GeneratedImages/GeneratedImages.tsx`: Replaced `endRef.current?.scrollIntoView()` with `bodyRef.current.scrollTop = bodyRef.current.scrollHeight` to scroll only within the thinking panel. Removed the unused sentinel `endRef` div. Added `{ passive: true }` to scroll listener.
+      - `apps/web/src/components/Layout/ResultsPanel.tsx`: Results panel now opens as soon as `generationResult` is set (i.e., when generation begins and the initial in-progress result is available), rather than waiting for `thinkingText` to arrive.
+    - **Acceptance criteria met:** Sidebar no longer auto-scrolls during generation; ThinkingPanel auto-scrolls internally only; Results panel opens automatically when generation starts.
+
 ## 14. Change Control Process
 
 Every change must:

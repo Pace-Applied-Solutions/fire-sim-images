@@ -13,18 +13,18 @@ import styles from './GeneratedImages.module.css';
 
 /**
  * Renders model thinking text in a chat-like scrollable panel.
- * Only auto-scrolls if the user hasn't manually scrolled up.
+ * Only auto-scrolls within the panel itself if the user hasn't manually scrolled up.
+ * Does NOT scroll the outer results panel.
  */
 const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({
   text,
   isStreaming,
 }) => {
-  const endRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const userHasScrolledRef = useRef(false);
   const lastTextLengthRef = useRef(0);
 
-  // Track when user manually scrolls
+  // Track when user manually scrolls within the thinking panel body
   useEffect(() => {
     const bodyEl = bodyRef.current;
     if (!bodyEl) return;
@@ -34,14 +34,17 @@ const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({
       userHasScrolledRef.current = !isAtBottom;
     };
 
-    bodyEl.addEventListener('scroll', handleScroll);
+    bodyEl.addEventListener('scroll', handleScroll, { passive: true });
     return () => bodyEl.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Only auto-scroll when new content arrives AND user hasn't scrolled away
+  // Only auto-scroll the thinking panel body when new content arrives AND user hasn't scrolled away.
+  // Uses scrollTop instead of scrollIntoView to avoid scrolling the outer results panel.
   useEffect(() => {
     if (text.length > lastTextLengthRef.current && !userHasScrolledRef.current) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      if (bodyRef.current) {
+        bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+      }
     }
     lastTextLengthRef.current = text.length;
   }, [text]);
@@ -55,7 +58,6 @@ const ThinkingPanel: React.FC<{ text: string; isStreaming?: boolean }> = ({
       </div>
       <div className={styles.thinkingBody} ref={bodyRef}>
         <div className={styles.thinkingBubble}>{text}</div>
-        <div ref={endRef} />
       </div>
     </div>
   );
