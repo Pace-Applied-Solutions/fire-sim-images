@@ -144,11 +144,14 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
         effectivePrompt +=
           `IMAGE ${perspectiveImage ? '2' : '1'} \u2014 AERIAL OVERVIEW:\n` +
-          'This flat, top-down aerial view shows the FULL EXTENT of the fire area. ' +
-          'The entire visible landscape represents the fire perimeter \u2014 edge to edge. ' +
-          'Use this overview to understand the complete fire footprint, its scale, ' +
-          'and the spatial relationship between the fire and surrounding terrain features (roads, clearings, ridges, waterways). ' +
-          'The fire in your generated image must cover the same spatial extent shown here.\n\n';
+          'This flat, top-down aerial view shows the exact fire zone from directly above. ' +
+          'The semi-transparent orange/amber highlighted area marks the PRECISE shape and location of the fire — ' +
+          'this is where the user has drawn the fire perimeter. ' +
+          'The fire in your generated image MUST fill this exact highlighted area completely, matching its exact shape — ' +
+          'if the highlighted area is triangular, the fire must be triangular; if elongated, the fire must be elongated. ' +
+          'The surrounding landscape outside the highlighted area shows the terrain, roads, clearings, and other features ' +
+          'that must appear as unaffected natural landscape in your generated image. ' +
+          'The fire must not extend beyond the highlighted boundary, and must not be smaller than it.\n\n';
       }
     }
 
@@ -172,7 +175,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
         'The spatial layout must be identical to the references.\n\n' +
         'Step 3: Overlay the following fire scenario onto this faithful landscape rendering:\n\n' +
         prompt +
-        '\n\nDo not show any UI from the map screenshots \u2014 no minimap, buttons, or red polygon lines. ' +
+        '\n\nDo not show any UI from the map screenshots \u2014 no minimap, buttons, labels, or overlay markers. ' +
         'Adherence to the terrain shown in the reference images is critical.';
     }
 
