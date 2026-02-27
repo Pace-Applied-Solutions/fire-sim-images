@@ -11,12 +11,12 @@ const mockImages: GeneratedImage[] = [
   {
     viewPoint: 'aerial',
     url: 'https://example.com/aerial.png',
-    metadata: { width: 1024, height: 1024, model: 'gemini', prompt: 'Test prompt' },
+    metadata: { width: 1024, height: 1024, model: 'gemini', prompt: 'Test prompt', generatedAt: '2026-01-01T00:00:00.000Z' },
   },
   {
     viewPoint: 'ground_north',
     url: 'https://example.com/ground.png',
-    metadata: { width: 1024, height: 1024, model: 'gemini', prompt: 'Test prompt 2' },
+    metadata: { width: 1024, height: 1024, model: 'gemini', prompt: 'Test prompt 2', generatedAt: '2026-01-01T00:00:01.000Z' },
   },
 ];
 
