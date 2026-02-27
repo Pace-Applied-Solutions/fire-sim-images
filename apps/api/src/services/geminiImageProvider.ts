@@ -144,11 +144,12 @@ export class GeminiImageProvider implements ImageGenerationProvider {
 
         effectivePrompt +=
           `IMAGE ${perspectiveImage ? '2' : '1'} \u2014 AERIAL OVERVIEW:\n` +
-          'This flat, top-down aerial view shows the FULL EXTENT of the fire area. ' +
-          'The entire visible landscape represents the fire perimeter \u2014 edge to edge. ' +
-          'Use this overview to understand the complete fire footprint, its scale, ' +
-          'and the spatial relationship between the fire and surrounding terrain features (roads, clearings, ridges, waterways). ' +
-          'The fire in your generated image must cover the same spatial extent shown here.\n\n';
+          'This flat, top-down aerial view shows the fire area from directly above. ' +
+          'The landscape captured in this image IS the fire footprint \u2014 the fire must fill this entire area with ' +
+          'realistic flames, smoke, and burned vegetation as seen from the perspective in Image 1. ' +
+          'Use this overview to understand the fire\'s spatial extent, shape, and its relationship to surrounding ' +
+          'terrain features (roads, clearings, ridges, waterways) that appear beyond the fire boundary. ' +
+          'The fire in your generated image must cover the same spatial footprint shown here.\n\n';
       }
     }
 
@@ -172,7 +173,7 @@ export class GeminiImageProvider implements ImageGenerationProvider {
         'The spatial layout must be identical to the references.\n\n' +
         'Step 3: Overlay the following fire scenario onto this faithful landscape rendering:\n\n' +
         prompt +
-        '\n\nDo not show any UI from the map screenshots \u2014 no minimap, buttons, or red polygon lines. ' +
+        '\n\nDo not show any UI from the map screenshots \u2014 no minimap, buttons, labels, or overlay markers. ' +
         'Adherence to the terrain shown in the reference images is critical.';
     }
 

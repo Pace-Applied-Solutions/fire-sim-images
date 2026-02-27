@@ -139,14 +139,16 @@ export const FIRE_STAGE_DESCRIPTIONS: Record<ScenarioInputs['fireStage'], string
 };
 
 /**
- * Default prompt template (v1.9.0).
+ * Default prompt template (v1.10.0).
  * Structured template with atomic sections for generating photorealistic bushfire scenario prompts.
- * Version 1.9.0: Clarified polygon outline exclusion - removed all references to visual polygon markers,
- *                emphasized natural fire boundaries only (flames, smoke, burned areas).
+ * Version 1.10.0: Removed reference to "perimeter boundary overlay" in referenceImagery — the fire
+ *                 perimeter draw layers are now hidden before screenshot capture, so the AI receives
+ *                 clean landscape images. The aerial overview is described as showing the fire footprint
+ *                 directly rather than a polygon overlay marking the boundary.
  */
 export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
   id: 'bushfire-photorealistic-v1',
-  version: '1.9.0',
+  version: '1.10.0',
   sections: {
     // Section 1: Establish photorealistic style and purpose
     style:
@@ -195,8 +197,8 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
         `IMAGE 1 (Perspective View): This shows the exact viewing angle and perspective that the generated output must match. ` +
         `Convert this 3D terrain visualisation into a photorealistic photograph from the same angle and field of view. ` +
         `This is the most important reference — the output image must look like a real photograph taken from this exact camera position. ` +
-        `IMAGE 2 (Aerial Overview): A top-down aerial view showing the full fire perimeter from directly above. ` +
-        `The perimeter boundary overlay shows the fire's exact extent — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
+        `IMAGE 2 (Aerial Overview): A top-down aerial view showing the fire area from directly above. ` +
+        `The landscape visible in this view IS the fire footprint — study it carefully for the precise fire shape, including any irregular edges, indentations, or protrusions. ` +
         `IMAGE 3 (Vegetation Map): A vegetation classification overlay showing the spatial distribution of vegetation types across the fire area. ` +
         `Use this to place the correct vegetation in corresponding areas of the generated image. ` +
         `The fire in the generated image must: ` +
@@ -333,7 +335,7 @@ export const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
 
       return (
         `Fire extent and boundaries: ${areaDesc} ${extentDesc} ` +
-        `The fire perimeter must follow the exact shape and boundaries shown on the reference map polygon. ` +
+        `The fire perimeter must follow the exact shape and boundaries shown in the aerial overview image. ` +
         `Allow natural features (ridgelines, valleys, rivers, vegetation type changes) to guide irregular perimeter edges — the fire boundary is NOT a perfect geometric shape. ` +
         `CRITICAL: The fire must occupy the ENTIRE mapped area following the polygon boundaries precisely, including any indentations, protrusions, or irregular edges. ` +
         `The fire's extent must be conveyed ENTIRELY through natural features: ` +
